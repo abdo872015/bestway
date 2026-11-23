@@ -893,14 +893,22 @@
             const txt = document.getElementById('cloudSyncText');
 
             try {
-                if (typeof __firebase_config === 'undefined') {
-                    if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-blue-400';
-                    if (txt) txt.textContent = 'وضع التشغيل المحلي جاهز';
-                    return;
-                }
+                // إعدادات الربط السحابي لمشروع مؤسسة الطريق الأمثل
+                const defaultFirebaseConfig = {
+                    apiKey: "AIzaSyDfgLZEkC0tP0pV4TUMX2s8NEzwVHrI2ps",
+                    authDomain: "bestway-c4af6.firebaseapp.com",
+                    projectId: "bestway-c4af6",
+                    storageBucket: "bestway-c4af6.firebasestorage.app",
+                    messagingSenderId: "800924657617",
+                    appId: "1:800924657617:web:4493349136e207295fa2f0",
+                    measurementId: "G-D2N69T19EZ"
+                };
 
-                const firebaseConfig = JSON.parse(__firebase_config);
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'altariq-wms-app';
+                const firebaseConfig = (typeof __firebase_config !== 'undefined')
+                    ? JSON.parse(__firebase_config)
+                    : defaultFirebaseConfig;
+
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'bestway-altariq-wms';
                 const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
                 const db = getFirestore(app);
@@ -952,13 +960,13 @@
                 }, (error) => {
                     console.error('Cloud listener error:', error);
                     if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400';
-                    if (txt) txt.textContent = 'وضع محلي (بانتظار الاتصال)';
+                    if (txt) txt.textContent = 'تأكد من تفعيل Firestore و Anonymous';
                 });
 
             } catch (e) {
                 console.error('Cloud init failed:', e);
-                if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-400';
-                if (txt) txt.textContent = 'وضع التشغيل المحلي';
+                if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
+                if (txt) txt.textContent = 'خطأ: ' + (e.code || e.message || 'وضع التشغيل المحلي');
             }
         }
 
