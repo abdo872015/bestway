@@ -4779,10 +4779,10 @@ ${statusLine}
                         <td class="py-3.5 px-4 text-center font-black text-blue-700">${totalSqm.toFixed(2)} م²</td>
                         <td class="py-3.5 px-4 text-center">${rollBadge}</td>
                         <td class="py-3.5 px-4 text-center relative">
-                            <button type="button" onclick="toggleActionMenu('itemMenu_${it.id}')" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold">
+                            <button type="button" onclick="toggleActionMenu('itemMenu_${it.id}', this)" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold">
                                 الإجراءات <i class="fa-solid fa-chevron-down mr-1"></i>
                             </button>
-                            <div id="itemMenu_${it.id}" class="action-dropdown hidden absolute left-4 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-30 text-right overflow-hidden">
+                            <div id="itemMenu_${it.id}" class="action-dropdown hidden fixed w-44 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 text-right overflow-hidden">
                                 <button type="button" onclick="viewRollDetails('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center justify-start text-right">
                                     <i class="fa-solid fa-eye text-blue-600"></i> <span class="flex-1 text-right">عرض</span>
                                 </button>
@@ -5166,24 +5166,22 @@ ${statusLine}
                     qtyClass = 'text-rose-700';
                     signPrefix = '-';
                 } else if (ev.kind === 'transfer') {
-                    badgeClass = 'bg-amber-100 text-amber-800';
-                    qtyClass = 'text-amber-700';
+                    badgeClass = 'bg-indigo-100 text-indigo-800';
+                    qtyClass = 'text-indigo-700';
+                    signPrefix = '⇄ ';
                 }
 
                 rowsHtml.push(`
                     <tr class="hover:bg-slate-50 transition">
-                        <td class="py-3 px-3 whitespace-nowrap text-slate-700">${formatDateTimeAr(ev.date)}</td>
-                        <td class="py-3 px-3 whitespace-nowrap"><span class="px-2.5 py-1 rounded-lg text-[11px] font-black ${badgeClass}">${ev.typeLabel}</span></td>
+                        <td class="py-3 px-3 text-slate-600 whitespace-nowrap">${formatDateTimeAr(ev.date)}</td>
+                        <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-lg font-black ${badgeClass}">${ev.typeLabel}</span></td>
                         <td class="py-3 px-3 font-black text-blue-700 whitespace-nowrap">${ev.refId}</td>
-                        <td class="py-3 px-3 text-slate-900 font-extrabold">${ev.party}</td>
+                        <td class="py-3 px-3 text-slate-800">${ev.party}</td>
                         <td class="py-3 px-3 text-slate-600 whitespace-nowrap">${ev.whName}</td>
                         <td class="py-3 px-3 text-center font-black ${qtyClass}">${signPrefix}${ev.qtyDetail}</td>
-                        <td class="py-3 px-3 text-center text-slate-700 whitespace-nowrap">${ev.unitPrice}</td>
-                        <td class="py-3 px-3 text-center font-black text-slate-900 whitespace-nowrap">${ev.totalPrice}</td>
-                        <td class="py-3 px-3 text-center font-black text-indigo-700 whitespace-nowrap">
-                            ${Math.max(0, runningRolls).toFixed(2)} رول
-                            <span class="block text-[10px] text-slate-500">(${(Math.max(0, runningRolls) * rollArea).toFixed(2)} م²)</span>
-                        </td>
+                        <td class="py-3 px-3 text-center">${ev.unitPrice}</td>
+                        <td class="py-3 px-3 text-center font-black">${ev.totalPrice}</td>
+                        <td class="py-3 px-3 text-center font-black text-slate-900">${runningRolls.toFixed(2)} رول<br><span class="text-[10px] text-slate-500">(${(runningRolls * rollArea).toFixed(2)} م²)</span></td>
                     </tr>
                 `);
             });
@@ -5191,13 +5189,50 @@ ${statusLine}
             document.getElementById('movTotInVal').textContent = `${totInRolls.toFixed(2)} رول (${totInSqm.toFixed(2)} م²)`;
             document.getElementById('movTotOutVal').textContent = `${totOutRolls.toFixed(2)} رول (${totOutSqm.toFixed(2)} م²)`;
             document.getElementById('movCurrentBalanceRolls').textContent = `${actualCurrentRolls.toFixed(2)} رول`;
-            document.getElementById('movCurrentBalanceSplit').textContent = `السامر: ${curSamir.toFixed(2)} رول | التحلية: ${curTahlia.toFixed(2)} رول`;
-            document.getElementById('movCurrentBalanceSqm').textContent = `${(actualCurrentRolls * rollArea).toFixed(2)} م²`;
+            document.getElementById('movCurrentBalanceSplit').textContent = `السامر: ${curSamir.toFixed(2)} | التحلية: ${curTahlia.toFixed(2)}`;
+            document.getElementById('movCurrentBalanceSqm').textContent = `الإجمالي: ${(actualCurrentRolls * rollArea).toFixed(2)} م²`;
 
-            if (rowsHtml.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="py-10 text-center text-slate-400">لا توجد حركات مسجلة لهذا الصنف في الفترة أو المخزن المحدد.</td></tr>';
-            } else {
-                tbody.innerHTML = rowsHtml.join('');
+            if (tbody) {
+                tbody.innerHTML = rowsHtml.length > 0
+                    ? rowsHtml.join('')
+                    : '<tr><td colspan="9" class="py-10 text-center text-slate-400">لا توجد حركات مسجلة لهذا الصنف في الفترة المحددة</td></tr>';
+            }
+        }
+
+        function toggleActionMenu(menuId, triggerEl) {
+            document.querySelectorAll('.action-dropdown').forEach(m => {
+                if (m.id !== menuId) m.classList.add('hidden');
+            });
+            const menu = document.getElementById(menuId);
+            if (!menu) return;
+
+            const willShow = menu.classList.contains('hidden');
+            if (!willShow) {
+                menu.classList.add('hidden');
+                return;
+            }
+
+            menu.classList.remove('hidden');
+
+            if (triggerEl && typeof triggerEl.getBoundingClientRect === 'function') {
+                const rect = triggerEl.getBoundingClientRect();
+                const menuHeight = menu.offsetHeight || 165;
+                const menuWidth = menu.offsetWidth || 176;
+                const spaceBelow = window.innerHeight - rect.bottom;
+
+                let topPos = rect.bottom + 6;
+                if (spaceBelow < menuHeight + 12 && rect.top > menuHeight + 12) {
+                    topPos = rect.top - menuHeight - 6;
+                }
+
+                let leftPos = rect.left;
+                if (leftPos + menuWidth > window.innerWidth - 12) {
+                    leftPos = window.innerWidth - menuWidth - 12;
+                }
+                if (leftPos < 12) leftPos = 12;
+
+                menu.style.top = `${Math.max(12, topPos)}px`;
+                menu.style.left = `${leftPos}px`;
             }
         }
 
@@ -6631,11 +6666,11 @@ ${balanceLine}
                                 <button type="button" onclick="sendCustomerWhatsApp('${c.id}')" title="إرسال كشف الحساب واتساب" class="px-2.5 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl text-xs font-extrabold transition">
                                     <i class="fa-brands fa-whatsapp text-sm"></i>
                                 </button>
-                                <button type="button" onclick="toggleActionMenu('custMenu_${c.id}')" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold">
+                                <button type="button" onclick="toggleActionMenu('custMenu_${c.id}', this)" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold">
                                     إجراءات <i class="fa-solid fa-chevron-down mr-1"></i>
                                 </button>
                             </div>
-                            <div id="custMenu_${c.id}" class="action-dropdown hidden absolute left-4 mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-xl z-30 text-right overflow-hidden">
+                            <div id="custMenu_${c.id}" class="action-dropdown hidden fixed w-44 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 text-right overflow-hidden">
                                 <button type="button" onclick="openCustomerStatement('${c.id}')" class="w-full px-3.5 py-2.5 text-xs font-extrabold text-blue-700 hover:bg-blue-50 flex items-center gap-2">
                                     <i class="fa-solid fa-file-invoice"></i> كشف حساب العميل
                                 </button>
