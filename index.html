@@ -1618,8 +1618,8 @@
                                         <th class="py-3.5 px-4">الاسم الكامل</th>
                                         <th class="py-3.5 px-4">اسم المستخدم للدخول</th>
                                         <th class="py-3.5 px-4">الدور والصلاحية</th>
-                                        <th class="py-3.5 px-4 text-center">حذف الفواتير/القيود</th>
-                                        <th class="py-3.5 px-4 text-center">إدارة المستخدمين</th>
+                                        <th class="py-3.5 px-4 text-center">الشاشات المسموحة (عرض)</th>
+                                        <th class="py-3.5 px-4 text-center">التعديل والحذف</th>
                                         <th class="py-3.5 px-4 text-center">الإجراءات</th>
                                     </tr>
                                 </thead>
@@ -1723,38 +1723,84 @@
     </div>
 
     <!-- نافذة إضافة / تعديل مستخدم وصلاحياته -->
-    <div id="systemUserModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="modal-card-animate bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 id="sysUserModalTitle" class="text-lg font-black text-slate-900">إضافة مستخدم جديد</h3>
+    <div id="systemUserModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="modal-card-animate bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden my-auto">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
+                <h3 id="sysUserModalTitle" class="text-lg font-black text-slate-900">إضافة مستخدم جديد وتحديد صلاحياته</h3>
                 <button type="button" onclick="closeSystemUserModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
-            <input type="hidden" id="editSysUserId">
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-xs font-extrabold text-slate-700 mb-1">الاسم الكامل للموظف *</label>
-                    <input type="text" id="sysUserFullName" placeholder="مثال: أحمد محمد - أمين مخزن السامر" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold">
+            <div class="p-6 overflow-y-auto space-y-5 flex-1">
+                <input type="hidden" id="editSysUserId">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-700 mb-1">الاسم الكامل للموظف *</label>
+                        <input type="text" id="sysUserFullName" placeholder="مثال: أحمد محمد - أمين مخزن السامر" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-700 mb-1">المسمى الوظيفي / القالب السريع</label>
+                        <select id="sysUserRoleSelect" onchange="applyRolePresetToPermissions(this.value)" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold">
+                            <option value="custom">صلاحيات مخصصة (اختيار يدوي)</option>
+                            <option value="admin">مدير عام (تحديد الكل)</option>
+                            <option value="storekeeper">أمين مخزن (قالب جاهز)</option>
+                            <option value="accountant">محاسب (قالب جاهز)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-700 mb-1">اسم المستخدم للدخول *</label>
+                        <input type="text" id="sysUserUsername" dir="ltr" placeholder="store1" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-left">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-700 mb-1">كلمة المرور *</label>
+                        <input type="text" id="sysUserPassword" dir="ltr" placeholder="••••" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-left">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-extrabold text-slate-700 mb-1">الدور والصلاحية *</label>
-                    <select id="sysUserRoleSelect" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold">
-                        <option value="admin">مدير عام (صلاحية كاملة)</option>
-                        <option value="storekeeper">أمين مخزن (إدارة المخزون والصرف والجرد)</option>
-                        <option value="accountant">محاسب (العملاء وسندات القبض والتقارير)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-extrabold text-slate-700 mb-1">اسم المستخدم للدخول *</label>
-                    <input type="text" id="sysUserUsername" dir="ltr" placeholder="store1" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-left">
-                </div>
-                <div>
-                    <label class="block text-xs font-extrabold text-slate-700 mb-1">كلمة المرور *</label>
-                    <input type="text" id="sysUserPassword" dir="ltr" placeholder="••••" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-left">
+
+                <!-- مصفوفة الصلاحيات التفصيلية لكل أيقونة في النظام -->
+                <div class="space-y-2.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h4 class="text-sm font-black text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved text-blue-600"></i>
+                            <span>تحديد الصلاحيات لكل أيقونة في النظام (عرض / تعديل / حذف)</span>
+                        </h4>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="toggleAllPermissionChecks(true)" class="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-extrabold rounded-lg transition">تحديد الكل</button>
+                            <button type="button" onclick="toggleAllPermissionChecks(false)" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-extrabold rounded-lg transition">إلغاء الكل</button>
+                        </div>
+                    </div>
+
+                    <div class="border border-slate-200 rounded-2xl overflow-hidden">
+                        <table class="w-full text-right text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-slate-900 text-white font-extrabold">
+                                    <th class="py-2.5 px-4">الأيقونة / الشاشة في النظام</th>
+                                    <th class="py-2.5 px-3 text-center w-24">
+                                        <label class="inline-flex items-center gap-1 cursor-pointer">
+                                            <input type="checkbox" id="chkColAllView" onchange="toggleColumnPermissions('view', this.checked)" class="rounded">
+                                            <span>عرض</span>
+                                        </label>
+                                    </th>
+                                    <th class="py-2.5 px-3 text-center w-28">
+                                        <label class="inline-flex items-center gap-1 cursor-pointer">
+                                            <input type="checkbox" id="chkColAllEdit" onchange="toggleColumnPermissions('edit', this.checked)" class="rounded">
+                                            <span>تعديل / إضافة</span>
+                                        </label>
+                                    </th>
+                                    <th class="py-2.5 px-3 text-center w-24">
+                                        <label class="inline-flex items-center gap-1 cursor-pointer">
+                                            <input type="checkbox" id="chkColAllDelete" onchange="toggleColumnPermissions('delete', this.checked)" class="rounded">
+                                            <span>حذف</span>
+                                        </label>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="userPermissionsMatrixBody" class="divide-y divide-slate-100 font-bold"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-            <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
-                <button type="button" onclick="closeSystemUserModal()" class="px-4 py-2.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl">إلغاء</button>
-                <button type="button" onclick="saveSystemUser()" class="px-6 py-2.5 bg-blue-600 text-white text-xs font-extrabold rounded-xl">حفظ المستخدم</button>
+            <div class="flex justify-end gap-2 px-6 py-4 bg-slate-50 border-t border-slate-100 shrink-0">
+                <button type="button" onclick="closeSystemUserModal()" class="px-4 py-2.5 bg-slate-200 text-slate-700 text-xs font-bold rounded-xl">إلغاء</button>
+                <button type="button" onclick="saveSystemUser()" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold rounded-xl shadow-md">حفظ المستخدم والصلاحيات</button>
             </div>
         </div>
     </div>
@@ -2364,8 +2410,45 @@
         const ROLE_LABELS = {
             admin: 'مدير عام (صلاحية كاملة)',
             storekeeper: 'أمين مخزن (إدارة المخزون)',
-            accountant: 'محاسب (الحسابات والتحصيل)'
+            accountant: 'محاسب (الحسابات والتحصيل)',
+            custom: 'صلاحيات مخصصة'
         };
+
+        const SYSTEM_PERMISSION_MODULES = [
+            { key: 'dashboard', label: 'لوحة القيادة والملخص', icon: 'fa-gauge-high', color: 'text-blue-600' },
+            { key: 'reports', label: 'التقارير والرسوم البيانية', icon: 'fa-chart-column', color: 'text-indigo-600' },
+            { key: 'overdue', label: 'الفواتير المتأخرة (25 يوم)', icon: 'fa-bell-concierge', color: 'text-rose-600' },
+            { key: 'sales', label: 'إذون الصرف والمبيعات', icon: 'fa-file-invoice-dollar', color: 'text-blue-600' },
+            { key: 'inbound', label: 'توريد وتغذية المخزن', icon: 'fa-truck-ramp-box', color: 'text-emerald-600' },
+            { key: 'transfers', label: 'التحويل بين المستودعات', icon: 'fa-right-left', color: 'text-indigo-600' },
+            { key: 'returns', label: 'مرتجعات العملاء', icon: 'fa-rotate-left', color: 'text-amber-600' },
+            { key: 'inventory', label: 'الأصناف وأرصدة الرولات', icon: 'fa-boxes-stacked', color: 'text-sky-600' },
+            { key: 'stocktake', label: 'الجرد الفعلي والمطابقة', icon: 'fa-clipboard-check', color: 'text-teal-600' },
+            { key: 'waste', label: 'الهالك والتالف والقصاقيص', icon: 'fa-scissors', color: 'text-rose-600' },
+            { key: 'stagnant', label: 'الأصناف الراكدة (60 يوم)', icon: 'fa-hourglass-half', color: 'text-orange-600' },
+            { key: 'customers', label: 'العملاء وكشوف الحساب', icon: 'fa-users', color: 'text-purple-600' },
+            { key: 'logs', label: 'السجل العام للحركات', icon: 'fa-clock-rotate-left', color: 'text-slate-500' },
+            { key: 'opening', label: 'الأرصدة الافتتاحية', icon: 'fa-scale-balanced', color: 'text-cyan-600' },
+            { key: 'users', label: 'المستخدمين والصلاحيات', icon: 'fa-user-shield', color: 'text-amber-600' }
+        ];
+
+        function buildDefaultPermissionsForRole(role = 'admin') {
+            const perms = {};
+            SYSTEM_PERMISSION_MODULES.forEach(m => {
+                if (role === 'admin') {
+                    perms[m.key] = { view: true, edit: true, delete: true };
+                } else if (role === 'storekeeper') {
+                    const isStoreModule = ['dashboard', 'sales', 'inbound', 'transfers', 'returns', 'inventory', 'stocktake', 'waste', 'stagnant', 'logs'].includes(m.key);
+                    perms[m.key] = { view: isStoreModule, edit: isStoreModule && m.key !== 'dashboard' && m.key !== 'logs', delete: false };
+                } else if (role === 'accountant') {
+                    const isAccModule = ['dashboard', 'reports', 'overdue', 'sales', 'customers', 'logs', 'opening'].includes(m.key);
+                    perms[m.key] = { view: isAccModule, edit: ['customers', 'opening'].includes(m.key), delete: false };
+                } else {
+                    perms[m.key] = { view: m.key === 'dashboard', edit: false, delete: false };
+                }
+            });
+            return perms;
+        }
 
         let appState = {
             warehouses: [
@@ -2378,7 +2461,14 @@
             stocktakeLines: [],
             stocktakeHistory: [],
             users: [
-                { id: 'user_admin', fullName: 'مدير النظام', username: 'admin', password: '1234', role: 'admin' }
+                {
+                    id: 'user_admin',
+                    fullName: 'مدير النظام',
+                    username: 'admin',
+                    password: '1234',
+                    role: 'admin',
+                    permissions: buildDefaultPermissionsForRole('admin')
+                }
             ]
         };
 
@@ -2574,8 +2664,29 @@
         // ==========================================
         // 3. تسجيل الدخول، الصلاحيات، والتنقل بين الشاشات
         // ==========================================
-        function canDeleteRecords() {
-            return !currentUser || currentUser.role === 'admin';
+        function getUserModulePerm(moduleKey) {
+            if (!currentUser) return { view: true, edit: true, delete: true };
+            if (currentUser.id === 'user_admin') return { view: true, edit: true, delete: true };
+            if (currentUser.permissions && currentUser.permissions[moduleKey]) {
+                return currentUser.permissions[moduleKey];
+            }
+            const fallback = buildDefaultPermissionsForRole(currentUser.role || 'admin');
+            return fallback[moduleKey] || { view: false, edit: false, delete: false };
+        }
+
+        function hasPermission(moduleKey, action = 'view') {
+            const p = getUserModulePerm(moduleKey);
+            return Boolean(p && p[action]);
+        }
+
+        function canDeleteRecords(moduleKey = null) {
+            if (moduleKey) return hasPermission(moduleKey, 'delete');
+            return !currentUser || currentUser.id === 'user_admin' || currentUser.role === 'admin' ||
+                Object.values(currentUser.permissions || {}).some(p => p.delete);
+        }
+
+        function canEditMasterData(moduleKey = 'inventory') {
+            return hasPermission(moduleKey, 'edit');
         }
 
         function canEditMasterData() {
@@ -2651,17 +2762,22 @@
 
             if (avEl) avEl.textContent = letter;
             if (nameEl) nameEl.textContent = currentUser.fullName;
-            if (roleEl) roleEl.textContent = ROLE_LABELS[currentUser.role] || 'مدير عام';
+            if (roleEl) roleEl.textContent = ROLE_LABELS[currentUser.role] || 'صلاحيات مخصصة';
             if (dropName) dropName.textContent = currentUser.fullName;
             if (dropUser) dropUser.textContent = '@' + currentUser.username;
 
-            const isAdmin = currentUser.role === 'admin';
-            const navUsers = document.getElementById('navBtnUsers');
+            // إظهار أو إخفاء أيقونات القائمة الجانبية حسب صلاحية "عرض" لكل مستخدم
+            document.querySelectorAll('.nav-btn[data-tab]').forEach(btn => {
+                const tabKey = btn.dataset.tab;
+                const allowedView = hasPermission(tabKey, 'view');
+                btn.classList.toggle('hidden', !allowedView);
+            });
+
+            const canManageUsers = hasPermission('users', 'view');
             const dropUsers = document.getElementById('dropBtnManageUsers');
             const btnRestore = document.getElementById('btnRestoreBackupSidebar');
-            if (navUsers) navUsers.classList.toggle('hidden', !isAdmin);
-            if (dropUsers) dropUsers.classList.toggle('hidden', !isAdmin);
-            if (btnRestore) btnRestore.classList.toggle('hidden', !isAdmin);
+            if (dropUsers) dropUsers.classList.toggle('hidden', !canManageUsers);
+            if (btnRestore) btnRestore.classList.toggle('hidden', !canManageUsers);
         }
 
         function toggleProfileDropdown() {
@@ -2710,6 +2826,16 @@
         }
 
         function switchTab(tabKey) {
+            if (!hasPermission(tabKey, 'view')) {
+                const firstAllowed = SYSTEM_PERMISSION_MODULES.find(m => hasPermission(m.key, 'view'));
+                if (firstAllowed && firstAllowed.key !== tabKey) {
+                    tabKey = firstAllowed.key;
+                } else {
+                    showToast('عذراً، ليس لديك صلاحية عرض هذه الشاشة', true);
+                    return;
+                }
+            }
+
             document.querySelectorAll('.tab-section').forEach(sec => {
                 sec.classList.add('hidden');
                 sec.classList.remove('tab-animate-in');
@@ -2978,42 +3104,128 @@
             const tbody = document.getElementById('systemUsersTableBody');
             if (!tbody) return;
             tbody.innerHTML = appState.users.map(u => {
-                const isAdmin = u.role === 'admin';
+                const isMainAdmin = u.id === 'user_admin';
+                const perms = u.permissions || buildDefaultPermissionsForRole(u.role || 'admin');
+                const viewCount = SYSTEM_PERMISSION_MODULES.filter(m => perms[m.key]?.view).length;
+                const editCount = SYSTEM_PERMISSION_MODULES.filter(m => perms[m.key]?.edit).length;
+                const delCount = SYSTEM_PERMISSION_MODULES.filter(m => perms[m.key]?.delete).length;
+
                 return `
                     <tr class="hover:bg-slate-50">
                         <td class="py-3.5 px-4 font-extrabold text-slate-900">${u.fullName}</td>
                         <td class="py-3.5 px-4 text-slate-600" dir="ltr">${u.username}</td>
-                        <td class="py-3.5 px-4"><span class="px-2.5 py-1 rounded-lg text-xs font-black ${isAdmin ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'}">${ROLE_LABELS[u.role] || u.role}</span></td>
-                        <td class="py-3.5 px-4 text-center">${isAdmin ? '<i class="fa-solid fa-check text-emerald-600"></i>' : '<i class="fa-solid fa-xmark text-rose-500"></i>'}</td>
-                        <td class="py-3.5 px-4 text-center">${isAdmin ? '<i class="fa-solid fa-check text-emerald-600"></i>' : '<i class="fa-solid fa-xmark text-rose-500"></i>'}</td>
+                        <td class="py-3.5 px-4"><span class="px-2.5 py-1 rounded-lg text-xs font-black ${isMainAdmin ? 'bg-blue-100 text-blue-800' : 'bg-indigo-50 text-indigo-800'}">${ROLE_LABELS[u.role] || 'صلاحيات مخصصة'}</span></td>
+                        <td class="py-3.5 px-4 text-center"><span class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-black">${viewCount} / ${SYSTEM_PERMISSION_MODULES.length} شاشة</span></td>
+                        <td class="py-3.5 px-4 text-center text-xs">
+                            <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 ml-1">تعديل: ${editCount}</span>
+                            <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700">حذف: ${delCount}</span>
+                        </td>
                         <td class="py-3.5 px-4 text-center">
-                            <button type="button" onclick="openEditSystemUserModal('${u.id}')" class="px-2.5 py-1 bg-amber-50 text-amber-700 rounded-lg text-xs font-extrabold ml-1">تعديل</button>
-                            ${u.id !== 'user_admin' ? `<button type="button" onclick="deleteSystemUser('${u.id}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 rounded-lg text-xs font-extrabold">حذف</button>` : ''}
+                            <button type="button" onclick="openEditSystemUserModal('${u.id}')" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-extrabold ml-1">تعديل الصلاحيات</button>
+                            ${!isMainAdmin && hasPermission('users', 'delete') ? `<button type="button" onclick="deleteSystemUser('${u.id}')" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-extrabold">حذف</button>` : ''}
                         </td>
                     </tr>
                 `;
             }).join('');
         }
 
+        function renderUserPermissionsMatrix(permsObj) {
+            const tbody = document.getElementById('userPermissionsMatrixBody');
+            if (!tbody) return;
+            const perms = permsObj || buildDefaultPermissionsForRole('custom');
+
+            tbody.innerHTML = SYSTEM_PERMISSION_MODULES.map(m => {
+                const mp = perms[m.key] || { view: false, edit: false, delete: false };
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-2.5 px-4 font-extrabold text-slate-900">
+                            <span class="inline-flex items-center gap-2.5">
+                                <i class="fa-solid ${m.icon} w-4 text-center ${m.color}"></i>
+                                <span>${m.label}</span>
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-3 text-center">
+                            <input type="checkbox" data-perm-mod="${m.key}" data-perm-act="view" ${mp.view ? 'checked' : ''} onchange="onSinglePermCheckChange('${m.key}', 'view', this.checked)" class="w-4 h-4 accent-emerald-600 cursor-pointer rounded">
+                        </td>
+                        <td class="py-2.5 px-3 text-center">
+                            <input type="checkbox" data-perm-mod="${m.key}" data-perm-act="edit" ${mp.edit ? 'checked' : ''} onchange="onSinglePermCheckChange('${m.key}', 'edit', this.checked)" class="w-4 h-4 accent-blue-600 cursor-pointer rounded">
+                        </td>
+                        <td class="py-2.5 px-3 text-center">
+                            <input type="checkbox" data-perm-mod="${m.key}" data-perm-act="delete" ${mp.delete ? 'checked' : ''} onchange="onSinglePermCheckChange('${m.key}', 'delete', this.checked)" class="w-4 h-4 accent-rose-600 cursor-pointer rounded">
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function onSinglePermCheckChange(modKey, act, isChecked) {
+            // إذا اختار المستخدم تعديل أو حذف لشاشة، يتم تفعيل "عرض" لها تلقائياً
+            if ((act === 'edit' || act === 'delete') && isChecked) {
+                const viewChk = document.querySelector(`[data-perm-mod="${modKey}"][data-perm-act="view"]`);
+                if (viewChk) viewChk.checked = true;
+            }
+            // إذا ألغى المستخدم "عرض" لشاشة، يتم إلغاء التعديل والحذف لها تلقائياً
+            if (act === 'view' && !isChecked) {
+                const editChk = document.querySelector(`[data-perm-mod="${modKey}"][data-perm-act="edit"]`);
+                const delChk = document.querySelector(`[data-perm-mod="${modKey}"][data-perm-act="delete"]`);
+                if (editChk) editChk.checked = false;
+                if (delChk) delChk.checked = false;
+            }
+            const roleSel = document.getElementById('sysUserRoleSelect');
+            if (roleSel) roleSel.value = 'custom';
+        }
+
+        function toggleAllPermissionChecks(checked) {
+            document.querySelectorAll('#userPermissionsMatrixBody input[type="checkbox"]').forEach(chk => {
+                chk.checked = checked;
+            });
+            ['chkColAllView', 'chkColAllEdit', 'chkColAllDelete'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.checked = checked;
+            });
+        }
+
+        function toggleColumnPermissions(act, checked) {
+            document.querySelectorAll(`#userPermissionsMatrixBody input[data-perm-act="${act}"]`).forEach(chk => {
+                chk.checked = checked;
+                onSinglePermCheckChange(chk.dataset.permMod, act, checked);
+            });
+        }
+
+        function applyRolePresetToPermissions(roleVal) {
+            if (roleVal === 'custom') return;
+            renderUserPermissionsMatrix(buildDefaultPermissionsForRole(roleVal));
+        }
+
         function openAddSystemUserModal() {
-            document.getElementById('sysUserModalTitle').textContent = 'إضافة مستخدم جديد';
+            if (!hasPermission('users', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية إضافة مستخدمين', true);
+                return;
+            }
+            document.getElementById('sysUserModalTitle').textContent = 'إضافة مستخدم جديد وتحديد صلاحياته';
             document.getElementById('editSysUserId').value = '';
             document.getElementById('sysUserFullName').value = '';
-            document.getElementById('sysUserRoleSelect').value = 'storekeeper';
+            document.getElementById('sysUserRoleSelect').value = 'custom';
             document.getElementById('sysUserUsername').value = '';
             document.getElementById('sysUserPassword').value = '';
+            renderUserPermissionsMatrix(buildDefaultPermissionsForRole('custom'));
             document.getElementById('systemUserModal')?.classList.remove('hidden');
         }
 
         function openEditSystemUserModal(id) {
+            if (!hasPermission('users', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية تعديل المستخدمين', true);
+                return;
+            }
             const u = appState.users.find(x => x.id === id);
             if (!u) return;
-            document.getElementById('sysUserModalTitle').textContent = 'تعديل بيانات المستخدم';
+            document.getElementById('sysUserModalTitle').textContent = `تعديل صلاحيات: ${u.fullName}`;
             document.getElementById('editSysUserId').value = u.id;
             document.getElementById('sysUserFullName').value = u.fullName;
-            document.getElementById('sysUserRoleSelect').value = u.role;
+            document.getElementById('sysUserRoleSelect').value = u.role || 'custom';
             document.getElementById('sysUserUsername').value = u.username;
             document.getElementById('sysUserPassword').value = u.password;
+            renderUserPermissionsMatrix(u.permissions || buildDefaultPermissionsForRole(u.role || 'admin'));
             document.getElementById('systemUserModal')?.classList.remove('hidden');
         }
 
@@ -3031,20 +3243,39 @@
                 showToast('يرجى إدخال جميع بيانات المستخدم', true);
                 return;
             }
+
+            const permissions = {};
+            SYSTEM_PERMISSION_MODULES.forEach(m => {
+                const v = document.querySelector(`[data-perm-mod="${m.key}"][data-perm-act="view"]`)?.checked || false;
+                const e = document.querySelector(`[data-perm-mod="${m.key}"][data-perm-act="edit"]`)?.checked || false;
+                const d = document.querySelector(`[data-perm-mod="${m.key}"][data-perm-act="delete"]`)?.checked || false;
+                permissions[m.key] = { view: v, edit: e, delete: d };
+            });
+
             if (id) {
                 const idx = appState.users.findIndex(u => u.id === id);
-                if (idx !== -1) appState.users[idx] = { ...appState.users[idx], fullName, role, username, password };
+                if (idx !== -1) {
+                    appState.users[idx] = { ...appState.users[idx], fullName, role, username, password, permissions };
+                    if (currentUser && currentUser.id === id) {
+                        currentUser = appState.users[idx];
+                    }
+                }
             } else {
-                appState.users.push({ id: 'user_' + Date.now(), fullName, role, username, password });
+                appState.users.push({ id: 'user_' + Date.now(), fullName, role, username, password, permissions });
             }
             saveState();
+            updateHeaderProfileDisplay();
             closeSystemUserModal();
             renderSystemUsersTable();
-            showToast('تم حفظ بيانات المستخدم بنجاح');
+            showToast('تم حفظ بيانات المستخدم وصلاحياته بنجاح');
         }
 
         function deleteSystemUser(id) {
             if (id === 'user_admin') return;
+            if (!hasPermission('users', 'delete')) {
+                showToast('عذراً، ليس لديك صلاحية حذف المستخدمين', true);
+                return;
+            }
             appState.users = appState.users.filter(u => u.id !== id);
             saveState();
             renderSystemUsersTable();
@@ -3194,6 +3425,10 @@
         }
 
         function completeStocktake() {
+            if (!hasPermission('stocktake', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية تعديل أو اعتماد الجرد', true);
+                return;
+            }
             if (appState.stocktakeLines.length === 0) {
                 showToast('قائمة الجرد فارغة!', true);
                 return;
@@ -3928,11 +4163,11 @@ ${statusLine}
                                 <button type="button" onclick="openItemMovementModal('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-50 flex items-center gap-2">
                                     <i class="fa-solid fa-arrows-left-right-to-line text-indigo-600"></i> حركة الصنف
                                 </button>
-                                ${canEditMasterData() ? `
+                                ${hasPermission('inventory', 'edit') ? `
                                 <button type="button" onclick="openEditRollModal('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
                                     <i class="fa-solid fa-pen-to-square text-amber-600"></i> تعديل
                                 </button>` : ''}
-                                ${canDeleteRecords() ? `
+                                ${hasPermission('inventory', 'delete') ? `
                                 <button type="button" onclick="deleteRollItem('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-2">
                                     <i class="fa-solid fa-trash"></i> حذف
                                 </button>` : ''}
@@ -3952,8 +4187,8 @@ ${statusLine}
         }
 
         function openAddRollModal() {
-            if (!canEditMasterData()) {
-                showToast('عذراً، إضافة الأصناف متاحة للمدير أو أمين المخزن فقط', true);
+            if (!hasPermission('inventory', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية إضافة أو تعديل الأصناف', true);
                 return;
             }
             document.getElementById('rollModalTitle').textContent = 'إضافة صنف رول جديد';
@@ -4028,8 +4263,8 @@ ${statusLine}
         }
 
         function deleteRollItem(id) {
-            if (!canDeleteRecords()) {
-                showToast('حذف الأصناف متاح للمدير العام فقط', true);
+            if (!hasPermission('inventory', 'delete')) {
+                showToast('عذراً، ليس لديك صلاحية حذف الأصناف', true);
                 return;
             }
             appState.items = appState.items.filter(x => x.id !== id);
@@ -4494,6 +4729,10 @@ ${statusLine}
         // 6. الوارد، المنصرف (مع فحص الرصيد والطباعة والواتساب)، التحويلات
         // ==========================================
         function submitInbound() {
+            if (!hasPermission('inbound', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية إضافة توريد للمخزن', true);
+                return;
+            }
             const wh = document.getElementById('inWarehouse').value;
             const date = document.getElementById('inDate').value || getNowLocalInputStr();
             const itemId = document.getElementById('inItemSelect').value;
@@ -4621,6 +4860,10 @@ ${statusLine}
         }
 
         function openNewSaleOrderModal() {
+            if (!hasPermission('sales', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية إضافة إذون صرف', true);
+                return;
+            }
             saleCart = [];
             renderSaleCart();
             document.getElementById('saleCustomerSearch').value = '';
@@ -4761,7 +5004,7 @@ ${linesTxt}
                                 <button type="button" onclick="sendSaleOrderWhatsApp('${t.id}')" title="إرسال واتساب للعميل" class="px-2.5 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl text-xs font-extrabold transition">
                                     <i class="fa-brands fa-whatsapp"></i>
                                 </button>
-                                ${canDeleteRecords() ? `
+                                ${hasPermission('sales', 'delete') ? `
                                 <button type="button" onclick="promptVoidTransaction('${t.id}')" title="إلغاء الإذن وإعادة الرصيد" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-extrabold transition">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>` : ''}
@@ -4817,7 +5060,7 @@ ${linesTxt}
 
             document.getElementById('viewSaleModalFooter').innerHTML = `
                 <div>
-                    ${canDeleteRecords() ? `
+                    ${hasPermission('sales', 'delete') ? `
                     <button type="button" onclick="document.getElementById('viewSaleDetailsModal').classList.add('hidden'); promptVoidTransaction('${tx.id}');" class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-extrabold rounded-xl flex items-center gap-1.5">
                         <i class="fa-solid fa-trash"></i>
                         <span>إلغاء الإذن</span>
@@ -5124,12 +5367,14 @@ ${linesTxt}
         }
 
         function promptVoidTransaction(txId) {
-            if (!canDeleteRecords()) {
-                showToast('عذراً، إلغاء وحذف القيود والفواتير متاح للمدير العام فقط', true);
-                return;
-            }
             const tx = appState.transactions.find(x => x.id === txId);
             if (!tx) return;
+            const modMap = { sale: 'sales', payment: 'customers', waste: 'waste', return: 'returns', inbound: 'inbound', transfer: 'transfers' };
+            const targetMod = modMap[tx.type] || 'sales';
+            if (!hasPermission(targetMod, 'delete')) {
+                showToast('عذراً، ليس لديك صلاحية حذف هذه الحركة', true);
+                return;
+            }
             pendingVoidTxId = txId;
 
             const subEl = document.getElementById('confirmVoidSubtitle');
@@ -5196,6 +5441,10 @@ ${linesTxt}
         }
 
         function submitTransfer() {
+            if (!hasPermission('transfers', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية تنفيذ التحويلات المخزنية', true);
+                return;
+            }
             const fromWh = document.getElementById('trFromWarehouse').value;
             const toWh = document.getElementById('trToWarehouse').value;
             const item = appState.items.find(x => x.id === document.getElementById('trItemSelect').value);
@@ -5239,6 +5488,10 @@ ${linesTxt}
         }
 
         function submitReturn() {
+            if (!hasPermission('returns', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية تسجيل مرتجعات العملاء', true);
+                return;
+            }
             const customerId = document.getElementById('retCustomerSelect').value;
             const wh = document.getElementById('retWarehouse').value;
             const item = appState.items.find(x => x.id === document.getElementById('retItemSelect').value);
@@ -5332,6 +5585,10 @@ ${linesTxt}
         }
 
         function submitWasteRecord() {
+            if (!hasPermission('waste', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية تسجيل الهالك والتالف', true);
+                return;
+            }
             const wh = document.getElementById('wasteWarehouse').value;
             const whName = wh === 'wh_tahlia' ? 'مخزن التحلية' : 'مخزن السامر';
             const date = document.getElementById('wasteDate').value || getNowLocalInputStr();
@@ -5412,7 +5669,7 @@ ${linesTxt}
                         <td class="py-3 px-3 text-center font-black text-rose-700">${Number(w.sqm || 0).toFixed(2)} م²<br><span class="text-[10px] text-slate-500">(${Number(w.rolls || 0).toFixed(2)} رول)</span></td>
                         <td class="py-3 px-3 text-slate-700">${w.reason}${w.notes ? ' - ' + w.notes : ''}</td>
                         <td class="py-3 px-3 text-center">
-                            ${canDeleteRecords() ? `
+                            ${hasPermission('waste', 'delete') ? `
                             <button type="button" onclick="promptVoidTransaction('${w.id}')" title="إلغاء وإرجاع للمخزن" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-extrabold">
                                 <i class="fa-solid fa-trash"></i>
                             </button>` : '-'}
@@ -5497,15 +5754,11 @@ ${balanceLine}
                                     <i class="fa-solid fa-file-invoice"></i> كشف حساب العميل
                                 </button>
                                 <button type="button" onclick="sendCustomerWhatsApp('${c.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-green-700 hover:bg-green-50 flex items-center gap-2">
-                                    <i class="fa-brands fa-whatsapp"></i> إرسال واتساب
-                                </button>
-                                <button type="button" onclick="viewCustomerDetails('${c.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-                                    <i class="fa-solid fa-eye text-slate-500"></i> عرض
-                                </button>
+                                ${hasPermission('customers', 'edit') ? `
                                 <button type="button" onclick="openEditCustomerModal('${c.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
                                     <i class="fa-solid fa-pen-to-square text-amber-600"></i> تعديل
-                                </button>
-                                ${canDeleteRecords() ? `
+                                </button>` : ''}
+                                ${hasPermission('customers', 'delete') ? `
                                 <button type="button" onclick="deleteCustomer('${c.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-2">
                                     <i class="fa-solid fa-trash"></i> حذف
                                 </button>` : ''}
@@ -5517,6 +5770,10 @@ ${balanceLine}
         }
 
         function openAddCustomerModal() {
+            if (!hasPermission('customers', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية إضافة أو تعديل العملاء', true);
+                return;
+            }
             document.getElementById('customerModalTitle').textContent = 'إضافة عميل جديد';
             document.getElementById('editCustomerId').value = '';
             document.getElementById('custTypeInput').value = 'عميل';
@@ -5592,8 +5849,8 @@ ${balanceLine}
         }
 
         function deleteCustomer(id) {
-            if (!canDeleteRecords()) {
-                showToast('حذف العملاء متاح للمدير العام فقط', true);
+            if (!hasPermission('customers', 'delete')) {
+                showToast('عذراً، ليس لديك صلاحية حذف العملاء', true);
                 return;
             }
             const hasTx = appState.transactions.some(t => t.customerId === id);
@@ -5897,7 +6154,7 @@ ${balanceLine}
                         ? `<span class="text-emerald-700 font-black">0.00 ر.س (خالص)</span>`
                         : `<span class="text-emerald-700 font-black">${Math.abs(running).toFixed(2)} ر.س (لكم)</span>`);
 
-                const deleteCell = (t.type !== 'opening' && canDeleteRecords())
+                const deleteCell = (t.type !== 'opening' && hasPermission('customers', 'delete'))
                     ? `<button type="button" onclick="promptVoidTransaction('${t.id}')" title="إلغاء وحذف الحركة" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-extrabold"><i class="fa-solid fa-trash"></i></button>`
                     : '-';
 
@@ -5918,6 +6175,10 @@ ${balanceLine}
         }
 
         function openPaymentModal() {
+            if (!hasPermission('customers', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية تسجيل سندات القبض', true);
+                return;
+            }
             document.getElementById('payAmountInput').value = '';
             document.getElementById('payDateInput').value = getNowLocalInputStr();
             document.getElementById('payNotesInput').value = '';
@@ -6072,6 +6333,10 @@ ${balanceLine}
         }
 
         function saveAllOpeningCustomers() {
+            if (!hasPermission('opening', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية تعديل الأرصدة الافتتاحية', true);
+                return;
+            }
             let updated = 0;
             appState.customers.forEach(c => {
                 const valInp = document.querySelector(`[data-op-cust-val="${c.id}"]`);
@@ -6090,6 +6355,10 @@ ${balanceLine}
         }
 
         function saveAllOpeningItems() {
+            if (!hasPermission('opening', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية تعديل الأرصدة الافتتاحية', true);
+                return;
+            }
             let updated = 0;
             appState.items.forEach(it => {
                 const samirInp = document.querySelector(`[data-op-item-samir="${it.id}"]`);
