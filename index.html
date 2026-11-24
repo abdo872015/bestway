@@ -47,15 +47,19 @@
             color: #0f172a;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
-
-        /* =========================================================
-           تأثيرات حركية وبصرية ناعمة للشاشات والبطاقات والأزرار
-           ========================================================= */
-        @keyframes tabSlideFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(12px) scale(0.992);
-            }
+        .brand-logo-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-color: #ffffff;
+        }
+        .brand-logo-slot img,
+        .brand-logo-slot svg {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
             to {
                 opacity: 1;
                 transform: translateY(0) scale(1);
@@ -528,10 +532,10 @@
                 </div>
 
                 <div class="text-center mb-6 login-stagger-1">
-                    <div class="login-logo-float w-36 h-32 mx-auto mb-3 rounded-2xl border border-slate-200/80 overflow-hidden bg-white flex items-center justify-center p-1.5">
+                    <div class="brand-logo-slot login-logo-float w-44 h-40 mx-auto mb-3 rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-md">
                         <svg viewBox="0 0 260 245" class="w-full h-full"><use href="#bestway-hd-logo"/></svg>
                     </div>
-                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">مؤسسة الطريق الأمثل</h1>
+                    <h1 id="loginCompanyTitle" class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">مؤسسة الطريق الأمثل</h1>
                     <p class="text-xs text-slate-500 font-extrabold mt-1">نظام إدارة المخازن والمستودعات والعملاء</p>
                 </div>
 
@@ -567,8 +571,8 @@
 
             <!-- 2. العرض الترويجي المتحرك مدمج مباشرة مع الخلفية بدون أي إطار أو شريط سفلي -->
             <div class="lg:col-span-7 flex flex-col items-center justify-center text-center p-4 sm:p-8 select-none pointer-events-none">
-                <div class="brand-logo-showcase w-48 sm:w-64 rounded-3xl bg-white/95 p-3.5 shadow-2xl mb-6">
-                    <svg viewBox="0 0 260 245" class="w-full h-auto"><use href="#bestway-hd-logo"/></svg>
+                <div class="brand-logo-slot brand-logo-showcase w-56 sm:w-72 h-52 sm:h-64 rounded-3xl bg-white p-3.5 shadow-2xl mb-6">
+                    <svg viewBox="0 0 260 245" class="w-full h-full"><use href="#bestway-hd-logo"/></svg>
                 </div>
 
                 <div class="space-y-3 max-w-md">
@@ -598,13 +602,13 @@
         <!-- القائمة الجانبية اليمنى (تتحول لقائمة منزلقة Drawer في الجوال) -->
         <aside id="mobileSidebarDrawer" class="lg:w-72 bg-white lg:border-l border-slate-200 flex flex-col shrink-0 no-print">
             <div class="p-4 border-b border-slate-200 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-13 h-12 rounded-xl border border-slate-200 bg-white p-1 shrink-0 flex items-center justify-center">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="brand-logo-slot w-14 h-12 rounded-xl border border-slate-200 bg-white p-1 shrink-0">
                         <svg viewBox="0 0 260 245" class="w-full h-full"><use href="#bestway-hd-logo"/></svg>
                     </div>
-                    <div>
-                        <h2 class="text-sm font-black text-slate-900 leading-tight">مؤسسة الطريق الأمثل</h2>
-                        <span class="text-[11px] font-bold text-slate-500">Best Way • إدارة المخازن</span>
+                    <div class="min-w-0">
+                        <h2 id="sidebarCompanyTitle" class="text-xs sm:text-sm font-black text-slate-900 leading-tight truncate">مؤسسة الطريق الأمثل</h2>
+                        <span id="sidebarBrandSubtitle" class="text-[11px] font-bold text-slate-500 block truncate">Best Way • إدارة المخازن</span>
                     </div>
                 </div>
                 <button type="button" onclick="closeMobileMenu()" class="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700">
@@ -725,9 +729,11 @@
                     <button type="button" onclick="toggleMobileMenu()" aria-label="فتح القائمة" class="lg:hidden p-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 shrink-0">
                         <i class="fa-solid fa-bars text-base"></i>
                     </button>
+                    <div class="brand-logo-slot w-14 h-12 rounded-xl border border-slate-200 bg-white p-1 shrink-0 shadow-2xs">
+                        <svg viewBox="0 0 260 245" class="w-full h-full"><use href="#bestway-hd-logo"/></svg>
+                    </div>
                     <div class="min-w-0">
-                        <h1 id="headerActiveScreenTitle" class="text-sm sm:text-base lg:text-lg font-black text-slate-900 flex items-center gap-2 truncate">
-                            <i class="fa-solid fa-layer-group text-blue-600 shrink-0"></i>
+                        <h1 id="headerActiveScreenTitle" class="text-sm sm:text-base lg:text-lg font-black text-slate-900 truncate">
                             <span class="truncate">لوحة القيادة والملخص التنفيذي</span>
                         </h1>
                         <p id="currentDateDisplay" class="text-[11px] sm:text-xs font-bold text-slate-500 mt-0.5 truncate"></p>
@@ -2485,7 +2491,7 @@
         function getBrandLogoMarkup(extraClasses = 'w-full h-full object-contain') {
             const cfg = getCompanySettings();
             if (cfg.logoDataUrl) {
-                return `<img src="${cfg.logoDataUrl}" alt="${cfg.companyName}" class="${extraClasses}">`;
+                return `<img src="${cfg.logoDataUrl}" alt="${cfg.companyName}" decoding="sync" class="${extraClasses}" style="width:100%;height:100%;object-fit:contain;">`;
             }
             return `<svg viewBox="0 0 260 245" class="w-full h-full"><use href="#bestway-hd-logo"/></svg>`;
         }
@@ -2500,9 +2506,7 @@
 
             const previewBox = document.getElementById('cfgLogoPreviewBox');
             if (previewBox) {
-                previewBox.innerHTML = cfg.logoDataUrl
-                    ? `<img src="${cfg.logoDataUrl}" alt="${cfg.companyName}" class="w-full h-full object-contain rounded-xl">`
-                    : `<svg viewBox="0 0 260 245" class="w-full h-full"><use href="#bestway-hd-logo"/></svg>`;
+                previewBox.innerHTML = logoHtml;
             }
 
             setTextSafe('loginCompanyTitle', cfg.companyName);
@@ -2547,15 +2551,56 @@
             }
             const reader = new FileReader();
             reader.onload = function(e) {
-                const dataUrl = e.target?.result;
-                if (!dataUrl) return;
-                appState.companySettings = {
-                    ...getCompanySettings(),
-                    logoDataUrl: dataUrl
+                const rawDataUrl = e.target?.result;
+                if (!rawDataUrl) return;
+
+                // ضغط وتحجيم الشعار تلقائياً لضمان سرعة التحديث وتوافق المزامنة السحابية
+                const img = new Image();
+                img.onload = function() {
+                    const maxDim = 420;
+                    let w = img.width || maxDim;
+                    let h = img.height || maxDim;
+                    if (w > maxDim || h > maxDim) {
+                        const ratio = Math.min(maxDim / w, maxDim / h);
+                        w = Math.max(1, Math.round(w * ratio));
+                        h = Math.max(1, Math.round(h * ratio));
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.clearRect(0, 0, w, h);
+                        ctx.drawImage(img, 0, 0, w, h);
+                        const isPng = file.type === 'image/png' || file.type === 'image/webp';
+                        const optimizedUrl = isPng
+                            ? canvas.toDataURL('image/png')
+                            : canvas.toDataURL('image/jpeg', 0.85);
+
+                        appState.companySettings = {
+                            ...getCompanySettings(),
+                            logoDataUrl: optimizedUrl || rawDataUrl
+                        };
+                    } else {
+                        appState.companySettings = {
+                            ...getCompanySettings(),
+                            logoDataUrl: rawDataUrl
+                        };
+                    }
+                    saveState();
+                    applyCompanyBrandingToUI();
+                    showToast('تم رفع وتحديث شعار الشركة في شاشة الدخول والهيدر وكامل النظام فوراً!');
                 };
-                saveState();
-                applyCompanyBrandingToUI();
-                showToast('تم رفع وتحديث شعار الشركة في كامل النظام فوراً!');
+                img.onerror = function() {
+                    appState.companySettings = {
+                        ...getCompanySettings(),
+                        logoDataUrl: rawDataUrl
+                    };
+                    saveState();
+                    applyCompanyBrandingToUI();
+                    showToast('تم رفع وتحديث شعار الشركة بنجاح!');
+                };
+                img.src = rawDataUrl;
             };
             reader.readAsDataURL(file);
             event.target.value = '';
