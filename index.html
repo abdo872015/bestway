@@ -1886,6 +1886,30 @@
                     <label class="block text-xs font-extrabold text-slate-700 mb-1">المستودع المصروف منه</label>
                     <select id="saleWarehouse" onchange="updateSaleAvailableStockBanner()" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
                 </div>
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">نوع الفاتورة (الضريبة)</label>
+                    <select id="saleTaxMode" onchange="renderSaleCart()" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                        <option value="none" selected>بدون ضريبة</option>
+                        <option value="inclusive">شامل الضريبة</option>
+                        <option value="exclusive">خال من الضريبة</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">حالة الفاتورة</label>
+                    <select id="salePaymentStatus" onchange="toggleSalePaymentMethodField()" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                        <option value="credit" selected>آجل</option>
+                        <option value="paid">مدفوعة</option>
+                    </select>
+                </div>
+                <div id="salePaidMethodWrap" class="hidden">
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">طريقة التحصيل (للمدفوعة)</label>
+                    <select id="salePaidMethod" class="w-full p-2.5 bg-emerald-50 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-900">
+                        <option value="تحويل بنكي">تحويل بنكي</option>
+                        <option value="كاش">كاش</option>
+                        <option value="شبكة / مدى">شبكة / مدى</option>
+                        <option value="شيك">شيك</option>
+                    </select>
+                </div>
             </div>
 
             <div id="saleCustomerCreditBanner" class="hidden"></div>
@@ -1902,7 +1926,7 @@
                     <span id="saleStockReqText"></span>
                 </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-6 gap-2.5 items-end">
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 items-end">
                     <div>
                         <label class="block text-[11px] font-extrabold text-slate-600 mb-1">العرض (م)</label>
                         <input type="number" step="any" id="saleWidth" oninput="calcSaleLineSqm()" class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-center">
@@ -1918,14 +1942,6 @@
                     <div>
                         <label class="block text-[11px] font-extrabold text-slate-600 mb-1">سعر المتر (ر.س)</label>
                         <input type="number" step="any" id="salePrice" placeholder="0.00" oninput="renderSaleCart()" class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-center">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-extrabold text-slate-600 mb-1">حالة الضريبة</label>
-                        <select id="saleTaxMode" onchange="renderSaleCart()" class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold">
-                            <option value="none" selected>بدون</option>
-                            <option value="inclusive">شامل الضريبة</option>
-                            <option value="exclusive">خال من الضريبة</option>
-                        </select>
                     </div>
                     <button type="button" id="addSaleCartLineBtn" onclick="addSaleCartLine()" class="py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black">
                         + إضافة البند
@@ -5354,8 +5370,27 @@ ${statusLine}
             setVal('saleOrderNumberInput', getNextSaleOrderNumber());
             setVal('saleQuoteRef', '');
             setVal('saleDate', getNowLocalInputStr());
+            setVal('saleTaxMode', 'none');
+            setVal('salePaymentStatus', 'credit');
+            setVal('salePaidMethod', 'تحويل بنكي');
+            toggleSalePaymentMethodField();
             closeAllSearchableDropdowns();
             document.getElementById('newSaleOrderModal')?.classList.remove('hidden');
+        }
+
+        function toggleSalePaymentMethodField() {
+            const status = document.getElementById('salePaymentStatus')?.value || 'credit';
+            const wrap = document.getElementById('salePaidMethodWrap');
+            if (wrap) {
+                wrap.classList.toggle('hidden', status !== 'paid');
+            }
+        }
+
+        function getPaymentStatusLabel(status, method = '') {
+            if (status === 'paid') {
+                return method ? `مدفوعة (${method})` : 'مدفوعة';
+            }
+            return 'آجل';
         }
 
         function checkSaleCustomerCreditAlert() {
@@ -5629,7 +5664,8 @@ ${linesTxt}
                     <div><span class="text-slate-500">التاريخ:</span> <strong class="text-slate-900">${formatDateTimeAr(tx.date)}</strong></div>
                     <div><span class="text-slate-500">رقم بيان الأسعار:</span> <strong class="text-slate-900">${tx.quoteRef || 'غير مسجل'}</strong></div>
                     <div><span class="text-slate-500">المخزن:</span> <strong class="text-slate-900">${whName}</strong></div>
-                    <div><span class="text-slate-500">معاملة الضريبة:</span> <strong class="text-slate-900">${getTaxModeLabel(tx.taxMode || 'none')}</strong></div>
+                    <div><span class="text-slate-500">نوع الفاتورة:</span> <strong class="text-slate-900">${getTaxModeLabel(tx.taxMode || 'none')}</strong></div>
+                    <div><span class="text-slate-500">حالة الفاتورة:</span> <strong class="${tx.paymentStatus === 'paid' ? 'text-emerald-700' : 'text-amber-700'}">${getPaymentStatusLabel(tx.paymentStatus || 'credit', tx.paidMethod)}</strong></div>
                     ${tx.driverName ? `<div><span class="text-slate-500">السائق / الناقل:</span> <strong class="text-slate-900">${tx.driverName}</strong></div>` : ''}
                     ${tx.vehiclePlate ? `<div><span class="text-slate-500">السيارة / البوليصة:</span> <strong class="text-slate-900">${tx.vehiclePlate}</strong></div>` : ''}
                     ${tx.attachmentRef ? `<div class="col-span-2"><span class="text-slate-500">مرجع الاستلام / التحويل:</span> <strong class="text-blue-700">${tx.attachmentRef}</strong></div>` : ''}
@@ -5745,6 +5781,8 @@ ${linesTxt}
                             <div class="space-y-1.5">
                                 <div><span class="text-slate-500">تاريخ ووقت الصرف:</span> <strong>${formatDateTimeAr(tx.date)}</strong></div>
                                 <div><span class="text-slate-500">المستودع المصروف منه:</span> <strong>${whName}</strong></div>
+                                <div><span class="text-slate-500">نوع الفاتورة:</span> <strong>${getTaxModeLabel(tx.taxMode || 'none')}</strong></div>
+                                <div><span class="text-slate-500">حالة الفاتورة:</span> <strong>${getPaymentStatusLabel(tx.paymentStatus || 'credit', tx.paidMethod)}</strong></div>
                                 <div><span class="text-slate-500">رقم بيان الأسعار / المرجع:</span> <strong>${tx.quoteRef || '-'}</strong></div>
                                 ${tx.driverName || tx.vehiclePlate ? `<div><span class="text-slate-500">الشحن / السائق:</span> <strong>${[tx.driverName, tx.vehiclePlate].filter(Boolean).join(' - ')}</strong></div>` : ''}
                                 ${tx.attachmentRef ? `<div><span class="text-slate-500">مرجع الاستلام / التحويل:</span> <strong>${tx.attachmentRef}</strong></div>` : ''}
@@ -5787,7 +5825,7 @@ ${linesTxt}
         function getTaxModeLabel(mode) {
             if (mode === 'inclusive') return 'شامل الضريبة (15%)';
             if (mode === 'exclusive') return 'خال من الضريبة (+15%)';
-            return 'بدون';
+            return 'بدون ضريبة';
         }
 
         function computeLineTaxBreakdown(rawLineTotal, taxMode) {
@@ -5932,6 +5970,8 @@ ${linesTxt}
                 const vehiclePlate = (document.getElementById('saleVehiclePlate')?.value || '').trim();
                 const attachmentRef = (document.getElementById('saleAttachmentRef')?.value || '').trim();
                 const taxMode = document.getElementById('saleTaxMode')?.value || 'none';
+                const paymentStatus = document.getElementById('salePaymentStatus')?.value || 'credit';
+                const paidMethod = document.getElementById('salePaidMethod')?.value || 'تحويل بنكي';
 
                 if (!customerId) {
                     showToast('يرجى اختيار العميل من القائمة أولاً', true);
@@ -5992,15 +6032,18 @@ ${linesTxt}
                 });
 
                 const cust = appState.customers.find(c => c.id === customerId);
+                const custDisplayName = cust ? cust.name : searchCustText;
                 appState.transactions.push({
                     id: txId,
                     seq: Date.now(),
                     type: 'sale',
                     date,
                     customerId,
-                    customerName: cust ? cust.name : searchCustText,
+                    customerName: custDisplayName,
                     warehouseId: wh,
                     taxMode,
+                    paymentStatus,
+                    paidMethod: paymentStatus === 'paid' ? paidMethod : '',
                     subtotalAmount,
                     vatAmount,
                     quoteRef,
@@ -6012,9 +6055,26 @@ ${linesTxt}
                     totalAmount
                 });
 
-                logUserActivity('create', 'إذون الصرف', `اعتماد إذن صرف ${txId} للعميل (${cust ? cust.name : searchCustText}) بقيمة ${totalAmount.toFixed(2)} ر.س`);
+                if (paymentStatus === 'paid' && totalAmount > 0) {
+                    const autoPayId = 'PAY-' + (5000 + appState.transactions.length + 1);
+                    appState.transactions.push({
+                        id: autoPayId,
+                        seq: Date.now() + 1,
+                        type: 'payment',
+                        date,
+                        customerId,
+                        customerName: custDisplayName,
+                        amount: totalAmount,
+                        method: paidMethod,
+                        notes: `سداد فوري لإذن صرف رقم ${txId}`
+                    });
+                }
+
+                logUserActivity('create', 'إذون الصرف', `اعتماد إذن صرف ${txId} (${getPaymentStatusLabel(paymentStatus, paidMethod)}) للعميل (${custDisplayName}) بقيمة ${totalAmount.toFixed(2)} ر.س`);
                 saleCart = [];
                 if (document.getElementById('saleTaxMode')) document.getElementById('saleTaxMode').value = 'none';
+                if (document.getElementById('salePaymentStatus')) document.getElementById('salePaymentStatus').value = 'credit';
+                toggleSalePaymentMethodField();
                 renderSaleCart();
                 document.getElementById('saleQuoteRef').value = '';
                 document.getElementById('saleDate').value = getNowLocalInputStr();
