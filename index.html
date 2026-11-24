@@ -1674,6 +1674,95 @@
                 </div>
             </section>
 
+            <!-- 10. شاشة الأرصدة الافتتاحية للعملاء والأصناف -->
+            <section id="tab-opening" class="tab-section hidden space-y-6">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                    <div>
+                        <h1 class="text-2xl font-black text-slate-900">الأرصدة الافتتاحية للعملاء والأصناف</h1>
+                        <p class="text-sm text-slate-500 font-semibold mt-0.5">إدخال رصيد أول المدة لكل عميل ولكل صنف (مخزن السامر والتحلية) ليظهر تلقائياً كـ "رصيد سابق" في كشوف الحساب</p>
+                    </div>
+                    <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 self-start">
+                        <button type="button" id="opSubTabCustBtn" onclick="switchOpeningSubTab('customers')" class="px-4 py-2 rounded-lg text-xs font-black bg-white text-blue-700 shadow-xs transition">
+                            <i class="fa-solid fa-users ml-1"></i> الأرصدة الافتتاحية للعملاء
+                        </button>
+                        <button type="button" id="opSubTabItemsBtn" onclick="switchOpeningSubTab('items')" class="px-4 py-2 rounded-lg text-xs font-extrabold text-slate-600 hover:text-slate-900 transition">
+                            <i class="fa-solid fa-scroll ml-1"></i> الأرصدة الافتتاحية للأصناف
+                        </button>
+                    </div>
+                </div>
+
+                <!-- لوحة الأرصدة الافتتاحية للعملاء -->
+                <div id="openingCustomersPanel" class="space-y-4">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-slate-400"></i>
+                            <input type="text" id="opCustSearchInput" oninput="renderOpeningBalancesTab()" placeholder="ابحث باسم العميل لإدخال رصيده الافتتاحي..." class="w-full pr-10 pl-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span id="opCustTotalBadge" class="px-3.5 py-2 rounded-xl bg-blue-50 text-blue-700 text-xs font-black border border-blue-100">إجمالي افتتاحي العملاء: 0.00 ر.س</span>
+                            <button type="button" onclick="saveAllOpeningCustomers()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-sm flex items-center gap-2 transition">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span>حفظ أرصدة العملاء</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-900 text-white font-extrabold">
+                                        <th class="py-3.5 px-4">اسم العميل</th>
+                                        <th class="py-3.5 px-3">التصنيف والمدينة</th>
+                                        <th class="py-3.5 px-3 text-center">تاريخ الرصيد الافتتاحي</th>
+                                        <th class="py-3.5 px-3 text-center">الرصيد الافتتاحي (ر.س)</th>
+                                        <th class="py-3.5 px-3">بيان / ملاحظة</th>
+                                        <th class="py-3.5 px-3 text-center">إجمالي الرصيد الحالي</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="openingCustomersTableBody" class="divide-y divide-slate-100 font-bold"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- لوحة الأرصدة الافتتاحية للأصناف -->
+                <div id="openingItemsPanel" class="hidden space-y-4">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-slate-400"></i>
+                            <input type="text" id="opItemSearchInput" oninput="renderOpeningBalancesTab()" placeholder="ابحث باسم الصنف لإدخال رصيده الافتتاحي..." class="w-full pr-10 pl-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span id="opItemsTotalBadge" class="px-3.5 py-2 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-black border border-indigo-100">إجمالي افتتاحي الرولات: 0.00 رول</span>
+                            <button type="button" onclick="saveAllOpeningItems()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-sm flex items-center gap-2 transition">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span>حفظ أرصدة الأصناف</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-900 text-white font-extrabold">
+                                        <th class="py-3.5 px-4">اسم الصنف</th>
+                                        <th class="py-3.5 px-3 text-center">المقاس (طول × عرض)</th>
+                                        <th class="py-3.5 px-3 text-center">تاريخ الرصيد الافتتاحي</th>
+                                        <th class="py-3.5 px-3 text-center">افتتاحي السامر (رول)</th>
+                                        <th class="py-3.5 px-3 text-center">افتتاحي التحلية (رول)</th>
+                                        <th class="py-3.5 px-3 text-center">إجمالي الافتتاحي (م²)</th>
+                                        <th class="py-3.5 px-3 text-center">الرصيد الحالي الفعلي</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="openingItemsTableBody" class="divide-y divide-slate-100 font-bold"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- 11. سجل مراقبة نشاط المستخدمين (Audit Log) -->
             <section id="tab-audit" class="tab-section hidden space-y-6">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
@@ -2591,6 +2680,16 @@
                 appState.auditLogs = appState.auditLogs.slice(0, 500);
             }
         }
+
+        // ==========================================
+        // 2. دوال الحفظ والتحميل والثيم والتنبيهات والمساعدات
+        // ==========================================
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && typeof parsed === 'object') {
                         appState = {
                             warehouses: parsed.warehouses || appState.warehouses,
                             items: Array.isArray(parsed.items) ? parsed.items : [],
@@ -2605,6 +2704,271 @@
                 }
             } catch (e) {
                 console.error('Error loading local state:', e);
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error('Error saving local state:', e);
+            }
+            if (typeof window.pushCloudState === 'function') {
+                window.pushCloudState(appState);
+            }
+        }
+
+        function setAppTheme(mode) {
+            const htmlEl = document.documentElement;
+            const metaScheme = document.getElementById('metaColorScheme');
+            const lightBtn = document.getElementById('themeLightBtn');
+            const darkBtn = document.getElementById('themeDarkBtn');
+
+            if (mode === 'dark') {
+                htmlEl.classList.remove('light-theme');
+                htmlEl.classList.add('dark');
+                if (metaScheme) metaScheme.setAttribute('content', 'dark');
+                if (darkBtn) darkBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 bg-slate-800 text-blue-400 shadow-xs transition';
+                if (lightBtn) lightBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 text-slate-400 hover:text-white transition';
+            } else {
+                htmlEl.classList.remove('dark');
+                htmlEl.classList.add('light-theme');
+                if (metaScheme) metaScheme.setAttribute('content', 'only light');
+                if (lightBtn) lightBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 bg-white text-amber-600 shadow-xs transition';
+                if (darkBtn) darkBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 text-slate-600 hover:text-slate-900 transition';
+            }
+            try { localStorage.setItem(THEME_KEY, mode); } catch (e) {}
+        }
+
+        function showToast(msg, isError = false) {
+            const box = document.getElementById('toastBox');
+            const txt = document.getElementById('toastText');
+            const icon = document.getElementById('toastIcon');
+            if (!box || !txt) return;
+            txt.textContent = msg;
+            if (icon) {
+                icon.className = isError
+                    ? 'fa-solid fa-circle-exclamation text-rose-400 text-lg'
+                    : 'fa-solid fa-circle-check text-emerald-400 text-lg';
+            }
+            box.classList.remove('hidden');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => {
+                box.classList.add('hidden');
+            }, 3500);
+        }
+
+        function getNowLocalInputStr() {
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60000;
+            return new Date(now.getTime() - offset).toISOString().slice(0, 16);
+        }
+
+        function formatDateTimeAr(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return String(dateStr);
+            return d.toLocaleDateString('ar-SA', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' +
+                   d.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function getCustomerStats(customerId) {
+            const cust = appState.customers.find(c => c.id === customerId);
+            const openingBalance = cust ? Number(cust.openingBalance || 0) : 0;
+            let salesTotal = 0, salesSqm = 0, paymentsTotal = 0, returnsTotal = 0;
+            appState.transactions.forEach(t => {
+                if (t.customerId !== customerId) return;
+                if (t.type === 'sale') {
+                    salesTotal += Number(t.totalAmount || 0);
+                    salesSqm += Number(t.totalSqm || 0);
+                } else if (t.type === 'payment') {
+                    paymentsTotal += Number(t.amount || 0);
+                } else if (t.type === 'return') {
+                    returnsTotal += Number(t.totalAmount || 0);
+                }
+            });
+            const balance = openingBalance + salesTotal - paymentsTotal - returnsTotal;
+            return { openingBalance, salesTotal, salesSqm, paymentsTotal, returnsTotal, balance };
+        }
+
+        function openCustomerFromCard(key) {
+            const cid = dashboardCustomerRefs[key];
+            if (!cid) {
+                showToast('لا توجد بيانات عميل متاحة لهذه البطاقة حالياً', true);
+                return;
+            }
+            switchTab('customers');
+            openCustomerStatement(cid);
+        }
+
+        function getOverdueInvoicesList() {
+            const now = Date.now();
+            const dayMs = 24 * 60 * 60 * 1000;
+            const result = [];
+
+            appState.customers.forEach(cust => {
+                const custSales = appState.transactions
+                    .filter(t => t.customerId === cust.id && t.type === 'sale')
+                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+                let creditPool = 0;
+                if (Number(cust.openingBalance || 0) < 0) {
+                    creditPool += Math.abs(Number(cust.openingBalance || 0));
+                }
+                appState.transactions.forEach(t => {
+                    if (t.customerId === cust.id) {
+                        if (t.type === 'payment') creditPool += Number(t.amount || 0);
+                        else if (t.type === 'return') creditPool += Number(t.totalAmount || 0);
+                    }
+                });
+
+                custSales.forEach(inv => {
+                    const invTotal = Number(inv.totalAmount || 0);
+                    const paidApplied = Math.min(invTotal, creditPool);
+                    creditPool = Math.max(0, creditPool - paidApplied);
+                    const remaining = Number((invTotal - paidApplied).toFixed(2));
+
+                    if (remaining > 0.01) {
+                        const issueMs = new Date(inv.date).getTime();
+                        const ageDays = Math.max(0, Math.floor((now - issueMs) / dayMs));
+                        const dueDateStr = new Date(issueMs + 25 * dayMs).toISOString();
+                        const overdueDays = Math.max(0, ageDays - 25);
+                        let status = 'current';
+                        if (ageDays > 25) status = 'overdue';
+                        else if (ageDays >= 20) status = 'warning';
+
+                        result.push({
+                            invoiceId: inv.id,
+                            customerId: cust.id,
+                            customerName: cust.name,
+                            issueDateStr: inv.date,
+                            dueDateStr,
+                            invTotal,
+                            paidApplied,
+                            remaining,
+                            ageDays,
+                            overdueDays,
+                            status
+                        });
+                    }
+                });
+            });
+
+            return result.sort((a, b) => b.ageDays - a.ageDays);
+        }
+
+        function getStagnantItemsList(thresholdDays = 60) {
+            const now = Date.now();
+            const dayMs = 24 * 60 * 60 * 1000;
+            const lastSaleMap = {};
+
+            appState.transactions.forEach(t => {
+                if (t.type === 'sale') {
+                    const ts = new Date(t.date).getTime();
+                    (t.lines || []).forEach(ln => {
+                        if (ln.itemId && (!lastSaleMap[ln.itemId] || ts > lastSaleMap[ln.itemId])) {
+                            lastSaleMap[ln.itemId] = ts;
+                        }
+                        if (ln.itemName && (!lastSaleMap[ln.itemName] || ts > lastSaleMap[ln.itemName])) {
+                            lastSaleMap[ln.itemName] = ts;
+                        }
+                    });
+                }
+            });
+
+            const list = [];
+            appState.items.forEach(it => {
+                const rSamir = Number(it.stockSamir || 0);
+                const rTahlia = Number(it.stockTahlia || 0);
+                const totalRolls = rSamir + rTahlia;
+                if (totalRolls <= 0) return;
+
+                const lastTs = lastSaleMap[it.id] || lastSaleMap[it.name] || null;
+                const daysIdle = lastTs ? Math.floor((now - lastTs) / dayMs) : 999;
+
+                if (daysIdle >= thresholdDays) {
+                    const area = (Number(it.length) || 50) * (Number(it.width) || 1);
+                    list.push({
+                        id: it.id,
+                        name: it.name,
+                        length: Number(it.length) || 50,
+                        width: Number(it.width) || 1,
+                        rSamir,
+                        rTahlia,
+                        totalRolls,
+                        totalSqm: totalRolls * area,
+                        lastSaleDate: lastTs ? new Date(lastTs).toISOString() : null,
+                        daysIdle
+                    });
+                }
+            });
+
+            return list.sort((a, b) => b.daysIdle - a.daysIdle);
+        }
+
+        function refreshAllViews() {
+            const dateDisplay = document.getElementById('currentDateDisplay');
+            if (dateDisplay) {
+                dateDisplay.textContent = new Date().toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            }
+
+            populateSelects();
+            renderDashboard();
+            renderInventoryTable();
+            renderSalesOrdersTable();
+            renderCustomersTable();
+            renderLogsTable();
+            renderStocktakeTable();
+            renderWasteTable();
+            renderSystemUsersTable();
+
+            if (activeStatementCustomerId && !document.getElementById('customerStatementBox')?.classList.contains('hidden')) {
+                renderCustomerStatement();
+            }
+            if (!document.getElementById('tab-reports')?.classList.contains('hidden')) {
+                renderReportsTab();
+            }
+            if (!document.getElementById('tab-overdue')?.classList.contains('hidden')) {
+                renderOverdueInvoicesReport();
+            }
+            if (!document.getElementById('tab-stagnant')?.classList.contains('hidden')) {
+                renderStagnantItemsTab();
+            }
+            if (!document.getElementById('tab-opening')?.classList.contains('hidden')) {
+                renderOpeningBalancesTab();
+            }
+            if (!document.getElementById('tab-audit')?.classList.contains('hidden')) {
+                renderAuditLogTable();
+            }
+
+            // تحديث الشارات الرقمية في القائمة الجانبية
+            const salesCount = appState.transactions.filter(t => t.type === 'sale').length;
+            const lowStockCount = appState.items.filter(it => (Number(it.stockSamir || 0) + Number(it.stockTahlia || 0)) <= 10).length;
+            const overdueCount = getOverdueInvoicesList().filter(x => x.status === 'overdue').length;
+            const stagnantCount = getStagnantItemsList(60).length;
+
+            const badgeSales = document.getElementById('navBadgeSales');
+            if (badgeSales) badgeSales.textContent = salesCount;
+
+            const badgeCust = document.getElementById('navBadgeCustomers');
+            if (badgeCust) badgeCust.textContent = appState.customers.length;
+
+            const badgeLow = document.getElementById('navBadgeLowStock');
+            if (badgeLow) {
+                badgeLow.textContent = lowStockCount;
+                badgeLow.classList.toggle('hidden', lowStockCount === 0);
+            }
+
+            const badgeOvd = document.getElementById('navBadgeOverdue');
+            if (badgeOvd) {
+                badgeOvd.textContent = overdueCount;
+                badgeOvd.classList.toggle('hidden', overdueCount === 0);
+            }
+
+            const badgeStag = document.getElementById('navBadgeStagnant');
+            if (badgeStag) {
+                badgeStag.textContent = stagnantCount;
+                badgeStag.classList.toggle('hidden', stagnantCount === 0);
             }
         }
 
@@ -2708,10 +3072,6 @@
 
         function canEditMasterData(moduleKey = 'inventory') {
             return hasPermission(moduleKey, 'edit');
-        }
-
-        function canEditMasterData() {
-            return !currentUser || currentUser.role === 'admin' || currentUser.role === 'storekeeper';
         }
 
         function doDirectLogin() {
@@ -3820,33 +4180,10 @@ ${statusLine}
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            plugins: { legend: { position: 'top' } },
-                            scales: { y: { beginAtZero: true } }
+                            plugins: { legend: { position: 'bottom' } }
                         }
                     });
                 }
-
-                const ctxWh = document.getElementById('warehouseCompareChart')?.getContext('2d');
-                if (ctxWh) {
-                    if (warehouseChartInstance) warehouseChartInstance.destroy();
-                    const hasData = (sumSamir + sumTahlia) > 0;
-                    warehouseChartInstance = new Chart(ctxWh, {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['مخزن السامر (م²)', 'مخزن التحلية (م²)'],
-                            datasets: [{
-                                data: hasData ? [Number(sumSamir.toFixed(2)), Number(sumTahlia.toFixed(2))] : [1, 1],
-                                backgroundColor: hasData ? ['#0284c7', '#f59e0b'] : ['#e2e8f0', '#cbd5e1'],
-                                borderWidth: 2
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-            if (!document.getElementById('tab-opening')?.classList.contains('hidden')) {
-                renderOpeningBalancesTab();
-            }
-            if (!document.getElementById('tab-audit')?.classList.contains('hidden')) {
-                renderAuditLogTable();
             }
         }
 
@@ -4832,21 +5169,91 @@ ${linesTxt}
                         <td class="py-3.5 px-4 text-slate-600">${whName}</td>
                         <td class="py-3.5 px-4 text-center text-indigo-700 font-black">${Number(t.totalSqm || 0).toFixed(2)} م²</td>
                         <td class="py-3.5 px-4 text-center text-emerald-700 font-black">${Number(t.totalAmount || 0).toFixed(2)} ر.س</td>
-                            <div id="custMenu_${c.id}" class="action-dropdown hidden absolute left-4 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-30 text-right overflow-hidden">
-                                <button type="button" onclick="openCustomerStatement('${c.id}')" class="w-full px-3.5 py-2.5 text-xs font-extrabold text-blue-700 hover:bg-blue-50 flex items-center justify-start text-right">
-                                    <i class="fa-solid fa-file-invoice"></i> <span class="flex-1 text-right">كشف حساب العميل</span>
+                        <td class="py-3.5 px-4 text-center">
+                            <div class="inline-flex items-center gap-1.5">
+                                <button type="button" onclick="viewSaleOrderDetails('${t.id}')" class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-extrabold transition">
+                                    عرض البنود
                                 </button>
-                                <button type="button" onclick="sendCustomerWhatsApp('${c.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-green-700 hover:bg-green-50 flex items-center justify-start text-right">
-                                    <i class="fa-brands fa-whatsapp"></i> <span class="flex-1 text-right">إرسال كشف واتساب</span>
+                                <button type="button" onclick="printSaleOrder('${t.id}')" title="طباعة إذن الصرف" class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-extrabold transition">
+                                    <i class="fa-solid fa-print"></i>
                                 </button>
-                                ${hasPermission('customers', 'edit') ? `
-                                <button type="button" onclick="openEditCustomerModal('${c.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center justify-start text-right">
-                                    <i class="fa-solid fa-pen-to-square text-amber-600"></i> <span class="flex-1 text-right">تعديل</span>
+                                <button type="button" onclick="sendSaleOrderWhatsApp('${t.id}')" title="إرسال واتساب" class="px-2.5 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl text-xs font-extrabold transition">
+                                    <i class="fa-brands fa-whatsapp"></i>
+                                </button>
+                                ${hasPermission('sales', 'delete') ? `
+                                <button type="button" onclick="promptVoidTransaction('${t.id}')" title="إلغاء وحذف الإذن" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-extrabold transition">
+                                    <i class="fa-solid fa-trash"></i>
                                 </button>` : ''}
-                                ${hasPermission('customers', 'delete') ? `
-                                <button type="button" onclick="deleteCustomer('${c.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center justify-start text-right">
-                                    <i class="fa-solid fa-trash"></i> <span class="flex-1 text-right">حذف</span>
-                                </button>` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderOverdueInvoicesReport() {
+            const tbody = document.getElementById('overdueInvoicesTableBody');
+            if (!tbody) return;
+
+            const allOpen = getOverdueInvoicesList();
+            let lateAmt = 0, lateCnt = 0, warnAmt = 0, warnCnt = 0, curAmt = 0, curCnt = 0;
+
+            allOpen.forEach(inv => {
+                if (inv.status === 'overdue') { lateAmt += inv.remaining; lateCnt++; }
+                else if (inv.status === 'warning') { warnAmt += inv.remaining; warnCnt++; }
+                else { curAmt += inv.remaining; curCnt++; }
+            });
+
+            document.getElementById('ovdTotalLateAmount').textContent = lateAmt.toFixed(2) + ' ر.س';
+            document.getElementById('ovdTotalLateCount').textContent = `عدد الفواتير المتأخرة: ${lateCnt} فاتورة`;
+            document.getElementById('ovdTotalWarningAmount').textContent = warnAmt.toFixed(2) + ' ر.س';
+            document.getElementById('ovdTotalWarningCount').textContent = `عدد الفواتير: ${warnCnt} فاتورة`;
+            document.getElementById('ovdTotalCurrentAmount').textContent = curAmt.toFixed(2) + ' ر.س';
+            document.getElementById('ovdTotalCurrentCount').textContent = `عدد الفواتير: ${curCnt} فاتورة`;
+
+            const term = (document.getElementById('ovdSearchInput')?.value || '').trim().toLowerCase();
+            const statusFilter = document.getElementById('ovdStatusFilter')?.value || 'overdue';
+
+            const filtered = allOpen.filter(inv => {
+                if (statusFilter !== 'all' && inv.status !== statusFilter) return false;
+                if (term) {
+                    return inv.customerName.toLowerCase().includes(term) || inv.invoiceId.toLowerCase().includes(term);
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="py-10 text-center text-slate-400">لا توجد فواتير مطابقة للفلتر المحدد حالياً.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(inv => {
+                let badgeHtml = `<span class="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-800 font-black">سارية (${inv.ageDays} يوم)</span>`;
+                if (inv.status === 'overdue') {
+                    badgeHtml = `<span class="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-black">متأخرة +${inv.overdueDays} يوم</span>`;
+                } else if (inv.status === 'warning') {
+                    badgeHtml = `<span class="px-2.5 py-1 rounded-lg bg-amber-500 text-white font-black">قاربت (${inv.ageDays}/25 يوم)</span>`;
+                }
+
+                return `
+                    <tr class="hover:bg-slate-50 transition ${inv.status === 'overdue' ? 'bg-rose-50/40' : ''}">
+                        <td class="py-3.5 px-3 font-black text-blue-700 whitespace-nowrap">${inv.invoiceId}</td>
+                        <td class="py-3.5 px-3 font-extrabold text-slate-900">${inv.customerName}</td>
+                        <td class="py-3.5 px-3 whitespace-nowrap text-slate-600">${new Date(inv.issueDateStr).toLocaleDateString('ar-SA')}</td>
+                        <td class="py-3.5 px-3 whitespace-nowrap text-slate-600">${new Date(inv.dueDateStr).toLocaleDateString('ar-SA')}</td>
+                        <td class="py-3.5 px-3 text-center">${inv.invTotal.toFixed(2)} ر.س</td>
+                        <td class="py-3.5 px-3 text-center text-emerald-700">${inv.paidApplied.toFixed(2)} ر.س</td>
+                        <td class="py-3.5 px-3 text-center font-black text-rose-700">${inv.remaining.toFixed(2)} ر.س</td>
+                        <td class="py-3.5 px-3 text-center whitespace-nowrap">${badgeHtml}</td>
+                        <td class="py-3.5 px-3 text-center whitespace-nowrap">
+                            <div class="inline-flex items-center gap-1.5">
+                                <button type="button" onclick="sendOverdueInvoiceWhatsApp('${inv.invoiceId}', ${inv.remaining}, ${inv.overdueDays}, ${inv.ageDays})" class="px-2.5 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-[11px] font-extrabold flex items-center gap-1 transition">
+                                    <i class="fa-brands fa-whatsapp"></i>
+                                    <span>تذكير</span>
+                                </button>
+                                <button type="button" onclick="switchTab('customers'); openCustomerStatement('${inv.customerId}');" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-[11px] font-extrabold transition">
+                                    كشف الحساب
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -5606,6 +6013,8 @@ ${balanceLine}
                                     <i class="fa-solid fa-file-invoice"></i> كشف حساب العميل
                                 </button>
                                 <button type="button" onclick="sendCustomerWhatsApp('${c.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-green-700 hover:bg-green-50 flex items-center gap-2">
+                                    <i class="fa-brands fa-whatsapp"></i> إرسال واتساب
+                                </button>
                                 ${hasPermission('customers', 'edit') ? `
                                 <button type="button" onclick="openEditCustomerModal('${c.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
                                     <i class="fa-solid fa-pen-to-square text-amber-600"></i> تعديل
