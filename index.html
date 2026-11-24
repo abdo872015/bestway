@@ -3216,6 +3216,112 @@
             refreshAllViews();
         };
 
+        // =========================================================================
+        // المعمارية المعزولة للوحدات (Modular Namespaces) لمنع التداخل بين الشاشات
+        // =========================================================================
+        const AppModules = {
+            Dashboard: {
+                render: () => renderDashboard()
+            },
+            Reports: {
+                initYears: () => initReportsYearSelect(),
+                render: () => renderReportsTab(),
+                exportExcel: () => exportAnnualReportExcel()
+            },
+            Overdue: {
+                getList: () => getOverdueInvoicesList(),
+                render: () => renderOverdueInvoicesReport(),
+                sendWhatsApp: (id, rem, ovd, age) => sendOverdueInvoiceWhatsApp(id, rem, ovd, age),
+                exportExcel: () => exportOverdueExcel()
+            },
+            Sales: {
+                render: () => renderSalesOrdersTable(),
+                openModal: () => openNewSaleOrderModal(),
+                closeModal: () => closeNewSaleOrderModal(),
+                addLine: () => addSaleCartLine(),
+                renderCart: () => renderSaleCart(),
+                submit: () => submitSaleOrder(),
+                viewDetails: (id) => viewSaleOrderDetails(id),
+                print: (id) => printSaleOrder(id),
+                sendWhatsApp: (id) => sendSaleOrderWhatsApp(id),
+                resetFilters: () => resetSalesFilters()
+            },
+            Receipts: {
+                render: () => renderReceiptsStatementTable(),
+                openQuickModal: () => openQuickReceiptModal(),
+                closeQuickModal: () => closeQuickReceiptModal(),
+                submitQuick: () => submitQuickReceipt(),
+                print: (id) => printReceiptVoucher(id),
+                sendWhatsApp: (id) => sendReceiptWhatsApp(id),
+                exportExcel: () => exportReceiptsExcel(),
+                resetFilters: () => resetReceiptsFilters()
+            },
+            Inventory: {
+                render: () => renderInventoryTable(),
+                openAddModal: () => openAddRollModal(),
+                openEditModal: (id) => openEditRollModal(id),
+                save: () => saveRollItem(),
+                remove: (id) => deleteRollItem(id),
+                openMovement: (id) => openItemMovementModal(id),
+                exportExcel: () => exportInventoryExcel()
+            },
+            InboundTransferReturn: {
+                submitInbound: () => submitInbound(),
+                submitTransfer: () => submitTransfer(),
+                submitReturn: () => submitReturn()
+            },
+            Stocktake: {
+                render: () => renderStocktakeTable(),
+                loadAll: () => loadAllWarehouseItemsToStocktake(),
+                syncCounts: () => syncStocktakeProgramCounts(),
+                complete: () => completeStocktake(),
+                openMobileQuick: () => openMobileQuickCountModal()
+            },
+            Waste: {
+                render: () => renderWasteTable(),
+                submit: () => submitWasteRecord()
+            },
+            Stagnant: {
+                getList: (days) => getStagnantItemsList(days),
+                render: () => renderStagnantItemsTab(),
+                exportExcel: () => exportStagnantExcel()
+            },
+            Customers: {
+                render: () => renderCustomersTable(),
+                openAddModal: () => openAddCustomerModal(),
+                openEditModal: (id) => openEditCustomerModal(id),
+                save: () => saveCustomer(),
+                remove: (id) => deleteCustomer(id),
+                openStatement: (id) => openCustomerStatement(id),
+                closeStatement: () => closeCustomerStatement(),
+                renderStatement: () => renderCustomerStatement(),
+                sendWhatsApp: (id) => sendCustomerWhatsApp(id)
+            },
+            Opening: {
+                switchSubTab: (sub) => switchOpeningSubTab(sub),
+                render: () => renderOpeningBalancesTab(),
+                saveCustomers: () => saveAllOpeningCustomers(),
+                saveItems: () => saveAllOpeningItems()
+            },
+            Settings: {
+                loadForm: () => loadCompanySettingsForm(),
+                uploadLogo: (ev) => handleCompanyLogoUpload(ev),
+                resetLogo: () => resetCompanyLogoToDefault(),
+                save: () => saveCompanySettings(),
+                applyBranding: () => applyCompanyBrandingToUI()
+            },
+            UsersAndAudit: {
+                renderUsers: () => renderSystemUsersTable(),
+                openAddUser: () => openAddSystemUserModal(),
+                openEditUser: (id) => openEditSystemUserModal(id),
+                saveUser: () => saveSystemUser(),
+                deleteUser: (id) => deleteSystemUser(id),
+                renderAudit: () => renderAuditLogTable(),
+                exportAuditExcel: () => exportAuditLogExcel()
+            }
+        };
+        window.AppModules = AppModules;
+
         function exportFullBackup() {
             const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
