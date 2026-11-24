@@ -1169,7 +1169,7 @@
                             <i class="fa-solid fa-right-left text-indigo-600"></i>
                             <span>تحويل رولات بين المستودعات</span>
                         </h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-5 gap-4">
                             <div>
                                 <label class="block text-xs font-extrabold text-slate-700 mb-1">من مستودع</label>
                                 <select id="trFromWarehouse" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
@@ -1177,6 +1177,10 @@
                             <div>
                                 <label class="block text-xs font-extrabold text-slate-700 mb-1">إلى مستودع</label>
                                 <select id="trToWarehouse" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-extrabold text-slate-700 mb-1">التاريخ والوقت</label>
+                                <input type="datetime-local" id="trDate" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
                             </div>
                             <div>
                                 <label class="block text-xs font-extrabold text-slate-700 mb-1">الصنف</label>
@@ -3354,16 +3358,18 @@
                     }
                     appState = {
                         warehouses: parsed.warehouses || appState.warehouses,
+                        companySettings: { ...DEFAULT_COMPANY_SETTINGS, ...(parsed.companySettings || {}) },
                         items: parsed.items || [],
                         customers: parsed.customers || [],
                         transactions: parsed.transactions || [],
                         stocktakeLines: parsed.stocktakeLines || [],
                         stocktakeHistory: parsed.stocktakeHistory || [],
+                        auditLogs: Array.isArray(parsed.auditLogs) ? parsed.auditLogs : [],
                         users: (Array.isArray(parsed.users) && parsed.users.length > 0) ? parsed.users : appState.users
                     };
                     saveState();
                     refreshAllViews();
-                    showToast('تمت استعادة النسخة الاحتياطية بنجاح!');
+                    showToast('تمت استعادة النسخة الاحتياطية بكامل الإعدادات والسجلات بنجاح!');
                 } catch (err) {
                     showToast('تعذر قراءة ملف النسخة الاحتياطية', true);
                 }
@@ -3373,20 +3379,16 @@
         }
 
         function getUserModulePerm(moduleKey) {
-            if (moduleKey === 'receipts' && currentUser && currentUser.permissions && !currentUser.permissions.receipts) {
-                return currentUser.permissions.customers || currentUser.permissions.sales || { view: true, edit: true, delete: false };
-            }
-            if (moduleKey === 'settings') {
-                if (!currentUser) return { view: true, edit: true, delete: false };
-                if (currentUser.id === 'user_admin' || currentUser.role === 'admin') {
-                    return { view: true, edit: true, delete: false };
-                }
-                return currentUser.permissions?.settings || { view: true, edit: false, delete: false };
-            }
             if (!currentUser) return { view: true, edit: true, delete: true };
             if (currentUser.id === 'user_admin') return { view: true, edit: true, delete: true };
-            if (currentUser.permissions && currentUser.permissions[moduleKey]) {
+            if (currentUser.permissions && Object.prototype.hasOwnProperty.call(currentUser.permissions, moduleKey)) {
                 return currentUser.permissions[moduleKey];
+            }
+            if (moduleKey === 'receipts') {
+                return currentUser.permissions?.customers || currentUser.permissions?.sales || { view: false, edit: false, delete: false };
+            }
+            if (moduleKey === 'settings') {
+                return { view: currentUser.role === 'admin', edit: currentUser.role === 'admin', delete: false };
             }
             const fallback = buildDefaultPermissionsForRole(currentUser.role || 'admin');
             return fallback[moduleKey] || { view: false, edit: false, delete: false };
@@ -3617,6 +3619,9 @@
             if (tabKey === 'inbound' && !document.getElementById('inDate').value) {
                 document.getElementById('inDate').value = getNowLocalInputStr();
             }
+            if (tabKey === 'transfers' && !document.getElementById('trDate').value) {
+                document.getElementById('trDate').value = getNowLocalInputStr();
+            }
             if (tabKey === 'waste' && !document.getElementById('wasteDate').value) {
                 document.getElementById('wasteDate').value = getNowLocalInputStr();
             }
@@ -3729,15 +3734,10 @@
                     onSaleItemPicked();
                 }
             } else if (event.key === 'Enter') {
-                event.preventDefault();
-                if (!sel.classList.contains('hidden') && sel.selectedIndex >= 0 && !sel.options[sel.selectedIndex].hidden) {
+                if (!sel.classList.contains('hidden') && sel.selectedIndex >= 0) {
+                    event.preventDefault();
                     syncSearchableInput('saleItemSelect', 'saleItemSearch');
                     onSaleItemPicked();
-                    document.getElementById('salePrice')?.focus();
-                } else if (getSelectedSaleItem() && (parseFloat(document.getElementById('salePrice')?.value) || 0) > 0) {
-                    addSaleCartLine();
-                } else {
-                    document.getElementById('salePrice')?.focus();
                 }
             } else if (event.key === 'Escape') {
                 sel.classList.add('hidden');
@@ -3748,30 +3748,69 @@
             const sel = document.getElementById('saleCustomerSelect');
             const inp = document.getElementById('saleCustomerSearch');
             if (!sel || !inp) return;
+
             const visibleOptions = Array.from(sel.options).filter(opt => !opt.hidden);
             if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
                 event.preventDefault();
                 sel.classList.remove('hidden');
                 if (visibleOptions.length === 0) return;
+
                 const currentOpt = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
                 let pos = currentOpt ? visibleOptions.indexOf(currentOpt) : -1;
                 pos = event.key === 'ArrowDown'
                     ? (pos < visibleOptions.length - 1 ? pos + 1 : 0)
                     : (pos > 0 ? pos - 1 : visibleOptions.length - 1);
+
                 const targetOpt = visibleOptions[pos];
                 if (targetOpt) {
                     sel.value = targetOpt.value;
                     inp.value = targetOpt.text;
                     targetOpt.scrollIntoView({ block: 'nearest' });
+                    checkSaleCustomerCreditAlert();
                 }
-            } else if (event.key === 'Enter' || event.key === 'Escape') {
-                if (!sel.classList.contains('hidden') && sel.selectedIndex >= 0 && event.key === 'Enter') {
+            } else if (event.key === 'Enter') {
+                if (!sel.classList.contains('hidden') && sel.selectedIndex >= 0) {
                     event.preventDefault();
                     syncSearchableInput('saleCustomerSelect', 'saleCustomerSearch');
                     checkSaleCustomerCreditAlert();
+                    document.getElementById('saleItemSearch')?.focus();
                 }
+            } else if (event.key === 'Escape') {
                 sel.classList.add('hidden');
             }
+        }
+
+        function bindGenericSearchableKeyboard(inputId, selectId, onSelectCallback) {
+            const inp = document.getElementById(inputId);
+            const sel = document.getElementById(selectId);
+            if (!inp || !sel) return;
+            inp.addEventListener('keydown', (event) => {
+                const visibleOptions = Array.from(sel.options).filter(opt => !opt.hidden);
+                if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    sel.classList.remove('hidden');
+                    if (visibleOptions.length === 0) return;
+                    const currentOpt = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
+                    let pos = currentOpt ? visibleOptions.indexOf(currentOpt) : -1;
+                    pos = event.key === 'ArrowDown'
+                        ? (pos < visibleOptions.length - 1 ? pos + 1 : 0)
+                        : (pos > 0 ? pos - 1 : visibleOptions.length - 1);
+                    const targetOpt = visibleOptions[pos];
+                    if (targetOpt) {
+                        sel.value = targetOpt.value;
+                        inp.value = targetOpt.text;
+                        targetOpt.scrollIntoView({ block: 'nearest' });
+                    }
+                } else if (event.key === 'Enter') {
+                    if (!sel.classList.contains('hidden') && sel.selectedIndex >= 0) {
+                        event.preventDefault();
+                        syncSearchableInput(selectId, inputId);
+                        if (typeof onSelectCallback === 'function') onSelectCallback();
+                    }
+                } else if (event.key === 'Escape') {
+                    sel.classList.add('hidden');
+                }
+            });
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -3783,6 +3822,13 @@
             if (saleCustSearchEl) {
                 saleCustSearchEl.addEventListener('keydown', handleSaleCustomerKeydown);
             }
+            bindGenericSearchableKeyboard('qPayCustomerSearch', 'qPayCustomerSelect', () => {
+                updateQuickReceiptBalanceHint();
+                document.getElementById('qPayAmountInput')?.focus();
+            });
+            bindGenericSearchableKeyboard('movItemSearch', 'movItemSelect', () => {
+                renderItemMovementReport();
+            });
             const salePriceEl = document.getElementById('salePrice');
             if (salePriceEl) {
                 salePriceEl.addEventListener('keydown', (e) => {
@@ -3801,6 +3847,12 @@
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.searchable-select-wrapper')) {
                     closeAllSearchableDropdowns();
+                }
+                if (!e.target.closest('.action-dropdown') && !e.target.closest('button[onclick^="toggleActionMenu"]')) {
+                    document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden'));
+                }
+                if (!e.target.closest('.profile-menu-wrapper')) {
+                    document.getElementById('userProfileDropdown')?.classList.add('hidden');
                 }
             });
         });
@@ -6276,6 +6328,7 @@ ${linesTxt}
             }
             const fromWh = document.getElementById('trFromWarehouse').value;
             const toWh = document.getElementById('trToWarehouse').value;
+            const trDate = document.getElementById('trDate')?.value || getNowLocalInputStr();
             const item = appState.items.find(x => x.id === document.getElementById('trItemSelect').value);
             const rolls = parseFloat(document.getElementById('trRollsQty').value) || 0;
 
@@ -6298,11 +6351,12 @@ ${linesTxt}
                 item.stockSamir = Number(item.stockSamir || 0) + rolls;
             }
 
+            const trId = 'TR-' + (1000 + appState.transactions.length + 1);
             appState.transactions.push({
-                id: 'TR-' + (1000 + appState.transactions.length + 1),
+                id: trId,
                 seq: Date.now(),
                 type: 'transfer',
-                date: getNowLocalInputStr(),
+                date: trDate,
                 itemId: item.id,
                 itemName: item.name,
                 rolls,
@@ -6310,6 +6364,7 @@ ${linesTxt}
                 toWh
             });
 
+            logUserActivity('create', 'التحويل بين المستودعات', `تحويل ${rolls} رول من (${item.name}) - سند ${trId}`);
             document.getElementById('trRollsQty').value = '';
             saveState();
             refreshAllViews();
