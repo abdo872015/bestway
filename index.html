@@ -2,10 +2,19 @@
 <html lang="ar" dir="rtl" class="light-theme">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <!-- منع متصفح الجوال من فرض الوضع الليلي التلقائي (Force Dark Mode) على الثيم الفاتح -->
     <meta id="metaColorScheme" name="color-scheme" content="only light">
     <meta name="supported-color-schemes" content="light">
+    <!-- إعدادات PWA لتثبيت المنصة كتطبيق على الجوال (Android & iOS) -->
+    <meta name="theme-color" content="#1C2C6E">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="الطريق الأمثل">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link id="pwaManifestLink" rel="manifest" href="">
+    <link id="pwaAppleIcon" rel="apple-touch-icon" href="">
+    <link id="pwaFavicon" rel="icon" type="image/svg+xml" href="">
     <title>نظام إدارة المخازن والمستودعات - مؤسسة الطريق الأمثل للدعاية والإعلان</title>
     <!-- ضبط إعدادات Tailwind قبل التحميل لدعم التبديل اليدوي بين الثيم الفاتح والداكن -->
     <script>
@@ -353,6 +362,44 @@
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* =========================================================
+           تحسينات التوافق الكامل مع الجوال (Mobile Responsive)
+           ========================================================= */
+        @media (max-width: 1023px) {
+            body { overflow-x: hidden; }
+            #mobileSidebarDrawer {
+                position: fixed;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                width: 82%;
+                max-width: 310px;
+                z-index: 45;
+                transform: translateX(105%);
+                transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+                box-shadow: -12px 0 32px rgba(15, 23, 42, 0.25);
+            }
+            #mobileSidebarDrawer.drawer-open {
+                transform: translateX(0);
+            }
+            /* تحسين عرض الجداول على شاشات الجوال مع تمرير أفقي سلس */
+            .overflow-x-auto {
+                -webkit-overflow-scrolling: touch;
+            }
+            table th, table td {
+                font-size: 11px !important;
+                padding-left: 0.6rem !important;
+                padding-right: 0.6rem !important;
+            }
+            /* جعل النوافذ المنبثقة مريحة للجوال */
+            .modal-card-animate {
+                padding: 1rem !important;
+                border-radius: 1.25rem !important;
+                max-height: 92vh;
+                overflow-y: auto;
+            }
+        }
     </style>
 </head>
 <body class="bg-white text-slate-900 antialiased overflow-x-hidden">
@@ -440,11 +487,14 @@
          الهيكل الرئيسي للمنصة (#mainApp) + القائمة الجانبية + جميع الشاشات
          ========================================================= -->
     <div id="mainApp" class="hidden min-h-screen flex flex-col lg:flex-row bg-white text-slate-900">
-        <!-- القائمة الجانبية اليمنى -->
-        <aside class="w-full lg:w-72 bg-white border-b lg:border-b-0 lg:border-l border-slate-200 flex flex-col shrink-0 no-print">
+        <!-- خلفية معتمة عند فتح القائمة الجانبية في الجوال -->
+        <div id="mobileDrawerBackdrop" onclick="closeMobileMenu()" class="hidden fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-xs lg:hidden no-print"></div>
+
+        <!-- القائمة الجانبية اليمنى (تتحول لقائمة منزلقة Drawer في الجوال) -->
+        <aside id="mobileSidebarDrawer" class="lg:w-72 bg-white lg:border-l border-slate-200 flex flex-col shrink-0 no-print">
             <div class="p-4 border-b border-slate-200 flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="w-14 h-12 rounded-xl border border-slate-200 bg-white p-1 shrink-0 flex items-center justify-center">
+                    <div class="w-12 h-11 rounded-xl border border-slate-200 bg-white p-1 shrink-0 flex items-center justify-center">
                         <svg viewBox="0 0 240 210" class="w-full h-full"><use href="#bestway-hd-logo"/></svg>
                     </div>
                     <div>
@@ -452,8 +502,8 @@
                         <span class="text-[11px] font-bold text-slate-500">Best Way • إدارة المخازن</span>
                     </div>
                 </div>
-                <button type="button" onclick="toggleMobileMenu()" class="lg:hidden p-2 rounded-xl bg-slate-100 text-slate-700">
-                    <i class="fa-solid fa-bars text-lg"></i>
+                <button type="button" onclick="closeMobileMenu()" class="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700">
+                    <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
 
@@ -466,10 +516,7 @@
             </div>
 
             <!-- روابط الشاشات -->
-            <nav id="sidebarNav" class="hidden lg:flex flex-col gap-1 p-3 flex-1 overflow-y-auto">
-                <button type="button" data-tab="dashboard" onclick="switchTab('dashboard')" class="nav-btn active-nav w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold bg-blue-600 text-white shadow-md">
-                    <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
-                    <span class="nav-label">لوحة القيادة والملخص</span>
+            <nav id="sidebarNav" class="flex flex-col gap-1 p-3 flex-1 overflow-y-auto">
                 </button>
                 <button type="button" data-tab="reports" onclick="switchTab('reports')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
                     <span class="nav-icon"><i class="fa-solid fa-chart-column text-indigo-600"></i></span>
@@ -521,33 +568,23 @@
                     <span id="navBadgeCustomers" class="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 text-[10px] font-black">0</span>
                 </button>
                 <button type="button" data-tab="opening" onclick="switchTab('opening')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                    <span class="nav-icon"><i class="fa-solid fa-scale-balanced text-cyan-600"></i></span>
-                    <span class="nav-label">الأرصدة الافتتاحية</span>
-                </button>
-                <button type="button" data-tab="logs" onclick="switchTab('logs')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                    <span class="nav-icon"><i class="fa-solid fa-clock-rotate-left text-slate-500"></i></span>
-                    <span class="nav-label">السجل العام للحركات</span>
-                </button>
-                <button type="button" data-tab="audit" onclick="switchTab('audit')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                    <span class="nav-icon"><i class="fa-solid fa-fingerprint text-violet-600"></i></span>
-                    <span class="nav-label">سجل نشاط المستخدمين</span>
-                </button>
-                <button type="button" data-tab="users" onclick="switchTab('users')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                    <span class="nav-icon"><i class="fa-solid fa-user-shield text-amber-600"></i></span>
-                    <span class="nav-label">المستخدمين والصلاحيات</span>
-                </button>
-
-                <!-- أزرار النسخ الاحتياطي أسفل القائمة -->
-                <div class="pt-3 mt-2 border-t border-slate-200 grid grid-cols-2 gap-2">
-                    <button type="button" onclick="exportFullBackup()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-download text-blue-600"></i>
-                        <span>نسخ احتياطي</span>
+                <!-- أزرار النسخ الاحتياطي وتثبيت التطبيق أسفل القائمة -->
+                <div class="pt-3 mt-2 border-t border-slate-200 space-y-2">
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="exportFullBackup()" class="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-download text-blue-600"></i>
+                            <span>نسخ احتياطي</span>
+                        </button>
+                        <button id="btnRestoreBackupSidebar" type="button" onclick="triggerRestoreBackup()" class="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-upload text-emerald-600"></i>
+                            <span>استعادة</span>
+                        </button>
+                        <input type="file" id="restoreBackupFileInput" accept=".json" onchange="handleRestoreBackupFile(event)" class="hidden">
+                    </div>
+                    <button id="sidebarInstallAppBtn" type="button" onclick="triggerPwaInstall()" class="w-full px-3 py-2.5 bg-gradient-to-l from-blue-600 to-indigo-600 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-mobile-screen-button"></i>
+                        <span>تثبيت التطبيق على الجوال</span>
                     </button>
-                    <button id="btnRestoreBackupSidebar" type="button" onclick="triggerRestoreBackup()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-upload text-emerald-600"></i>
-                        <span>استعادة</span>
-                    </button>
-                    <input type="file" id="restoreBackupFileInput" accept=".json" onchange="handleRestoreBackupFile(event)" class="hidden">
                 </div>
             </nav>
         </aside>
@@ -555,16 +592,27 @@
         <!-- المحتوى الرئيسي -->
         <div class="flex-1 flex flex-col min-w-0">
             <!-- الشريط العلوي -->
-            <header class="bg-white border-b border-slate-200 px-4 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20 no-print">
-                <div>
-                    <h1 id="headerActiveScreenTitle" class="text-base lg:text-lg font-black text-slate-900 flex items-center gap-2">
-                        <i class="fa-solid fa-layer-group text-blue-600"></i>
-                        <span>لوحة القيادة والملخص التنفيذي</span>
-                    </h1>
-                    <p id="currentDateDisplay" class="text-xs font-bold text-slate-500 mt-0.5"></p>
+            <header class="bg-white border-b border-slate-200 px-3 sm:px-4 lg:px-8 py-3 flex items-center justify-between gap-2 sticky top-0 z-20 no-print">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <button type="button" onclick="toggleMobileMenu()" aria-label="فتح القائمة" class="lg:hidden p-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 shrink-0">
+                        <i class="fa-solid fa-bars text-base"></i>
+                    </button>
+                    <div class="min-w-0">
+                        <h1 id="headerActiveScreenTitle" class="text-sm sm:text-base lg:text-lg font-black text-slate-900 flex items-center gap-2 truncate">
+                            <i class="fa-solid fa-layer-group text-blue-600 shrink-0"></i>
+                            <span class="truncate">لوحة القيادة والملخص التنفيذي</span>
+                        </h1>
+                        <p id="currentDateDisplay" class="text-[11px] sm:text-xs font-bold text-slate-500 mt-0.5 truncate"></p>
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-2.5">
+                <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                    <!-- زر تثبيت سريع في الهيدر للجوال -->
+                    <button id="headerInstallAppBtn" type="button" onclick="triggerPwaInstall()" title="تثبيت التطبيق على الجوال" class="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-black flex items-center gap-1.5">
+                        <i class="fa-solid fa-download"></i>
+                        <span class="hidden md:inline">تثبيت التطبيق</span>
+                    </button>
+
                     <!-- مبدل الثيم النهاري / الليلي -->
                     <div class="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200">
                         <button id="themeLightBtn" type="button" onclick="setAppTheme('light')" class="px-2.5 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 bg-white text-amber-600 shadow-xs transition">
@@ -1499,6 +1547,50 @@
                 </section>
 
             </main>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         نافذة وبانر تثبيت التطبيق على الجوال (PWA Install Prompt)
+         ========================================================= -->
+    <div id="pwaInstallBanner" class="hidden fixed bottom-3 left-3 right-3 sm:left-auto sm:right-5 sm:bottom-5 sm:w-96 z-50 bg-slate-900/95 backdrop-blur-xl text-white p-4 rounded-2xl shadow-2xl border border-slate-700/80 modal-card-animate no-print">
+        <div class="flex items-start gap-3">
+            <div class="w-12 h-11 rounded-xl bg-white p-1 shrink-0 flex items-center justify-center shadow-md">
+                <svg viewBox="0 0 240 210" class="w-full h-full"><use href="#bestway-hd-logo"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                    <h4 class="text-xs font-black text-white">تثبيت تطبيق الطريق الأمثل</h4>
+                    <button type="button" onclick="dismissPwaBanner()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <p class="text-[11px] text-slate-300 font-semibold mt-0.5 leading-relaxed">ثبّت المنصة على شاشة جوالك الرئيسية للوصول السريع والعمل بملء الشاشة كتطبيق مستقل.</p>
+                <div class="flex items-center gap-2 mt-3">
+                    <button type="button" onclick="triggerPwaInstall()" class="flex-1 py-2 px-3 bg-gradient-to-l from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-md">
+                        <i class="fa-solid fa-mobile-screen-button"></i>
+                        <span>تثبيت الآن</span>
+                    </button>
+                    <button type="button" onclick="dismissPwaBanner()" class="py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold">
+                        لاحقاً
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تعليمات التثبيت للآيفون (iOS Safari) أو المتصفحات اليدوية -->
+    <div id="iosInstallGuideModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-end sm:items-center justify-center p-4 no-print">
+        <div class="modal-card-animate bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-4 text-slate-900">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-9 rounded-xl border border-slate-200 p-1 bg-white">
+                        <svg viewBox="0 0 240 210" class="w-full h-full"><use href="#bestway-hd-logo"/></svg>
+                    </div>
+                    <h3 class="text-sm font-black text-slate-900">تثبيت التطبيق على شاشة الجوال</h3>
+                </div>
+                <button type="button" onclick="document.getElementById('iosInstallGuideModal').classList.add('hidden')" class="p-2 rounded-xl bg-slate-100 text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="installGuideStepsBody" class="space-y-3 text-xs font-bold text-slate-700 leading-relaxed"></div>
+            <button type="button" onclick="document.getElementById('iosInstallGuideModal').classList.add('hidden')" class="w-full py-2.5 bg-blue-600 text-white rounded-xl text-xs font-black">فهمت، إغلاق</button>
         </div>
     </div>
 
@@ -2792,11 +2884,23 @@
         }
 
         function toggleMobileMenu() {
-            const nav = document.getElementById('sidebarNav');
-            if (nav) {
-                nav.classList.toggle('hidden');
-                nav.classList.toggle('flex');
+            const drawer = document.getElementById('mobileSidebarDrawer');
+            const backdrop = document.getElementById('mobileDrawerBackdrop');
+            if (!drawer) return;
+            const isOpen = drawer.classList.contains('drawer-open');
+            if (isOpen) {
+                closeMobileMenu();
+            } else {
+                drawer.classList.add('drawer-open');
+                backdrop?.classList.remove('hidden');
             }
+        }
+
+        function closeMobileMenu() {
+            const drawer = document.getElementById('mobileSidebarDrawer');
+            const backdrop = document.getElementById('mobileDrawerBackdrop');
+            drawer?.classList.remove('drawer-open');
+            backdrop?.classList.add('hidden');
         }
 
         function switchTab(tabKey) {
@@ -2833,11 +2937,7 @@
             if (headerTitle) headerTitle.textContent = TAB_TITLES[tabKey] || 'لوحة القيادة والملخص التنفيذي';
 
             if (window.innerWidth < 1024) {
-                const nav = document.getElementById('sidebarNav');
-                if (nav && !nav.classList.contains('hidden')) {
-                    nav.classList.add('hidden');
-                    nav.classList.remove('flex');
-                }
+                closeMobileMenu();
             }
 
             if (tabKey === 'reports') renderReportsTab();
@@ -6309,8 +6409,138 @@ ${balanceLine}
             XLSX.writeFile(wb, `سجل_نشاط_المستخدمين_${new Date().toISOString().slice(0, 10)}.xlsx`);
         }
 
+        // ==========================================
+        // 12. تهيئة تطبيق الجوال (PWA Manifest + Service Worker + Install Prompt)
+        // ==========================================
+        let deferredPwaPrompt = null;
+
+        function initPwaAppSupport() {
+            try {
+                const logoSvgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 210"><rect x="0" y="0" width="240" height="210" rx="28" fill="#ffffff"/><rect x="34" y="34" width="52" height="19" rx="9.5" fill="#E36588"/><rect x="12" y="60" width="68" height="21" rx="10.5" fill="#F37021"/><path fill-rule="evenodd" clip-rule="evenodd" d="M120 12C88 12 66 44 66 84C66 124 88 156 120 156C152 156 174 124 174 84C174 44 152 12 120 12ZM120 42C136 42 146 60 146 84C146 108 136 126 120 126C104 126 94 108 94 84C94 60 104 42 120 42Z" fill="#52B5E5"/><rect x="160" y="88" width="68" height="20" rx="10" fill="#1C2C6E"/><rect x="155" y="114" width="64" height="20" rx="10" fill="#F37021"/><text x="120" y="191" text-anchor="middle" font-family="Georgia, serif" font-weight="900" font-size="37" fill="#1C2C6E">Best Way</text></svg>`;
+                const iconDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(logoSvgString);
+
+                const favEl = document.getElementById('pwaFavicon');
+                const appleEl = document.getElementById('pwaAppleIcon');
+                if (favEl) favEl.href = iconDataUrl;
+                if (appleEl) appleEl.href = iconDataUrl;
+
+                const manifestObj = {
+                    name: 'نظام إدارة المخازن - مؤسسة الطريق الأمثل',
+                    short_name: 'الطريق الأمثل',
+                    description: 'منصة إدارة المستودعات والمخازن والعملاء - Best Way',
+                    start_url: window.location.href,
+                    display: 'standalone',
+                    orientation: 'any',
+                    background_color: '#ffffff',
+                    theme_color: '#1C2C6E',
+                    dir: 'rtl',
+                    lang: 'ar',
+                    icons: [
+                        { src: iconDataUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+                        { src: iconDataUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+                    ]
+                };
+                const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+                const manifestUrl = URL.createObjectURL(manifestBlob);
+                const manifestLink = document.getElementById('pwaManifestLink');
+                if (manifestLink) manifestLink.href = manifestUrl;
+
+                if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+                    const swCode = `
+                        self.addEventListener('install', (e) => self.skipWaiting());
+                        self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+                        self.addEventListener('fetch', (e) => {
+                            e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+                        });
+                    `;
+                    const swBlob = new Blob([swCode], { type: 'application/javascript' });
+                    const swUrl = URL.createObjectURL(swBlob);
+                    navigator.serviceWorker.register(swUrl).catch(() => {});
+                }
+            } catch (e) {
+                console.warn('PWA setup notice:', e);
+            }
+
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            if (isStandalone) {
+                document.getElementById('headerInstallAppBtn')?.classList.add('hidden');
+                document.getElementById('sidebarInstallAppBtn')?.classList.add('hidden');
+                return;
+            }
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPwaPrompt = e;
+                if (!sessionStorage.getItem('pwa_banner_dismissed')) {
+                    document.getElementById('pwaInstallBanner')?.classList.remove('hidden');
+                }
+            });
+
+            window.addEventListener('appinstalled', () => {
+                deferredPwaPrompt = null;
+                document.getElementById('pwaInstallBanner')?.classList.add('hidden');
+                document.getElementById('headerInstallAppBtn')?.classList.add('hidden');
+                document.getElementById('sidebarInstallAppBtn')?.classList.add('hidden');
+                showToast('تم تثبيت تطبيق الطريق الأمثل على جهازك بنجاح!');
+            });
+
+            // إظهار بانر التثبيت تلقائياً على الجوال عند فتح الموقع من المتصفح
+            const isMobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+            if (isMobileDevice && !sessionStorage.getItem('pwa_banner_dismissed')) {
+                setTimeout(() => {
+                    if (!isStandalone) {
+                        document.getElementById('pwaInstallBanner')?.classList.remove('hidden');
+                    }
+                }, 1400);
+            }
+        }
+
+        function dismissPwaBanner() {
+            document.getElementById('pwaInstallBanner')?.classList.add('hidden');
+            try { sessionStorage.setItem('pwa_banner_dismissed', '1'); } catch (e) {}
+        }
+
+        async function triggerPwaInstall() {
+            if (deferredPwaPrompt) {
+                deferredPwaPrompt.prompt();
+                const { outcome } = await deferredPwaPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    document.getElementById('pwaInstallBanner')?.classList.add('hidden');
+                }
+                deferredPwaPrompt = null;
+                return;
+            }
+
+            const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const stepsBox = document.getElementById('installGuideStepsBody');
+            if (stepsBox) {
+                if (isIos) {
+                    stepsBox.innerHTML = `
+                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <p class="text-slate-900 font-black">لتثبيت التطبيق على جوال آيفون (Safari):</p>
+                            <p>1. اضغط على زر <strong>المشاركة (Share)</strong> <i class="fa-solid fa-arrow-up-from-bracket text-blue-600"></i> في أسفل المتصفح.</p>
+                            <p>2. مرر للأسفل واختر <strong>"إضافة إلى الصفحة الرئيسية" (Add to Home Screen)</strong> <i class="fa-regular fa-square-plus text-blue-600"></i>.</p>
+                            <p>3. اضغط على <strong>"إضافة" (Add)</strong> ليظهر التطبيق بأيقونة Best Way على شاشتك.</p>
+                        </div>
+                    `;
+                } else {
+                    stepsBox.innerHTML = `
+                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <p class="text-slate-900 font-black">لتثبيت التطبيق على جوال أندرويد (Chrome):</p>
+                            <p>1. اضغط على قائمة النقاط الثلاث <strong>(⋮)</strong> في أعلى يسار المتصفح.</p>
+                            <p>2. اختر <strong>"تثبيت التطبيق" (Install App)</strong> أو <strong>"الإضافة إلى الشاشة الرئيسية"</strong>.</p>
+                            <p>3. اضغط <strong>"تثبيت"</strong> ليتم تشغيل المنصة كتطبيق مستقل بملء الشاشة.</p>
+                        </div>
+                    `;
+                }
+            }
+            document.getElementById('pwaInstallBanner')?.classList.add('hidden');
+            document.getElementById('iosInstallGuideModal')?.classList.remove('hidden');
+        }
+
         // تشغيل التهيئة فور تحميل الصفحة
         window.addEventListener('DOMContentLoaded', () => {
+            initPwaAppSupport();
             const savedTheme = localStorage.getItem(THEME_KEY) || 'light';
             setAppTheme(savedTheme);
             loadState();
