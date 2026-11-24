@@ -530,6 +530,10 @@
                                 <i class="fa-solid fa-plus"></i>
                                 <span>صنف رول جديد</span>
                             </button>
+                            <button type="button" onclick="openItemMovementModal()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-xl shadow-sm flex items-center gap-2 transition">
+                                <i class="fa-solid fa-arrows-left-right-to-line"></i>
+                                <span>حركة صنف</span>
+                            </button>
                             <button type="button" onclick="openImportItemsModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold rounded-xl shadow-sm flex items-center gap-2 transition">
                                 <i class="fa-solid fa-file-excel"></i>
                                 <span>استيراد من Excel</span>
@@ -1378,6 +1382,119 @@
         </div>
     </div>
 
+    <!-- شاشة منفصلة لكارت حركة صنف تفصيلي (الوارد والمنصرف والرصيد) -->
+    <div id="itemMovementModal" class="fixed inset-0 z-50 hidden bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-6xl max-h-[94vh] flex flex-col overflow-hidden my-auto">
+            <!-- رأس النافذة -->
+            <div class="flex items-center justify-between px-6 py-4 bg-slate-900 text-white shrink-0 no-print">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-arrows-left-right-to-line"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-black">كارت حركة صنف تفصيلي</h3>
+                        <p class="text-xs text-slate-300 font-semibold">تتبع كافة أوامر الوارد، أوامر المنصرف للعملاء، التحويلات، والرصيد النهائي</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="printItemMovementReport()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold rounded-xl flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-print"></i>
+                        <span>طباعة الحركة</span>
+                    </button>
+                    <button type="button" onclick="closeItemMovementModal()" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-rose-600 text-white flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- شريط اختيار الصنف والفلاتر -->
+            <div class="p-5 bg-slate-50 border-b border-slate-200 grid grid-cols-1 md:grid-cols-12 gap-3 items-end shrink-0 no-print">
+                <div class="md:col-span-5 searchable-select-wrapper relative">
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">اختر الصنف (اكتب للبحث الفوري) *</label>
+                    <input type="text" id="movItemSearch" oninput="filterSearchableSelect('movItemSearch', 'movItemSelect')" onfocus="showSearchableDropdown('movItemSelect')" placeholder="ابحث واختر الصنف لعرض حركته..." class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                    <select id="movItemSelect" size="6" onchange="syncSearchableInput('movItemSelect', 'movItemSearch'); renderItemMovementReport();" onclick="syncSearchableInput('movItemSelect', 'movItemSearch'); renderItemMovementReport();" class="hidden absolute z-40 w-full mt-1 bg-white border border-slate-300 rounded-xl shadow-xl text-sm font-bold p-1"></select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">المخزن</label>
+                    <select id="movWarehouseFilter" onchange="renderItemMovementReport()" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold outline-none">
+                        <option value="all">جميع المخازن</option>
+                        <option value="wh_samir">مخزن السامر</option>
+                        <option value="wh_tahlia">مخزن التحلية</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">من تاريخ</label>
+                    <input type="date" id="movFromDate" onchange="renderItemMovementReport()" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold outline-none">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">إلى تاريخ</label>
+                    <input type="date" id="movToDate" onchange="renderItemMovementReport()" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold outline-none">
+                </div>
+                <div class="md:col-span-1">
+                    <button type="button" onclick="resetItemMovementFilters()" class="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold transition">
+                        الكل
+                    </button>
+                </div>
+            </div>
+
+            <!-- محتوى تقرير حركة الصنف -->
+            <div id="itemMovementPrintableArea" class="p-6 overflow-y-auto space-y-5 flex-1">
+                <!-- بطاقة بيانات الصنف والأرصدة -->
+                <div id="movItemSummaryCards" class="hidden space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+                        <div>
+                            <h4 id="movSelectedItemTitle" class="text-lg font-black text-slate-900"></h4>
+                            <p id="movSelectedItemDims" class="text-xs font-bold text-slate-500 mt-0.5"></p>
+                        </div>
+                        <span id="movWarehouseBadge" class="px-3 py-1 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-black border border-indigo-100 self-start"></span>
+                    </div>
+
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-center">
+                            <span class="text-xs font-bold text-emerald-700 block">إجمالي الوارد (رول / م²)</span>
+                            <strong id="movTotInVal" class="text-base font-black text-emerald-800 mt-1 block">0 رول (0 م²)</strong>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-center">
+                            <span class="text-xs font-bold text-rose-700 block">إجمالي المنصرف (رول / م²)</span>
+                            <strong id="movTotOutVal" class="text-base font-black text-rose-800 mt-1 block">0 رول (0 م²)</strong>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-center">
+                            <span class="text-xs font-bold text-blue-700 block">الرصيد المتبقي الفعلي</span>
+                            <strong id="movCurrentBalanceRolls" class="text-base font-black text-blue-800 mt-1 block">0.00 رول</strong>
+                            <span id="movCurrentBalanceSplit" class="text-[11px] font-bold text-blue-600 block mt-0.5">السامر: 0 | التحلية: 0</span>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+                            <span class="text-xs font-bold text-slate-600 block">إجمالي الأمتار المتبقية</span>
+                            <strong id="movCurrentBalanceSqm" class="text-base font-black text-slate-900 mt-1 block">0.00 م²</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- جدول حركات الصنف -->
+                <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+                    <table class="w-full text-right text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900 text-white font-extrabold">
+                                <th class="py-3 px-3">التاريخ والوقت</th>
+                                <th class="py-3 px-3">نوع الحركة</th>
+                                <th class="py-3 px-3">رقم الإذن / المرجع</th>
+                                <th class="py-3 px-3">الجهة / العميل / البيان</th>
+                                <th class="py-3 px-3">المخزن</th>
+                                <th class="py-3 px-3 text-center">الكمية (م² / رول)</th>
+                                <th class="py-3 px-3 text-center">سعر المتر</th>
+                                <th class="py-3 px-3 text-center">الإجمالي (ر.س)</th>
+                                <th class="py-3 px-3 text-center">الرصيد التراكمي</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemMovementTableBody" class="divide-y divide-slate-100 font-bold">
+                            <tr><td colspan="9" class="py-10 text-center text-slate-400">اختر صنفاً من القائمة أعلاه لعرض سجل حركته الكامل</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- محرك المزامنة السحابية الحية -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -1801,7 +1918,7 @@
                 const totalR = (Number(it.stockSamir || 0) + Number(it.stockTahlia || 0)).toFixed(2);
                 return `<option value="${it.id}">${it.name} (متوفر: ${totalR} رول)</option>`;
             }).join('');
-            ['inItemSelect', 'saleItemSelect', 'trItemSelect', 'retItemSelect', 'stAddItemSelect'].forEach(id => {
+            ['inItemSelect', 'saleItemSelect', 'trItemSelect', 'retItemSelect', 'stAddItemSelect', 'movItemSelect'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.innerHTML = itemsHtml;
             });
@@ -2036,6 +2153,9 @@
                                 <button type="button" onclick="viewRollDetails('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
                                     <i class="fa-solid fa-eye text-blue-600"></i> عرض
                                 </button>
+                                <button type="button" onclick="openItemMovementModal('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-50 flex items-center gap-2">
+                                    <i class="fa-solid fa-arrows-left-right-to-line text-indigo-600"></i> حركة الصنف
+                                </button>
                                 <button type="button" onclick="openEditRollModal('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
                                     <i class="fa-solid fa-pen-to-square text-amber-600"></i> تعديل
                                 </button>
@@ -2129,15 +2249,336 @@
             showToast(`${it.name} | السامر: ${it.stockSamir} رول | التحلية: ${it.stockTahlia} رول | الإجمالي: ${totalSqm.toFixed(2)} م²`);
         }
 
-        function deleteRollItem(id) {
-            const it = appState.items.find(x => x.id === id);
-            if (!it) return;
-            const totalR = Number(it.stockSamir || 0) + Number(it.stockTahlia || 0);
-            const hasTx = appState.transactions.some(t => t.itemId === id || (t.lines || []).some(l => l.itemId === id));
-            if (totalR > 0 || hasTx) {
-                showToast('لا يمكن حذف صنف به رصيد بالمخزن أو مرتبط بحركات سابقة!', true);
+        // ==========================================
+        // 5.5 شاشة كارت حركة صنف تفصيلي (وارد / منصرف / تحويلات / رصيد)
+        // ==========================================
+        function openItemMovementModal(preselectedItemId = '') {
+            document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden'));
+            populateSelects();
+            document.getElementById('movWarehouseFilter').value = 'all';
+            document.getElementById('movFromDate').value = '';
+            document.getElementById('movToDate').value = '';
+
+            const sel = document.getElementById('movItemSelect');
+            const inp = document.getElementById('movItemSearch');
+
+            if (preselectedItemId) {
+                const it = appState.items.find(x => x.id === preselectedItemId);
+                if (it && sel && inp) {
+                    sel.value = it.id;
+                    inp.value = `${it.name} (متوفر: ${(Number(it.stockSamir || 0) + Number(it.stockTahlia || 0)).toFixed(2)} رول)`;
+                }
+            } else {
+                if (sel) sel.selectedIndex = -1;
+                if (inp) inp.value = '';
+            }
+
+            document.getElementById('itemMovementModal').classList.remove('hidden');
+            renderItemMovementReport();
+        }
+
+        function closeItemMovementModal() {
+            document.getElementById('itemMovementModal').classList.add('hidden');
+        }
+
+        function resetItemMovementFilters() {
+            document.getElementById('movWarehouseFilter').value = 'all';
+            document.getElementById('movFromDate').value = '';
+            document.getElementById('movToDate').value = '';
+            renderItemMovementReport();
+        }
+
+        function renderItemMovementReport() {
+            const sel = document.getElementById('movItemSelect');
+            const searchTxt = (document.getElementById('movItemSearch')?.value || '').trim();
+            let itemId = sel ? sel.value : '';
+
+            if (!itemId && searchTxt) {
+                const found = appState.items.find(x => searchTxt.includes(x.name) || x.name.toLowerCase().includes(searchTxt.toLowerCase()));
+                if (found) itemId = found.id;
+            }
+
+            const item = appState.items.find(x => x.id === itemId);
+            const summaryBox = document.getElementById('movItemSummaryCards');
+            const tbody = document.getElementById('itemMovementTableBody');
+
+            if (!item) {
+                if (summaryBox) summaryBox.classList.add('hidden');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="py-10 text-center text-slate-400">اختر صنفاً من القائمة أعلاه لعرض سجل حركته الكامل</td></tr>';
                 return;
             }
+
+            const whFilter = document.getElementById('movWarehouseFilter').value || 'all';
+            const fromStr = document.getElementById('movFromDate').value || '';
+            const toStr = document.getElementById('movToDate').value || '';
+            const fromDate = fromStr ? new Date(fromStr + 'T00:00:00') : null;
+            const toDate = toStr ? new Date(toStr + 'T23:59:59') : null;
+
+            const rollArea = (Number(item.length) || 50) * (Number(item.width) || 1);
+            const whLabelMap = { all: 'جميع المخازن (السامر + التحلية)', wh_samir: 'مخزن السامر', wh_tahlia: 'مخزن التحلية' };
+
+            summaryBox.classList.remove('hidden');
+            document.getElementById('movSelectedItemTitle').textContent = item.name;
+            document.getElementById('movSelectedItemDims').textContent = `مقاس الرول القياسي: الطول ${item.length} م × العرض ${item.width} م (مساحة الرول = ${rollArea.toFixed(2)} م²)`;
+            document.getElementById('movWarehouseBadge').textContent = whLabelMap[whFilter] || 'جميع المخازن';
+
+            // استخراج كافة الحركات المرتبطة بهذا الصنف
+            const rawEvents = [];
+            appState.transactions.forEach(t => {
+                const whName = t.warehouseId === 'wh_tahlia' ? 'مخزن التحلية' : 'مخزن السامر';
+
+                if (t.type === 'inbound' && (t.itemId === item.id || t.itemName === item.name)) {
+                    if (whFilter !== 'all' && t.warehouseId && t.warehouseId !== whFilter) return;
+                    const rolls = Number(t.rolls || 0);
+                    const sqm = Number(t.sqm || (rolls * rollArea));
+                    rawEvents.push({
+                        date: t.date,
+                        seq: t.seq || 0,
+                        kind: rolls >= 0 ? 'inbound' : 'adjust_out',
+                        typeLabel: rolls >= 0 ? 'أمر وارد' : 'تسوية نقص جرد',
+                        refId: t.id,
+                        party: t.notes ? `توريد مخزني (${t.notes})` : 'توريد وتغذية مخزن',
+                        whName: t.warehouseId ? whName : 'المخازن',
+                        rollsDelta: rolls,
+                        sqmDelta: sqm,
+                        qtyDetail: `${Math.abs(rolls).toFixed(2)} رول (${Math.abs(sqm).toFixed(2)} م²)`,
+                        unitPrice: '-',
+                        totalPrice: '-'
+                    });
+                } else if (t.type === 'sale') {
+                    if (whFilter !== 'all' && t.warehouseId !== whFilter) return;
+                    (t.lines || []).forEach(ln => {
+                        if (ln.itemId === item.id || ln.itemName === item.name) {
+                            const sqm = Number(ln.sqm || 0);
+                            const rolls = rollArea > 0 ? (sqm / rollArea) : 0;
+                            rawEvents.push({
+                                date: t.date,
+                                seq: t.seq || 0,
+                                kind: 'sale',
+                                typeLabel: 'أمر منصرف',
+                                refId: t.id + (t.quoteRef ? ` (بيان ${t.quoteRef})` : ''),
+                                party: `العميل: ${t.customerName || '-'}`,
+                                whName,
+                                rollsDelta: -rolls,
+                                sqmDelta: -sqm,
+                                qtyDetail: `${ln.width}م × ${ln.length}م × ${ln.qty} = ${sqm.toFixed(2)} م² (${rolls.toFixed(2)} رول)`,
+                                unitPrice: Number(ln.price || 0).toFixed(2) + ' ر.س',
+                                totalPrice: Number(ln.total || 0).toFixed(2) + ' ر.س'
+                            });
+                        }
+                    });
+                } else if (t.type === 'return' && (t.itemId === item.id || t.itemName === item.name)) {
+                    if (whFilter !== 'all' && t.warehouseId && t.warehouseId !== whFilter) return;
+                    const sqm = Number(t.totalSqm || 0);
+                    const rolls = rollArea > 0 ? (sqm / rollArea) : 0;
+                    rawEvents.push({
+                        date: t.date,
+                        seq: t.seq || 0,
+                        kind: 'return',
+                        typeLabel: 'مرتجع عميل',
+                        refId: t.id,
+                        party: `مرتجع من العميل: ${t.customerName || '-'}`,
+                        whName,
+                        rollsDelta: rolls,
+                        sqmDelta: sqm,
+                        qtyDetail: `${sqm.toFixed(2)} م² (${rolls.toFixed(2)} رول)`,
+                        unitPrice: sqm > 0 ? (Number(t.totalAmount || 0) / sqm).toFixed(2) + ' ر.س' : '-',
+                        totalPrice: Number(t.totalAmount || 0).toFixed(2) + ' ر.س'
+                    });
+                } else if (t.type === 'transfer' && (t.itemId === item.id || t.itemName === item.name)) {
+                    const rolls = Number(t.rolls || 0);
+                    const sqm = rolls * rollArea;
+                    const fromName = t.fromWh === 'wh_tahlia' ? 'مخزن التحلية' : 'مخزن السامر';
+                    const toName = t.toWh === 'wh_tahlia' ? 'مخزن التحلية' : 'مخزن السامر';
+
+                    if (whFilter === 'all') {
+                        rawEvents.push({
+                            date: t.date,
+                            seq: t.seq || 0,
+                            kind: 'transfer',
+                            typeLabel: 'تحويل مخزني',
+                            refId: t.id,
+                            party: `من ${fromName} إلى ${toName}`,
+                            whName: `${fromName} ← ${toName}`,
+                            rollsDelta: 0,
+                            sqmDelta: 0,
+                            qtyDetail: `${rolls.toFixed(2)} رول (${sqm.toFixed(2)} م²)`,
+                            unitPrice: '-',
+                            totalPrice: '-'
+                        });
+                    } else if (t.fromWh === whFilter) {
+                        rawEvents.push({
+                            date: t.date,
+                            seq: t.seq || 0,
+                            kind: 'sale',
+                            typeLabel: 'تحويل صادر',
+                            refId: t.id,
+                            party: `محول إلى ${toName}`,
+                            whName: fromName,
+                            rollsDelta: -rolls,
+                            sqmDelta: -sqm,
+                            qtyDetail: `${rolls.toFixed(2)} رول (${sqm.toFixed(2)} م²)`,
+                            unitPrice: '-',
+                            totalPrice: '-'
+                        });
+                    } else if (t.toWh === whFilter) {
+                        rawEvents.push({
+                            date: t.date,
+                            seq: t.seq || 0,
+                            kind: 'inbound',
+                            typeLabel: 'تحويل وارد',
+                            refId: t.id,
+                            party: `مستلم من ${fromName}`,
+                            whName: toName,
+                            rollsDelta: rolls,
+                            sqmDelta: sqm,
+                            qtyDetail: `${rolls.toFixed(2)} رول (${sqm.toFixed(2)} م²)`,
+                            unitPrice: '-',
+                            totalPrice: '-'
+                        });
+                    }
+                }
+            });
+
+            // ترتيب تصاعدي لحساب الرصيد التراكمي بدقة
+            rawEvents.sort((a, b) => {
+                const ta = new Date(a.date).getTime();
+                const tb = new Date(b.date).getTime();
+                if (ta !== tb) return ta - tb;
+                return (a.seq || 0) - (b.seq || 0);
+            });
+
+            // حساب الرصيد الافتتاحي (الفرق بين الرصيد الفعلي الحالي وصافي الحركات المسجلة)
+            const curSamir = Number(item.stockSamir || 0);
+            const curTahlia = Number(item.stockTahlia || 0);
+            const actualCurrentRolls = whFilter === 'wh_samir' ? curSamir : (whFilter === 'wh_tahlia' ? curTahlia : (curSamir + curTahlia));
+            const netEventsRolls = rawEvents.reduce((acc, ev) => acc + ev.rollsDelta, 0);
+            const openingRolls = Math.max(0, Number((actualCurrentRolls - netEventsRolls).toFixed(4)));
+
+            let totInRolls = openingRolls;
+            let totInSqm = openingRolls * rollArea;
+            let totOutRolls = 0;
+            let totOutSqm = 0;
+
+            let runningRolls = openingRolls;
+            const rowsHtml = [];
+
+            if (openingRolls > 0.0001 && !fromDate) {
+                rowsHtml.push(`
+                    <tr class="bg-slate-50/80">
+                        <td class="py-3 px-3 text-slate-500">-</td>
+                        <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-lg bg-slate-200 text-slate-800 font-black">رصيد افتتاحي</span></td>
+                        <td class="py-3 px-3">-</td>
+                        <td class="py-3 px-3 text-slate-700">رصيد أول المدة / استيراد مخزني</td>
+                        <td class="py-3 px-3">${whLabelMap[whFilter]}</td>
+                        <td class="py-3 px-3 text-center text-emerald-700 font-black">+${openingRolls.toFixed(2)} رول (${(openingRolls * rollArea).toFixed(2)} م²)</td>
+                        <td class="py-3 px-3 text-center">-</td>
+                        <td class="py-3 px-3 text-center">-</td>
+                        <td class="py-3 px-3 text-center font-black text-slate-900">${runningRolls.toFixed(2)} رول<br><span class="text-[10px] text-slate-500">(${(runningRolls * rollArea).toFixed(2)} م²)</span></td>
+                    </tr>
+                `);
+            }
+
+            rawEvents.forEach(ev => {
+                const evDate = new Date(ev.date);
+                runningRolls = Number((runningRolls + ev.rollsDelta).toFixed(4));
+
+                if (fromDate && evDate < fromDate) return;
+                if (toDate && evDate > toDate) return;
+
+                if (ev.rollsDelta > 0) {
+                    totInRolls += ev.rollsDelta;
+                    totInSqm += ev.sqmDelta;
+                } else if (ev.rollsDelta < 0) {
+                    totOutRolls += Math.abs(ev.rollsDelta);
+                    totOutSqm += Math.abs(ev.sqmDelta);
+                }
+
+                let badgeClass = 'bg-slate-100 text-slate-800';
+                let qtyClass = 'text-slate-800';
+                let signPrefix = '';
+
+                if (ev.kind === 'inbound' || ev.kind === 'return') {
+                    badgeClass = 'bg-emerald-100 text-emerald-800';
+                    qtyClass = 'text-emerald-700';
+                    signPrefix = '+';
+                } else if (ev.kind === 'sale' || ev.kind === 'adjust_out') {
+                    badgeClass = 'bg-rose-100 text-rose-800';
+                    qtyClass = 'text-rose-700';
+                    signPrefix = '-';
+                } else if (ev.kind === 'transfer') {
+                    badgeClass = 'bg-amber-100 text-amber-800';
+                    qtyClass = 'text-amber-700';
+                }
+
+                rowsHtml.push(`
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 px-3 whitespace-nowrap text-slate-700">${formatDateTimeAr(ev.date)}</td>
+                        <td class="py-3 px-3 whitespace-nowrap"><span class="px-2.5 py-1 rounded-lg text-[11px] font-black ${badgeClass}">${ev.typeLabel}</span></td>
+                        <td class="py-3 px-3 font-black text-blue-700 whitespace-nowrap">${ev.refId}</td>
+                        <td class="py-3 px-3 text-slate-900 font-extrabold">${ev.party}</td>
+                        <td class="py-3 px-3 text-slate-600 whitespace-nowrap">${ev.whName}</td>
+                        <td class="py-3 px-3 text-center font-black ${qtyClass}">${signPrefix}${ev.qtyDetail}</td>
+                        <td class="py-3 px-3 text-center text-slate-700 whitespace-nowrap">${ev.unitPrice}</td>
+                        <td class="py-3 px-3 text-center font-black text-slate-900 whitespace-nowrap">${ev.totalPrice}</td>
+                        <td class="py-3 px-3 text-center font-black text-indigo-700 whitespace-nowrap">
+                            ${Math.max(0, runningRolls).toFixed(2)} رول
+                            <span class="block text-[10px] text-slate-500">(${(Math.max(0, runningRolls) * rollArea).toFixed(2)} م²)</span>
+                        </td>
+                    </tr>
+                `);
+            });
+
+            document.getElementById('movTotInVal').textContent = `${totInRolls.toFixed(2)} رول (${totInSqm.toFixed(2)} م²)`;
+            document.getElementById('movTotOutVal').textContent = `${totOutRolls.toFixed(2)} رول (${totOutSqm.toFixed(2)} م²)`;
+            document.getElementById('movCurrentBalanceRolls').textContent = `${actualCurrentRolls.toFixed(2)} رول`;
+            document.getElementById('movCurrentBalanceSplit').textContent = `السامر: ${curSamir.toFixed(2)} رول | التحلية: ${curTahlia.toFixed(2)} رول`;
+            document.getElementById('movCurrentBalanceSqm').textContent = `${(actualCurrentRolls * rollArea).toFixed(2)} م²`;
+
+            if (rowsHtml.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="py-10 text-center text-slate-400">لا توجد حركات مسجلة لهذا الصنف في الفترة أو المخزن المحدد.</td></tr>';
+            } else {
+                tbody.innerHTML = rowsHtml.join('');
+            }
+        }
+
+        function printItemMovementReport() {
+            const area = document.getElementById('itemMovementPrintableArea');
+            if (!area) return;
+            const win = window.open('', '_blank', 'width=1000,height=800');
+            if (!win) {
+                window.print();
+                return;
+            }
+            win.document.write(`
+                <!DOCTYPE html>
+                <html lang="ar" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>كارت حركة صنف - مؤسسة الطريق الأمثل</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
+                    <script src="https://cdn.tailwindcss.com"><\/script>
+                    <style>body { font-family: 'Cairo', sans-serif; padding: 20px; background: #fff; color: #0f172a; }</style>
+                </head>
+                <body>
+                    <div class="flex items-center justify-between border-b-2 border-slate-800 pb-4 mb-5">
+                        <div>
+                            <h1 class="text-xl font-black">مؤسسة الطريق الأمثل للدعاية والإعلان</h1>
+                            <p class="text-xs font-bold text-slate-600">تقرير كارت حركة صنف تفصيلي</p>
+                        </div>
+                        <div class="text-left text-xs font-bold text-slate-600">
+                            تاريخ الطباعة: ${new Date().toLocaleDateString('ar-SA')}
+                        </div>
+                    </div>
+                    ${area.innerHTML}
+                    <script>setTimeout(() => { window.print(); window.close(); }, 600);<\/script>
+                </body>
+                </html>
+            `);
+            win.document.close();
+        }
+
+        function deleteRollItem(id) {
             appState.items = appState.items.filter(x => x.id !== id);
             saveState();
             refreshAllViews();
