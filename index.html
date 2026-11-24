@@ -2579,6 +2579,12 @@
             if (el) el.textContent = value;
         }
 
+        function getNowLocalInputStr() {
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60000;
+            return new Date(now.getTime() - offset).toISOString().slice(0, 16);
+        }
+
         function formatDateTimeAr(dateStr) {
             if (!dateStr) return '-';
             const d = new Date(dateStr);
@@ -4855,30 +4861,39 @@ ${statusLine}
 
         function openNewSaleOrderModal() {
             if (!hasPermission('sales', 'edit')) {
-                showToast('عذراً، ليس لديك صلاحية إضافة إذون صرف', true);
+                showToast('عذراً، ليس لديك صلاحية إضافة إذون صرف مبيعات', true);
                 return;
             }
+            populateSelects();
             saleCart = [];
             renderSaleCart();
-            document.getElementById('saleCustomerSearch').value = '';
-            document.getElementById('saleCustomerSelect').selectedIndex = -1;
-            document.getElementById('saleItemSearch').value = '';
-            document.getElementById('saleItemSelect').selectedIndex = -1;
-            document.getElementById('saleWidth').value = '';
-            document.getElementById('saleLength').value = '';
-            document.getElementById('saleQty').value = '1';
-            document.getElementById('salePrice').value = '';
-            document.getElementById('saleLinePreviewSqm').textContent = '0.00';
-            document.getElementById('saleLinePreviewRolls').textContent = '0.00';
-            document.getElementById('saleStockAvailBanner').classList.add('hidden');
+            const setVal = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.value = val;
+            };
+            setVal('saleCustomerSearch', '');
+            const custSel = document.getElementById('saleCustomerSelect');
+            if (custSel) custSel.selectedIndex = -1;
+
+            setVal('saleItemSearch', '');
+            const itemSel = document.getElementById('saleItemSelect');
+            if (itemSel) itemSel.selectedIndex = -1;
+
+            setVal('saleWidth', '');
+            setVal('saleLength', '');
+            setVal('saleQty', '1');
+            setVal('salePrice', '');
+            setTextSafe('saleLinePreviewSqm', '0.00');
+            setTextSafe('saleLinePreviewRolls', '0.00');
+            document.getElementById('saleStockAvailBanner')?.classList.add('hidden');
             document.getElementById('saleCustomerCreditBanner')?.classList.add('hidden');
-            if (document.getElementById('saleDriverName')) document.getElementById('saleDriverName').value = '';
-            if (document.getElementById('saleVehiclePlate')) document.getElementById('saleVehiclePlate').value = '';
-            if (document.getElementById('saleAttachmentRef')) document.getElementById('saleAttachmentRef').value = '';
-            document.getElementById('saleOrderNumberInput').value = getNextSaleOrderNumber();
-            document.getElementById('saleQuoteRef').value = '';
-            document.getElementById('saleDate').value = getNowLocalInputStr();
-            document.getElementById('newSaleOrderModal').classList.remove('hidden');
+            setVal('saleDriverName', '');
+            setVal('saleVehiclePlate', '');
+            setVal('saleAttachmentRef', '');
+            setVal('saleOrderNumberInput', getNextSaleOrderNumber());
+            setVal('saleQuoteRef', '');
+            setVal('saleDate', getNowLocalInputStr());
+            document.getElementById('newSaleOrderModal')?.classList.remove('hidden');
         }
 
         function checkSaleCustomerCreditAlert() {
