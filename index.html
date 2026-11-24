@@ -1890,10 +1890,18 @@
             <input type="hidden" id="editingSaleOrderId" value="">
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="searchable-select-wrapper relative sm:col-span-2">
+                <div class="searchable-select-wrapper relative sm:col-span-2" id="saleCustomerComboWrap">
                     <label class="block text-xs font-extrabold text-slate-700 mb-1">اسم العميل</label>
-                    <input type="text" id="saleCustomerSearch" onclick="showSearchableDropdown('saleCustomerSelect')" oninput="filterSearchableSelect('saleCustomerSearch', 'saleCustomerSelect')" placeholder="ابحث واختر العميل..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                    <select id="saleCustomerSelect" size="5" onchange="syncSearchableInput('saleCustomerSelect', 'saleCustomerSearch'); checkSaleCustomerCreditAlert();" class="hidden absolute left-0 right-0 mt-1 bg-white border border-slate-300 rounded-xl shadow-xl z-40 text-xs font-bold p-1"></select>
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute right-3 top-3 text-slate-400 text-xs pointer-events-none"></i>
+                        <input type="text" id="saleCustomerSearch" autocomplete="off" placeholder="ابحث باسم العميل، المدينة، أو الجوال..." class="w-full pr-9 pl-16 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white outline-none transition">
+                        <div class="absolute left-2 top-1.5 flex items-center gap-1">
+                            <button type="button" id="saleCustomerClearBtn" onclick="clearSaleCustomerCombo()" title="مسح" class="hidden w-6 h-6 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center text-xs"><i class="fa-solid fa-xmark"></i></button>
+                            <button type="button" onclick="toggleSaleCustomerMenu()" title="فتح القائمة" class="w-6 h-6 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center text-xs"><i class="fa-solid fa-chevron-down"></i></button>
+                        </div>
+                    </div>
+                    <input type="hidden" id="saleCustomerSelect" value="">
+                    <div id="saleCustomerMenu" class="hidden absolute left-0 right-0 mt-1.5 bg-white border border-slate-300 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto divide-y divide-slate-100"></div>
                 </div>
                 <div>
                     <label class="block text-xs font-extrabold text-slate-700 mb-1">المستودع المصروف منه</label>
@@ -1928,10 +1936,18 @@
             <div id="saleCustomerCreditBanner" class="hidden"></div>
 
             <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
-                <div class="searchable-select-wrapper relative">
+                <div class="searchable-select-wrapper relative" id="saleItemComboWrap">
                     <label class="block text-xs font-extrabold text-slate-700 mb-1">اختيار الصنف / الخامة</label>
-                    <input type="text" id="saleItemSearch" onclick="showSearchableDropdown('saleItemSelect')" oninput="filterSearchableSelect('saleItemSearch', 'saleItemSelect')" placeholder="ابحث باسم الصنف أو المقاس..." class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold">
-                    <select id="saleItemSelect" size="5" onchange="syncSearchableInput('saleItemSelect', 'saleItemSearch'); onSaleItemPicked();" class="hidden absolute left-0 right-0 mt-1 bg-white border border-slate-300 rounded-xl shadow-xl z-40 text-xs font-bold p-1"></select>
+                    <div class="relative">
+                        <i class="fa-solid fa-boxes-stacked absolute right-3 top-3 text-slate-400 text-xs pointer-events-none"></i>
+                        <input type="text" id="saleItemSearch" autocomplete="off" placeholder="ابحث باسم الصنف أو المقاس (استخدم ↑ ↓ و Enter)..." class="w-full pr-9 pl-16 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                        <div class="absolute left-2 top-1.5 flex items-center gap-1">
+                            <button type="button" id="saleItemClearBtn" onclick="clearSaleItemCombo()" title="مسح" class="hidden w-6 h-6 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center text-xs"><i class="fa-solid fa-xmark"></i></button>
+                            <button type="button" onclick="toggleSaleItemMenu()" title="فتح القائمة" class="w-6 h-6 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center text-xs"><i class="fa-solid fa-chevron-down"></i></button>
+                        </div>
+                    </div>
+                    <input type="hidden" id="saleItemSelect" value="">
+                    <div id="saleItemMenu" class="hidden absolute left-0 right-0 mt-1.5 bg-white border border-slate-300 rounded-2xl shadow-2xl z-50 max-h-64 overflow-y-auto divide-y divide-slate-100"></div>
                 </div>
 
                 <div id="saleStockAvailBanner" class="hidden">
@@ -2448,6 +2464,46 @@
             <div class="flex justify-end gap-2 pt-2">
                 <button type="button" onclick="closeUserProfileModal()" class="px-4 py-2 bg-slate-100 rounded-xl text-xs font-extrabold">إلغاء</button>
                 <button type="button" onclick="saveUserProfile()" class="px-5 py-2 bg-blue-600 text-white rounded-xl text-xs font-black">حفظ التعديلات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تسجيل سند قبض من داخل كشف حساب العميل -->
+    <div id="paymentModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="modal-card-animate bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-hand-holding-dollar text-emerald-600"></i>
+                    <span>تسجيل سند قبض للعميل</span>
+                </h3>
+                <button type="button" onclick="closePaymentModal()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">المبلغ المقبوض (ر.س)</label>
+                    <input type="number" step="any" min="0" id="payAmountInput" placeholder="0.00" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-black text-emerald-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">تاريخ القبض</label>
+                    <input type="datetime-local" id="payDateInput" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">طريقة الدفع</label>
+                    <select id="payMethodInput" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                        <option value="تحويل بنكي">تحويل بنكي</option>
+                        <option value="كاش">كاش</option>
+                        <option value="شبكة / مدى">شبكة / مدى</option>
+                        <option value="شيك">شيك</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">ملاحظات / مرجع التحويل</label>
+                    <input type="text" id="payNotesInput" placeholder="اختياري..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closePaymentModal()" class="px-4 py-2 bg-slate-100 rounded-xl text-xs font-extrabold">إلغاء</button>
+                <button type="button" onclick="submitCustomerPayment()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black">اعتماد سند القبض</button>
             </div>
         </div>
     </div>
@@ -3659,7 +3715,7 @@
             const itemOptions = appState.items.map(it =>
                 `<option value="${it.id}">${it.name} (السامر: ${Number(it.stockSamir || 0).toFixed(2)} | التحلية: ${Number(it.stockTahlia || 0).toFixed(2)})</option>`
             ).join('');
-            ['inItemSelect', 'saleItemSelect', 'trItemSelect', 'retItemSelect', 'wasteItemSelect', 'stAddItemSelect', 'movItemSelect'].forEach(id => {
+            ['inItemSelect', 'trItemSelect', 'retItemSelect', 'wasteItemSelect', 'stAddItemSelect', 'movItemSelect'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     const prev = el.value;
@@ -3671,7 +3727,7 @@
             const custOptions = appState.customers.map(c =>
                 `<option value="${c.id}">${c.name}${c.city ? ' - ' + c.city : ''}</option>`
             ).join('');
-            ['saleCustomerSelect', 'retCustomerSelect', 'qPayCustomerSelect'].forEach(id => {
+            ['retCustomerSelect', 'qPayCustomerSelect'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     const prev = el.value;
@@ -3679,6 +3735,284 @@
                     if (prev) el.value = prev;
                 }
             });
+        }
+
+        // ==========================================
+        // نظام القوائم المنسدلة الاحترافية (Combobox) للعملاء والأصناف في إذن الصرف
+        // ==========================================
+        let saleCustomerHighlightIdx = -1;
+        let saleCustomerFilteredList = [];
+        let saleItemHighlightIdx = -1;
+        let saleItemFilteredList = [];
+
+        function escapeHtmlAttr(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function renderSaleCustomerMenu(query = '') {
+            const menu = document.getElementById('saleCustomerMenu');
+            if (!menu) return;
+            const q = String(query || '').trim().toLowerCase();
+            saleCustomerFilteredList = appState.customers.filter(c => {
+                if (!q) return true;
+                return (c.name || '').toLowerCase().includes(q) ||
+                       (c.city || '').toLowerCase().includes(q) ||
+                       (c.phone || '').toLowerCase().includes(q) ||
+                       (c.vat || '').toLowerCase().includes(q);
+            });
+
+            if (saleCustomerFilteredList.length === 0) {
+                saleCustomerHighlightIdx = -1;
+                menu.innerHTML = `<div class="p-4 text-center text-xs font-bold text-slate-400">لا يوجد عميل مطابق لـ "${escapeHtmlAttr(query)}"</div>`;
+                return;
+            }
+
+            if (saleCustomerHighlightIdx >= saleCustomerFilteredList.length) {
+                saleCustomerHighlightIdx = 0;
+            }
+
+            menu.innerHTML = saleCustomerFilteredList.map((c, idx) => {
+                const st = getCustomerStats(c.id);
+                const isActive = idx === saleCustomerHighlightIdx;
+                const balBadge = st.balance > 0
+                    ? `<span class="px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 text-[10px] font-black">عليه: ${st.balance.toFixed(2)} ر.س</span>`
+                    : `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-black">الرصيد: ${st.balance.toFixed(2)} ر.س</span>`;
+
+                return `
+                    <div data-combo-idx="${idx}"
+                         onmouseenter="highlightSaleCustomerOption(${idx})"
+                         onmousedown="event.preventDefault(); selectSaleCustomerById('${c.id}');"
+                         class="px-3.5 py-2.5 cursor-pointer flex items-center justify-between gap-2 transition-colors ${isActive ? 'bg-blue-600 text-white' : 'hover:bg-blue-50 text-slate-800'}">
+                        <div class="min-w-0">
+                            <div class="text-xs font-black truncate ${isActive ? 'text-white' : 'text-slate-900'}">${escapeHtmlAttr(c.name)}</div>
+                            <div class="text-[11px] font-semibold mt-0.5 ${isActive ? 'text-blue-100' : 'text-slate-500'}">
+                                ${[c.city, c.phone].filter(Boolean).join(' • ') || 'عميل مسجل'}
+                            </div>
+                        </div>
+                        <div class="shrink-0">${isActive ? `<span class="px-2 py-0.5 rounded-md bg-white/20 text-white text-[10px] font-black">${st.balance.toFixed(2)} ر.س</span>` : balBadge}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function highlightSaleCustomerOption(idx) {
+            saleCustomerHighlightIdx = idx;
+            const menu = document.getElementById('saleCustomerMenu');
+            if (!menu) return;
+            Array.from(menu.children).forEach((el, i) => {
+                const c = saleCustomerFilteredList[i];
+                if (!c) return;
+                const st = getCustomerStats(c.id);
+                if (i === idx) {
+                    el.className = 'px-3.5 py-2.5 cursor-pointer flex items-center justify-between gap-2 transition-colors bg-blue-600 text-white';
+                    el.querySelector('div > div:first-child').className = 'text-xs font-black truncate text-white';
+                    el.querySelector('div > div:last-child').className = 'text-[11px] font-semibold mt-0.5 text-blue-100';
+                    el.lastElementChild.innerHTML = `<span class="px-2 py-0.5 rounded-md bg-white/20 text-white text-[10px] font-black">${st.balance.toFixed(2)} ر.س</span>`;
+                    el.scrollIntoView({ block: 'nearest' });
+                } else {
+                    el.className = 'px-3.5 py-2.5 cursor-pointer flex items-center justify-between gap-2 transition-colors hover:bg-blue-50 text-slate-800';
+                    el.querySelector('div > div:first-child').className = 'text-xs font-black truncate text-slate-900';
+                    el.querySelector('div > div:last-child').className = 'text-[11px] font-semibold mt-0.5 text-slate-500';
+                    el.lastElementChild.innerHTML = st.balance > 0
+                        ? `<span class="px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 text-[10px] font-black">عليه: ${st.balance.toFixed(2)} ر.س</span>`
+                        : `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-black">الرصيد: ${st.balance.toFixed(2)} ر.س</span>`;
+                }
+            });
+        }
+
+        function openSaleCustomerMenu() {
+            closeAllSearchableDropdowns();
+            const menu = document.getElementById('saleCustomerMenu');
+            const inp = document.getElementById('saleCustomerSearch');
+            const selectedId = document.getElementById('saleCustomerSelect')?.value || '';
+            if (!menu || !inp) return;
+            const query = selectedId ? '' : inp.value;
+            saleCustomerHighlightIdx = selectedId
+                ? Math.max(0, appState.customers.findIndex(c => c.id === selectedId))
+                : 0;
+            renderSaleCustomerMenu(query);
+            menu.classList.remove('hidden');
+            const activeEl = menu.children[saleCustomerHighlightIdx];
+            if (activeEl) activeEl.scrollIntoView({ block: 'nearest' });
+        }
+
+        function toggleSaleCustomerMenu() {
+            const menu = document.getElementById('saleCustomerMenu');
+            if (!menu) return;
+            if (menu.classList.contains('hidden')) {
+                openSaleCustomerMenu();
+                document.getElementById('saleCustomerSearch')?.focus();
+            } else {
+                menu.classList.add('hidden');
+            }
+        }
+
+        function selectSaleCustomerById(custId, moveFocusToItem = true) {
+            const cust = appState.customers.find(c => c.id === custId);
+            const hiddenInp = document.getElementById('saleCustomerSelect');
+            const searchInp = document.getElementById('saleCustomerSearch');
+            const clearBtn = document.getElementById('saleCustomerClearBtn');
+            const menu = document.getElementById('saleCustomerMenu');
+            if (!cust || !hiddenInp || !searchInp) return;
+
+            hiddenInp.value = cust.id;
+            searchInp.value = cust.name;
+            if (clearBtn) clearBtn.classList.remove('hidden');
+            if (menu) menu.classList.add('hidden');
+            checkSaleCustomerCreditAlert();
+            if (moveFocusToItem) {
+                document.getElementById('saleItemSearch')?.focus();
+            }
+        }
+
+        function clearSaleCustomerCombo() {
+            const hiddenInp = document.getElementById('saleCustomerSelect');
+            const searchInp = document.getElementById('saleCustomerSearch');
+            const clearBtn = document.getElementById('saleCustomerClearBtn');
+            if (hiddenInp) hiddenInp.value = '';
+            if (searchInp) {
+                searchInp.value = '';
+                searchInp.focus();
+            }
+            if (clearBtn) clearBtn.classList.add('hidden');
+            document.getElementById('saleCustomerCreditBanner')?.classList.add('hidden');
+            openSaleCustomerMenu();
+        }
+
+        function renderSaleItemMenu(query = '') {
+            const menu = document.getElementById('saleItemMenu');
+            if (!menu) return;
+            const q = String(query || '').trim().toLowerCase();
+            saleItemFilteredList = appState.items.filter(it => {
+                if (!q) return true;
+                const dims = `${it.length} ${it.width} ${it.width}*${it.length} ${it.width}×${it.length}`;
+                return (it.name || '').toLowerCase().includes(q) || dims.includes(q);
+            });
+
+            if (saleItemFilteredList.length === 0) {
+                saleItemHighlightIdx = -1;
+                menu.innerHTML = `<div class="p-4 text-center text-xs font-bold text-slate-400">لا يوجد صنف مطابق لـ "${escapeHtmlAttr(query)}"</div>`;
+                return;
+            }
+
+            if (saleItemHighlightIdx >= saleItemFilteredList.length) {
+                saleItemHighlightIdx = 0;
+            }
+
+            menu.innerHTML = saleItemFilteredList.map((it, idx) => {
+                const rS = Number(it.stockSamir || 0);
+                const rT = Number(it.stockTahlia || 0);
+                const isActive = idx === saleItemHighlightIdx;
+                return `
+                    <div data-combo-idx="${idx}"
+                         onmouseenter="highlightSaleItemOption(${idx})"
+                         onmousedown="event.preventDefault(); selectSaleItemById('${it.id}');"
+                         class="px-3.5 py-2.5 cursor-pointer flex items-center justify-between gap-2 transition-colors ${isActive ? 'bg-blue-600 text-white' : 'hover:bg-blue-50 text-slate-800'}">
+                        <div class="min-w-0">
+                            <div class="text-xs font-black truncate ${isActive ? 'text-white' : 'text-slate-900'}">${escapeHtmlAttr(it.name)}</div>
+                            <div class="text-[11px] font-semibold mt-0.5 ${isActive ? 'text-blue-100' : 'text-slate-500'}">
+                                المقاس القياسي: العرض ${it.width}م × الطول ${it.length}م
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0 text-[10px] font-black">
+                            <span class="px-2 py-0.5 rounded-md ${isActive ? 'bg-white/20 text-white' : (rS > 0 ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-400')}">السامر: ${rS.toFixed(2)}</span>
+                            <span class="px-2 py-0.5 rounded-md ${isActive ? 'bg-white/20 text-white' : (rT > 0 ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-400')}">التحلية: ${rT.toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function highlightSaleItemOption(idx) {
+            saleItemHighlightIdx = idx;
+            const menu = document.getElementById('saleItemMenu');
+            if (!menu) return;
+            Array.from(menu.children).forEach((el, i) => {
+                const it = saleItemFilteredList[i];
+                if (!it) return;
+                const rS = Number(it.stockSamir || 0);
+                const rT = Number(it.stockTahlia || 0);
+                if (i === idx) {
+                    el.className = 'px-3.5 py-2.5 cursor-pointer flex items-center justify-between gap-2 transition-colors bg-blue-600 text-white';
+                    el.querySelector('div > div:first-child').className = 'text-xs font-black truncate text-white';
+                    el.querySelector('div > div:last-child').className = 'text-[11px] font-semibold mt-0.5 text-blue-100';
+                    el.lastElementChild.innerHTML = `
+                        <span class="px-2 py-0.5 rounded-md bg-white/20 text-white">السامر: ${rS.toFixed(2)}</span>
+                        <span class="px-2 py-0.5 rounded-md bg-white/20 text-white">التحلية: ${rT.toFixed(2)}</span>
+                    `;
+                    el.scrollIntoView({ block: 'nearest' });
+                } else {
+                    el.className = 'px-3.5 py-2.5 cursor-pointer flex items-center justify-between gap-2 transition-colors hover:bg-blue-50 text-slate-800';
+                    el.querySelector('div > div:first-child').className = 'text-xs font-black truncate text-slate-900';
+                    el.querySelector('div > div:last-child').className = 'text-[11px] font-semibold mt-0.5 text-slate-500';
+                    el.lastElementChild.innerHTML = `
+                        <span class="px-2 py-0.5 rounded-md ${rS > 0 ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-400'}">السامر: ${rS.toFixed(2)}</span>
+                        <span class="px-2 py-0.5 rounded-md ${rT > 0 ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-400'}">التحلية: ${rT.toFixed(2)}</span>
+                    `;
+                }
+            });
+        }
+
+        function openSaleItemMenu() {
+            closeAllSearchableDropdowns();
+            const menu = document.getElementById('saleItemMenu');
+            const inp = document.getElementById('saleItemSearch');
+            const selectedId = document.getElementById('saleItemSelect')?.value || '';
+            if (!menu || !inp) return;
+            const query = selectedId ? '' : inp.value;
+            saleItemHighlightIdx = selectedId
+                ? Math.max(0, appState.items.findIndex(it => it.id === selectedId))
+                : 0;
+            renderSaleItemMenu(query);
+            menu.classList.remove('hidden');
+            const activeEl = menu.children[saleItemHighlightIdx];
+            if (activeEl) activeEl.scrollIntoView({ block: 'nearest' });
+        }
+
+        function toggleSaleItemMenu() {
+            const menu = document.getElementById('saleItemMenu');
+            if (!menu) return;
+            if (menu.classList.contains('hidden')) {
+                openSaleItemMenu();
+                document.getElementById('saleItemSearch')?.focus();
+            } else {
+                menu.classList.add('hidden');
+            }
+        }
+
+        function selectSaleItemById(itemId, focusPrice = true) {
+            const item = appState.items.find(it => it.id === itemId);
+            const hiddenInp = document.getElementById('saleItemSelect');
+            const searchInp = document.getElementById('saleItemSearch');
+            const clearBtn = document.getElementById('saleItemClearBtn');
+            const menu = document.getElementById('saleItemMenu');
+            if (!item || !hiddenInp || !searchInp) return;
+
+            hiddenInp.value = item.id;
+            searchInp.value = item.name;
+            if (clearBtn) clearBtn.classList.remove('hidden');
+            if (menu) menu.classList.add('hidden');
+            onSaleItemPicked(focusPrice);
+        }
+
+        function clearSaleItemCombo() {
+            const hiddenInp = document.getElementById('saleItemSelect');
+            const searchInp = document.getElementById('saleItemSearch');
+            const clearBtn = document.getElementById('saleItemClearBtn');
+            if (hiddenInp) hiddenInp.value = '';
+            if (searchInp) {
+                searchInp.value = '';
+                searchInp.focus();
+            }
+            if (clearBtn) clearBtn.classList.add('hidden');
+            document.getElementById('saleWidth').value = '';
+            document.getElementById('saleLength').value = '';
+            document.getElementById('saleQty').value = '1';
+            document.getElementById('salePrice').value = '';
+            setTextSafe('saleLinePreviewSqm', '0.00');
+            setTextSafe('saleLinePreviewRolls', '0.00');
+            document.getElementById('saleStockAvailBanner')?.classList.add('hidden');
+            openSaleItemMenu();
         }
 
         function filterSearchableSelect(inputId, selectId) {
@@ -3701,9 +4035,7 @@
         function showSearchableDropdown(selectId) {
             const sel = document.getElementById(selectId);
             if (!sel) return;
-            document.querySelectorAll('.searchable-select-wrapper select').forEach(other => {
-                if (other.id !== selectId) other.classList.add('hidden');
-            });
+            closeAllSearchableDropdowns();
             Array.from(sel.options).forEach(opt => opt.hidden = false);
             sel.classList.remove('hidden');
             if (sel.selectedIndex < 0 && sel.options.length > 0) {
@@ -3715,6 +4047,8 @@
             document.querySelectorAll('.searchable-select-wrapper select').forEach(sel => {
                 sel.classList.add('hidden');
             });
+            document.getElementById('saleCustomerMenu')?.classList.add('hidden');
+            document.getElementById('saleItemMenu')?.classList.add('hidden');
         }
 
         function syncSearchableInput(selectId, inputId) {
@@ -3726,74 +4060,60 @@
         }
 
         function handleSaleItemKeydown(event) {
-            const sel = document.getElementById('saleItemSelect');
+            const menu = document.getElementById('saleItemMenu');
             const inp = document.getElementById('saleItemSearch');
-            if (!sel || !inp) return;
+            if (!menu || !inp) return;
 
-            const visibleOptions = Array.from(sel.options).filter(opt => !opt.hidden);
             if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
                 event.preventDefault();
-                sel.classList.remove('hidden');
-                if (visibleOptions.length === 0) return;
-
-                const currentOpt = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
-                let pos = currentOpt ? visibleOptions.indexOf(currentOpt) : -1;
+                if (menu.classList.contains('hidden')) {
+                    openSaleItemMenu();
+                    return;
+                }
+                if (saleItemFilteredList.length === 0) return;
                 if (event.key === 'ArrowDown') {
-                    pos = pos < visibleOptions.length - 1 ? pos + 1 : 0;
+                    saleItemHighlightIdx = saleItemHighlightIdx < saleItemFilteredList.length - 1 ? saleItemHighlightIdx + 1 : 0;
                 } else {
-                    pos = pos > 0 ? pos - 1 : visibleOptions.length - 1;
+                    saleItemHighlightIdx = saleItemHighlightIdx > 0 ? saleItemHighlightIdx - 1 : saleItemFilteredList.length - 1;
                 }
-                const targetOpt = visibleOptions[pos];
-                if (targetOpt) {
-                    sel.value = targetOpt.value;
-                    inp.value = targetOpt.text;
-                    targetOpt.scrollIntoView({ block: 'nearest' });
-                    onSaleItemPicked();
-                }
+                highlightSaleItemOption(saleItemHighlightIdx);
             } else if (event.key === 'Enter') {
-                if (!sel.classList.contains('hidden') && sel.selectedIndex >= 0) {
+                if (!menu.classList.contains('hidden') && saleItemFilteredList.length > 0) {
                     event.preventDefault();
-                    syncSearchableInput('saleItemSelect', 'saleItemSearch');
-                    onSaleItemPicked();
+                    const picked = saleItemFilteredList[Math.max(0, saleItemHighlightIdx)];
+                    if (picked) selectSaleItemById(picked.id, true);
                 }
-            } else if (event.key === 'Escape') {
-                sel.classList.add('hidden');
+            } else if (event.key === 'Escape' || event.key === 'Tab') {
+                menu.classList.add('hidden');
             }
         }
 
         function handleSaleCustomerKeydown(event) {
-            const sel = document.getElementById('saleCustomerSelect');
+            const menu = document.getElementById('saleCustomerMenu');
             const inp = document.getElementById('saleCustomerSearch');
-            if (!sel || !inp) return;
+            if (!menu || !inp) return;
 
-            const visibleOptions = Array.from(sel.options).filter(opt => !opt.hidden);
             if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
                 event.preventDefault();
-                sel.classList.remove('hidden');
-                if (visibleOptions.length === 0) return;
-
-                const currentOpt = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
-                let pos = currentOpt ? visibleOptions.indexOf(currentOpt) : -1;
-                pos = event.key === 'ArrowDown'
-                    ? (pos < visibleOptions.length - 1 ? pos + 1 : 0)
-                    : (pos > 0 ? pos - 1 : visibleOptions.length - 1);
-
-                const targetOpt = visibleOptions[pos];
-                if (targetOpt) {
-                    sel.value = targetOpt.value;
-                    inp.value = targetOpt.text;
-                    targetOpt.scrollIntoView({ block: 'nearest' });
-                    checkSaleCustomerCreditAlert();
+                if (menu.classList.contains('hidden')) {
+                    openSaleCustomerMenu();
+                    return;
                 }
+                if (saleCustomerFilteredList.length === 0) return;
+                if (event.key === 'ArrowDown') {
+                    saleCustomerHighlightIdx = saleCustomerHighlightIdx < saleCustomerFilteredList.length - 1 ? saleCustomerHighlightIdx + 1 : 0;
+                } else {
+                    saleCustomerHighlightIdx = saleCustomerHighlightIdx > 0 ? saleCustomerHighlightIdx - 1 : saleCustomerFilteredList.length - 1;
+                }
+                highlightSaleCustomerOption(saleCustomerHighlightIdx);
             } else if (event.key === 'Enter') {
-                if (!sel.classList.contains('hidden') && sel.selectedIndex >= 0) {
+                if (!menu.classList.contains('hidden') && saleCustomerFilteredList.length > 0) {
                     event.preventDefault();
-                    syncSearchableInput('saleCustomerSelect', 'saleCustomerSearch');
-                    checkSaleCustomerCreditAlert();
-                    document.getElementById('saleItemSearch')?.focus();
+                    const picked = saleCustomerFilteredList[Math.max(0, saleCustomerHighlightIdx)];
+                    if (picked) selectSaleCustomerById(picked.id, true);
                 }
-            } else if (event.key === 'Escape') {
-                sel.classList.add('hidden');
+            } else if (event.key === 'Escape' || event.key === 'Tab') {
+                menu.classList.add('hidden');
             }
         }
 
@@ -3833,10 +4153,28 @@
         document.addEventListener('DOMContentLoaded', () => {
             const saleItemSearchEl = document.getElementById('saleItemSearch');
             if (saleItemSearchEl) {
+                saleItemSearchEl.addEventListener('focus', openSaleItemMenu);
+                saleItemSearchEl.addEventListener('click', openSaleItemMenu);
+                saleItemSearchEl.addEventListener('input', () => {
+                    document.getElementById('saleItemSelect').value = '';
+                    document.getElementById('saleItemClearBtn')?.classList.toggle('hidden', !saleItemSearchEl.value.trim());
+                    saleItemHighlightIdx = 0;
+                    renderSaleItemMenu(saleItemSearchEl.value);
+                    document.getElementById('saleItemMenu')?.classList.remove('hidden');
+                });
                 saleItemSearchEl.addEventListener('keydown', handleSaleItemKeydown);
             }
             const saleCustSearchEl = document.getElementById('saleCustomerSearch');
             if (saleCustSearchEl) {
+                saleCustSearchEl.addEventListener('focus', openSaleCustomerMenu);
+                saleCustSearchEl.addEventListener('click', openSaleCustomerMenu);
+                saleCustSearchEl.addEventListener('input', () => {
+                    document.getElementById('saleCustomerSelect').value = '';
+                    document.getElementById('saleCustomerClearBtn')?.classList.toggle('hidden', !saleCustSearchEl.value.trim());
+                    saleCustomerHighlightIdx = 0;
+                    renderSaleCustomerMenu(saleCustSearchEl.value);
+                    document.getElementById('saleCustomerMenu')?.classList.remove('hidden');
+                });
                 saleCustSearchEl.addEventListener('keydown', handleSaleCustomerKeydown);
             }
             bindGenericSearchableKeyboard('qPayCustomerSearch', 'qPayCustomerSelect', () => {
@@ -4331,11 +4669,14 @@
 
             const histEl = document.getElementById('stocktakeHistoryList');
             if (histEl) {
-                if (appState.stocktakeHistory.length === 0) {
+                if (!appState.stocktakeHistory || appState.stocktakeHistory.length === 0) {
                     histEl.textContent = 'لا توجد عمليات جرد معتمدة سابقة.';
                 } else {
-                    histEl.innerHTML = appState.stocktakeHistory.slice().reverse().map(h =>
-                        `<div class="py-1.5 border-b border-slate-100 flex justify-between"><span>جرد #${h.docNum} (${h.count} صنف)</span><span>${formatDateTimeAr(h.date)}</span></div>`
+                    histEl.innerHTML = [...appState.stocktakeHistory].reverse().map(h =>
+                        `<div class="py-1.5 border-b border-slate-100 flex items-center justify-between">
+                            <span>جرد رقم <strong>#${h.docNum}</strong> — عدد الأصناف: <strong>${h.count}</strong></span>
+                            <span class="text-slate-500">${formatDateTimeAr(h.date)}</span>
+                        </div>`
                     ).join('');
                 }
             }
@@ -4800,18 +5141,18 @@ ${statusLine}
                                 الإجراءات <i class="fa-solid fa-chevron-down mr-1"></i>
                             </button>
                             <div id="itemMenu_${it.id}" class="action-dropdown hidden fixed w-44 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 text-right overflow-hidden">
-                                <button type="button" onclick="viewRollDetails('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center justify-start text-right">
+                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); viewRollDetails('${it.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center justify-start text-right">
                                     <i class="fa-solid fa-eye text-blue-600"></i> <span class="flex-1 text-right">عرض</span>
                                 </button>
                                 <button type="button" onclick="openItemMovementModal('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-50 flex items-center justify-start text-right">
                                     <i class="fa-solid fa-arrows-left-right-to-line text-indigo-600"></i> <span class="flex-1 text-right">حركة الصنف</span>
                                 </button>
                                 ${hasPermission('inventory', 'edit') ? `
-                                <button type="button" onclick="openEditRollModal('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center justify-start text-right">
+                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); openEditRollModal('${it.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center justify-start text-right">
                                     <i class="fa-solid fa-pen-to-square text-amber-600"></i> <span class="flex-1 text-right">تعديل</span>
                                 </button>` : ''}
                                 ${hasPermission('inventory', 'delete') ? `
-                                <button type="button" onclick="deleteRollItem('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center justify-start text-right">
+                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); deleteRollItem('${it.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center justify-start text-right">
                                     <i class="fa-solid fa-trash"></i> <span class="flex-1 text-right">حذف</span>
                                 </button>` : ''}
                             </div>
@@ -4819,14 +5160,6 @@ ${statusLine}
                     </tr>
                 `;
             }).join('');
-        }
-
-        function toggleActionMenu(menuId) {
-            document.querySelectorAll('.action-dropdown').forEach(m => {
-                if (m.id !== menuId) m.classList.add('hidden');
-            });
-            const menu = document.getElementById(menuId);
-            if (menu) menu.classList.toggle('hidden');
         }
 
         function openAddRollModal() {
@@ -5479,13 +5812,15 @@ ${statusLine}
             return null;
         }
 
-        function onSaleItemPicked() {
+        function onSaleItemPicked(focusPrice = true) {
             const item = getSelectedSaleItem();
             if (item) {
                 document.getElementById('saleWidth').value = item.width;
                 document.getElementById('saleLength').value = item.length;
                 calcSaleLineSqm();
-                document.getElementById('salePrice')?.focus();
+                if (focusPrice) {
+                    document.getElementById('salePrice')?.focus();
+                }
             }
         }
 
@@ -5575,12 +5910,12 @@ ${statusLine}
             if (submitBtn) submitBtn.innerHTML = '<i class="fa-solid fa-check ml-1"></i> اعتماد إذن الصرف وخصم المخزون';
 
             setVal('saleCustomerSearch', '');
-            const custSel = document.getElementById('saleCustomerSelect');
-            if (custSel) custSel.selectedIndex = -1;
+            setVal('saleCustomerSelect', '');
+            document.getElementById('saleCustomerClearBtn')?.classList.add('hidden');
 
             setVal('saleItemSearch', '');
-            const itemSel = document.getElementById('saleItemSelect');
-            if (itemSel) itemSel.selectedIndex = -1;
+            setVal('saleItemSelect', '');
+            document.getElementById('saleItemClearBtn')?.classList.add('hidden');
 
             setVal('saleWidth', '');
             setVal('saleLength', '');
@@ -5624,11 +5959,9 @@ ${statusLine}
             const submitBtn = document.getElementById('submitSaleOrderBtn');
             if (submitBtn) submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk ml-1"></i> حفظ تعديلات إذن الصرف';
 
-            const custSel = document.getElementById('saleCustomerSelect');
-            if (custSel && tx.customerId) {
-                custSel.value = tx.customerId;
-            }
+            setVal('saleCustomerSelect', tx.customerId || '');
             setVal('saleCustomerSearch', tx.customerName || '');
+            document.getElementById('saleCustomerClearBtn')?.classList.toggle('hidden', !(tx.customerName || '').trim());
             setVal('saleWarehouse', tx.warehouseId || 'wh_samir');
             setVal('saleTaxMode', tx.taxMode || 'none');
             setVal('salePaymentStatus', tx.paymentStatus || 'credit');
@@ -5643,8 +5976,8 @@ ${statusLine}
             setVal('saleAttachmentRef', tx.attachmentRef || '');
 
             setVal('saleItemSearch', '');
-            const itemSel = document.getElementById('saleItemSelect');
-            if (itemSel) itemSel.selectedIndex = -1;
+            setVal('saleItemSelect', '');
+            document.getElementById('saleItemClearBtn')?.classList.add('hidden');
             setVal('saleWidth', '');
             setVal('saleLength', '');
             setVal('saleQty', '1');
@@ -6203,10 +6536,9 @@ ${linesTxt}
             const itemSearchInp = document.getElementById('saleItemSearch');
             const itemSel = document.getElementById('saleItemSelect');
             if (itemSearchInp) itemSearchInp.value = '';
-            if (itemSel) {
-                itemSel.selectedIndex = -1;
-                itemSel.classList.add('hidden');
-            }
+            if (itemSel) itemSel.value = '';
+            document.getElementById('saleItemClearBtn')?.classList.add('hidden');
+            document.getElementById('saleItemMenu')?.classList.add('hidden');
             document.getElementById('saleWidth').value = '';
             document.getElementById('saleLength').value = '';
             document.getElementById('saleQty').value = '1';
@@ -6836,18 +7168,18 @@ ${balanceLine}
                                 </button>
                             </div>
                             <div id="custMenu_${c.id}" class="action-dropdown hidden fixed w-44 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 text-right overflow-hidden">
-                                <button type="button" onclick="openCustomerStatement('${c.id}')" class="w-full px-3.5 py-2.5 text-xs font-extrabold text-blue-700 hover:bg-blue-50 flex items-center gap-2">
+                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); openCustomerStatement('${c.id}');" class="w-full px-3.5 py-2.5 text-xs font-extrabold text-blue-700 hover:bg-blue-50 flex items-center gap-2">
                                     <i class="fa-solid fa-file-invoice"></i> كشف حساب العميل
                                 </button>
-                                <button type="button" onclick="sendCustomerWhatsApp('${c.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-green-700 hover:bg-green-50 flex items-center gap-2">
+                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); sendCustomerWhatsApp('${c.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-green-700 hover:bg-green-50 flex items-center gap-2">
                                     <i class="fa-brands fa-whatsapp"></i> إرسال واتساب
                                 </button>
                                 ${hasPermission('customers', 'edit') ? `
-                                <button type="button" onclick="openEditCustomerModal('${c.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); openEditCustomerModal('${c.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
                                     <i class="fa-solid fa-pen-to-square text-amber-600"></i> تعديل
                                 </button>` : ''}
                                 ${hasPermission('customers', 'delete') ? `
-                                <button type="button" onclick="deleteCustomer('${c.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-2">
+                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); deleteCustomer('${c.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-2">
                                     <i class="fa-solid fa-trash"></i> حذف
                                 </button>` : ''}
                             </div>
