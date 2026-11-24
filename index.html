@@ -5219,17 +5219,19 @@ ${statusLine}
 
             menu.style.position = 'fixed';
             menu.style.zIndex = '9999';
+            menu.style.margin = '0';
             menu.classList.remove('hidden');
 
             if (triggerEl && typeof triggerEl.getBoundingClientRect === 'function') {
                 const rect = triggerEl.getBoundingClientRect();
-                const menuHeight = menu.offsetHeight || 165;
-                const menuWidth = menu.offsetWidth || 180;
+                const menuRect = menu.getBoundingClientRect();
+                const menuHeight = menuRect.height || menu.offsetHeight || 165;
+                const menuWidth = menuRect.width || menu.offsetWidth || 180;
                 const spaceBelow = window.innerHeight - rect.bottom;
 
-                let topPos = rect.bottom + 6;
-                if (spaceBelow < menuHeight + 12 && rect.top > menuHeight + 12) {
-                    topPos = rect.top - menuHeight - 6;
+                let topPos = rect.bottom + 4;
+                if (spaceBelow < menuHeight + 10 && rect.top > menuHeight + 10) {
+                    topPos = rect.top - menuHeight - 4;
                 }
 
                 let leftPos = rect.left;
@@ -5238,8 +5240,10 @@ ${statusLine}
                 }
                 if (leftPos < 12) leftPos = 12;
 
-                menu.style.top = `${Math.max(12, topPos)}px`;
-                menu.style.left = `${leftPos}px`;
+                menu.style.setProperty('top', `${Math.max(8, topPos)}px`, 'important');
+                menu.style.setProperty('left', `${leftPos}px`, 'important');
+                menu.style.setProperty('right', 'auto', 'important');
+                menu.style.setProperty('bottom', 'auto', 'important');
             }
         }
 
