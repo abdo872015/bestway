@@ -1876,9 +1876,10 @@
     <div id="newSaleOrderModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 overflow-y-auto">
         <div class="modal-card-animate bg-white rounded-3xl shadow-2xl w-full max-w-4xl p-6 space-y-4 my-6">
             <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                <h3 class="text-base font-black text-slate-900">إصدار إذن صرف بضاعة جديد</h3>
+                <h3 id="saleOrderModalTitle" class="text-base font-black text-slate-900">إصدار إذن صرف بضاعة جديد</h3>
                 <button type="button" onclick="closeNewSaleOrderModal()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700"><i class="fa-solid fa-xmark"></i></button>
             </div>
+            <input type="hidden" id="editingSaleOrderId" value="">
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div class="searchable-select-wrapper relative sm:col-span-2">
@@ -2005,7 +2006,7 @@
                     <span id="saleCartVatWrap" class="hidden">الضريبة (15%): <strong id="saleCartVatAmount" class="text-amber-300">0.00 ر.س</strong></span>
                     <span>الإجمالي المستحق: <strong id="saleCartTotalAmount" class="text-emerald-400 text-base">0.00 ر.س</strong></span>
                 </div>
-                <button type="button" onclick="submitSaleOrder()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-lg">
+                <button type="button" id="submitSaleOrderBtn" onclick="submitSaleOrder()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-lg">
                     <i class="fa-solid fa-check ml-1"></i> اعتماد إذن الصرف وخصم المخزون
                 </button>
             </div>
@@ -5552,6 +5553,11 @@ ${statusLine}
                 const el = document.getElementById(id);
                 if (el) el.value = val;
             };
+            setVal('editingSaleOrderId', '');
+            setTextSafe('saleOrderModalTitle', 'إصدار إذن صرف بضاعة جديد');
+            const submitBtn = document.getElementById('submitSaleOrderBtn');
+            if (submitBtn) submitBtn.innerHTML = '<i class="fa-solid fa-check ml-1"></i> اعتماد إذن الصرف وخصم المخزون';
+
             setVal('saleCustomerSearch', '');
             const custSel = document.getElementById('saleCustomerSelect');
             if (custSel) custSel.selectedIndex = -1;
@@ -5578,6 +5584,83 @@ ${statusLine}
             setVal('salePaymentStatus', 'credit');
             setVal('salePaidMethod', 'تحويل بنكي');
             toggleSalePaymentMethodField();
+            closeAllSearchableDropdowns();
+            document.getElementById('newSaleOrderModal')?.classList.remove('hidden');
+        }
+
+        function openEditSaleOrderModal(txId) {
+            if (!hasPermission('sales', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية تعديل إذون الصرف', true);
+                return;
+            }
+            document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden'));
+            const tx = appState.transactions.find(x => x.id === txId && x.type === 'sale');
+            if (!tx) return;
+
+            populateSelects();
+            const setVal = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.value = val;
+            };
+
+            setVal('editingSaleOrderId', tx.id);
+            setTextSafe('saleOrderModalTitle', `تعديل إذن الصرف (${tx.id})`);
+            const submitBtn = document.getElementById('submitSaleOrderBtn');
+            if (submitBtn) submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk ml-1"></i> حفظ تعديلات إذن الصرف';
+
+            const custSel = document.getElementById('saleCustomerSelect');
+            if (custSel && tx.customerId) {
+                custSel.value = tx.customerId;
+            }
+            setVal('saleCustomerSearch', tx.customerName || '');
+            setVal('saleWarehouse', tx.warehouseId || 'wh_samir');
+            setVal('saleTaxMode', tx.taxMode || 'none');
+            setVal('salePaymentStatus', tx.paymentStatus || 'credit');
+            setVal('salePaidMethod', tx.paidMethod || 'تحويل بنكي');
+            toggleSalePaymentMethodField();
+
+            setVal('saleOrderNumberInput', tx.id);
+            setVal('saleQuoteRef', tx.quoteRef || '');
+            setVal('saleDate', tx.date ? String(tx.date).slice(0, 16) : getNowLocalInputStr());
+            setVal('saleDriverName', tx.driverName || '');
+            setVal('saleVehiclePlate', tx.vehiclePlate || '');
+            setVal('saleAttachmentRef', tx.attachmentRef || '');
+
+            setVal('saleItemSearch', '');
+            const itemSel = document.getElementById('saleItemSelect');
+            if (itemSel) itemSel.selectedIndex = -1;
+            setVal('saleWidth', '');
+            setVal('saleLength', '');
+            setVal('saleQty', '1');
+            setVal('salePrice', '');
+            setTextSafe('saleLinePreviewSqm', '0.00');
+            setTextSafe('saleLinePreviewRolls', '0.00');
+            document.getElementById('saleStockAvailBanner')?.classList.add('hidden');
+
+            const taxMode = tx.taxMode || 'none';
+            saleCart = (tx.lines || []).map(ln => {
+                const it = appState.items.find(x => x.id === ln.itemId || x.name === ln.itemName);
+                const rollArea = Number(ln.rollArea) || (it ? (Number(it.length || 50) * Number(it.width || 1)) : 50);
+                const sqm = Number(ln.sqm || 0);
+                const price = Number(ln.price || 0);
+                const rawTotal = ln.subtotal !== undefined && taxMode === 'exclusive'
+                    ? Number(ln.subtotal)
+                    : (sqm * price);
+                return {
+                    itemId: it ? it.id : ln.itemId,
+                    itemName: ln.itemName,
+                    rollArea,
+                    width: Number(ln.width || 0),
+                    length: Number(ln.length || 0),
+                    qty: Number(ln.qty || 1),
+                    sqm,
+                    price,
+                    total: rawTotal
+                };
+            });
+
+            renderSaleCart();
+            checkSaleCustomerCreditAlert();
             closeAllSearchableDropdowns();
             document.getElementById('newSaleOrderModal')?.classList.remove('hidden');
         }
@@ -5754,20 +5837,27 @@ ${linesTxt}
                         <td class="py-3.5 px-4 text-slate-600">${whName}</td>
                         <td class="py-3.5 px-4 text-center text-indigo-700 font-black">${Number(t.totalSqm || 0).toFixed(2)} م²</td>
                         <td class="py-3.5 px-4 text-center text-emerald-700 font-black">${Number(t.totalAmount || 0).toFixed(2)} ر.س</td>
-                        <td class="py-3.5 px-4 text-center">
-                            <div class="inline-flex items-center gap-1.5">
-                                <button type="button" onclick="viewSaleOrderDetails('${t.id}')" class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-extrabold transition">
-                                    عرض البنود
+                        <td class="py-3.5 px-4 text-center relative">
+                            <button type="button" onclick="toggleActionMenu('saleMenu_${t.id}', this)" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold">
+                                إجراءات <i class="fa-solid fa-chevron-down mr-1"></i>
+                            </button>
+                            <div id="saleMenu_${t.id}" class="action-dropdown hidden fixed w-44 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 text-right overflow-hidden">
+                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); viewSaleOrderDetails('${t.id}');" class="w-full px-3.5 py-2.5 text-xs font-extrabold text-blue-700 hover:bg-blue-50 flex items-center justify-start text-right">
+                                    <i class="fa-solid fa-eye text-blue-600"></i> <span class="flex-1 text-right">عرض البنود</span>
                                 </button>
-                                <button type="button" onclick="printSaleOrder('${t.id}')" title="طباعة إذن الصرف" class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-extrabold transition">
-                                    <i class="fa-solid fa-print"></i>
+                                ${hasPermission('sales', 'edit') ? `
+                                <button type="button" onclick="openEditSaleOrderModal('${t.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center justify-start text-right">
+                                    <i class="fa-solid fa-pen-to-square text-amber-600"></i> <span class="flex-1 text-right">تعديل</span>
+                                </button>` : ''}
+                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); printSaleOrder('${t.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center justify-start text-right">
+                                    <i class="fa-solid fa-print text-emerald-600"></i> <span class="flex-1 text-right">طباعة</span>
                                 </button>
-                                <button type="button" onclick="sendSaleOrderWhatsApp('${t.id}')" title="إرسال واتساب" class="px-2.5 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl text-xs font-extrabold transition">
-                                    <i class="fa-brands fa-whatsapp"></i>
+                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); sendSaleOrderWhatsApp('${t.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-green-700 hover:bg-green-50 flex items-center justify-start text-right">
+                                    <i class="fa-brands fa-whatsapp"></i> <span class="flex-1 text-right">واتساب</span>
                                 </button>
                                 ${hasPermission('sales', 'delete') ? `
-                                <button type="button" onclick="promptVoidTransaction('${t.id}')" title="إلغاء وحذف الإذن" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-extrabold transition">
-                                    <i class="fa-solid fa-trash"></i>
+                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); promptVoidTransaction('${t.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center justify-start text-right">
+                                    <i class="fa-solid fa-trash"></i> <span class="flex-1 text-right">حذف</span>
                                 </button>` : ''}
                             </div>
                         </td>
@@ -5896,7 +5986,12 @@ ${linesTxt}
             `;
 
             document.getElementById('viewSaleModalFooter').innerHTML = `
-                <div>
+                <div class="flex flex-wrap items-center gap-2">
+                    ${hasPermission('sales', 'edit') ? `
+                    <button type="button" onclick="document.getElementById('viewSaleDetailsModal').classList.add('hidden'); openEditSaleOrderModal('${tx.id}');" class="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-extrabold rounded-xl flex items-center gap-1.5">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        <span>تعديل الإذن</span>
+                    </button>` : ''}
                     ${hasPermission('sales', 'delete') ? `
                     <button type="button" onclick="document.getElementById('viewSaleDetailsModal').classList.add('hidden'); promptVoidTransaction('${tx.id}');" class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-extrabold rounded-xl flex items-center gap-1.5">
                         <i class="fa-solid fa-trash"></i>
@@ -6156,6 +6251,7 @@ ${linesTxt}
 
         function submitSaleOrder() {
             try {
+                const editingId = (document.getElementById('editingSaleOrderId')?.value || '').trim();
                 const selCust = document.getElementById('saleCustomerSelect');
                 const searchCustText = (document.getElementById('saleCustomerSearch').value || '').trim();
                 let customerId = selCust ? selCust.value : '';
@@ -6182,14 +6278,29 @@ ${linesTxt}
                     return;
                 }
                 if (saleCart.length === 0) {
-                    showToast('يرجى الضغط على "إضافة البند للإذن" لإضافة بند واحد على الأقل قبل الاعتماد', true);
+                    showToast('يرجى الضغط على "إضافة البند" لإضافة بند واحد على الأقل قبل الاعتماد', true);
                     return;
                 }
 
-                const txId = customOrderNum || getNextSaleOrderNumber();
-                if (appState.transactions.some(t => String(t.id).trim().toLowerCase() === txId.toLowerCase())) {
+                const txId = customOrderNum || (editingId || getNextSaleOrderNumber());
+                if (appState.transactions.some(t => t.id !== editingId && String(t.id).trim().toLowerCase() === txId.toLowerCase())) {
                     showToast(`رقم إذن الصرف (${txId}) مستخدم مسبقاً، يرجى إدخال رقم آخر`, true);
                     return;
+                }
+
+                // في حالة التعديل: نحتسب الرولات المخصومة مسبقاً في الإذن القديم للتحقق الدقيق من الرصيد المتاح
+                const existingTx = editingId ? appState.transactions.find(t => t.id === editingId && t.type === 'sale') : null;
+                const oldCreditedRolls = {};
+                if (existingTx && (existingTx.warehouseId || 'wh_samir') === wh) {
+                    (existingTx.lines || []).forEach(ln => {
+                        const it = appState.items.find(x => x.id === ln.itemId || x.name === ln.itemName);
+                        if (it) {
+                            const rArea = Number(ln.rollArea) || (Number(it.length || 50) * Number(it.width || 1));
+                            if (rArea > 0) {
+                                oldCreditedRolls[it.id] = (oldCreditedRolls[it.id] || 0) + (Number(ln.sqm || 0) / rArea);
+                            }
+                        }
+                    });
                 }
 
                 const rollsNeededPerItem = {};
@@ -6201,12 +6312,34 @@ ${linesTxt}
                 for (const [itId, reqRolls] of Object.entries(rollsNeededPerItem)) {
                     const item = appState.items.find(x => x.id === itId);
                     if (item) {
-                        const avail = wh === 'wh_samir' ? Number(item.stockSamir || 0) : Number(item.stockTahlia || 0);
+                        const avail = (wh === 'wh_samir' ? Number(item.stockSamir || 0) : Number(item.stockTahlia || 0)) + (oldCreditedRolls[itId] || 0);
                         if (reqRolls > avail + 0.0001) {
                             showToast(`لا يمكن الاعتماد: رصيد (${item.name}) في ${whName} هو ${avail.toFixed(2)} رول فقط!`, true);
                             return;
                         }
                     }
+                }
+
+                // استرجاع مخزون الإذن القديم وحذف سند القبض المرتبط به قبل حفظ التعديل الجديد
+                let preservedSeq = Date.now();
+                if (existingTx) {
+                    preservedSeq = existingTx.seq || preservedSeq;
+                    const oldWh = existingTx.warehouseId || 'wh_samir';
+                    (existingTx.lines || []).forEach(ln => {
+                        const item = appState.items.find(x => x.id === ln.itemId || x.name === ln.itemName);
+                        if (item) {
+                            const rollArea = Number(ln.rollArea) || (Number(item.length || 50) * Number(item.width || 1));
+                            if (rollArea > 0) {
+                                const restoredRolls = Number(ln.sqm || 0) / rollArea;
+                                if (oldWh === 'wh_samir') item.stockSamir = Number(item.stockSamir || 0) + restoredRolls;
+                                else item.stockTahlia = Number(item.stockTahlia || 0) + restoredRolls;
+                            }
+                        }
+                    });
+                    appState.transactions = appState.transactions.filter(t =>
+                        t.id !== editingId &&
+                        !(t.type === 'payment' && String(t.notes || '').includes(`سداد فوري لإذن صرف رقم ${editingId}`))
+                    );
                 }
 
                 let totalSqm = 0;
@@ -6239,7 +6372,7 @@ ${linesTxt}
                 const custDisplayName = cust ? cust.name : searchCustText;
                 appState.transactions.push({
                     id: txId,
-                    seq: Date.now(),
+                    seq: preservedSeq,
                     type: 'sale',
                     date,
                     customerId,
@@ -6263,7 +6396,7 @@ ${linesTxt}
                     const autoPayId = 'PAY-' + (5000 + appState.transactions.length + 1);
                     appState.transactions.push({
                         id: autoPayId,
-                        seq: Date.now() + 1,
+                        seq: preservedSeq + 1,
                         type: 'payment',
                         date,
                         customerId,
@@ -6274,8 +6407,13 @@ ${linesTxt}
                     });
                 }
 
-                logUserActivity('create', 'إذون الصرف', `اعتماد إذن صرف ${txId} (${getPaymentStatusLabel(paymentStatus, paidMethod)}) للعميل (${custDisplayName}) بقيمة ${totalAmount.toFixed(2)} ر.س`);
+                logUserActivity(
+                    editingId ? 'edit' : 'create',
+                    'إذون الصرف',
+                    `${editingId ? 'تعديل' : 'اعتماد'} إذن صرف ${txId} (${getPaymentStatusLabel(paymentStatus, paidMethod)}) للعميل (${custDisplayName}) بقيمة ${totalAmount.toFixed(2)} ر.س`
+                );
                 saleCart = [];
+                if (document.getElementById('editingSaleOrderId')) document.getElementById('editingSaleOrderId').value = '';
                 if (document.getElementById('saleTaxMode')) document.getElementById('saleTaxMode').value = 'none';
                 if (document.getElementById('salePaymentStatus')) document.getElementById('salePaymentStatus').value = 'credit';
                 toggleSalePaymentMethodField();
@@ -6285,7 +6423,7 @@ ${linesTxt}
                 closeNewSaleOrderModal();
                 saveState();
                 refreshAllViews();
-                showToast(`تم اعتماد إذن المنصرف (${txId}) بنجاح`);
+                showToast(editingId ? `تم حفظ تعديلات إذن الصرف (${txId}) وتحديث المخزون بنجاح` : `تم اعتماد إذن المنصرف (${txId}) بنجاح`);
             } catch (err) {
                 console.error('Error submitting sale order:', err);
                 showToast('حدث خطأ أثناء اعتماد الإذن: ' + err.message, true);
