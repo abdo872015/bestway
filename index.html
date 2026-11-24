@@ -286,6 +286,10 @@
                     <i class="fa-solid fa-boxes-stacked w-5 text-center"></i>
                     <span>المخزون والرولات (م²)</span>
                 </button>
+                <button type="button" onclick="switchTab('stocktake')" data-tab="stocktake" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-100 transition">
+                    <i class="fa-solid fa-clipboard-check w-5 text-center"></i>
+                    <span>إدارة الجرد</span>
+                </button>
                 <button type="button" onclick="switchTab('inbound')" data-tab="inbound" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-100 transition">
                     <i class="fa-solid fa-truck-ramp-box w-5 text-center"></i>
                     <span>الوارد وتغذية المخزن</span>
@@ -568,6 +572,105 @@
                                     <!-- يتم التعبئة ديناميكياً -->
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2.5 إدارة الجرد الفعلي ومطابقة المخازن -->
+                <section id="tab-stocktake" class="tab-section hidden space-y-5">
+                    <!-- رأس شاشة الجرد (مطابق لتصميم الصورة المرفقة) -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div class="flex flex-wrap items-center gap-4">
+                            <div>
+                                <div class="flex items-center gap-2.5">
+                                    <h1 id="stocktakeDocNumber" class="text-xl sm:text-2xl font-black text-slate-900">جرد المخزون #000001</h1>
+                                    <span id="stocktakeRecordedBadge" class="px-3 py-1 rounded-xl bg-blue-50 text-blue-700 text-xs font-black border border-blue-100">0 / 0 المنتجات المسجلة</span>
+                                </div>
+                                <p class="text-xs text-slate-500 font-bold mt-1">مطابقة الرولات الفعلية في مخزن التحلية ومخزن السامر مع أرصدة البرنامج</p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <button type="button" onclick="completeStocktake()" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black rounded-xl shadow-md shadow-emerald-500/20 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-check"></i>
+                                <span>منجز (اعتماد الجرد)</span>
+                            </button>
+                            <button type="button" onclick="openStocktakeAddItemModal()" class="px-4 py-2.5 bg-teal-500 hover:bg-teal-600 text-white text-xs font-black rounded-xl shadow-sm flex items-center gap-2 transition">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>إضافة عنصر</span>
+                            </button>
+                            <button type="button" onclick="loadAllWarehouseItemsToStocktake()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-xl shadow-sm flex items-center gap-2 transition">
+                                <i class="fa-solid fa-boxes-packing"></i>
+                                <span>إضافة جميع المنتجات من المستودع</span>
+                            </button>
+                            <button type="button" onclick="syncStocktakeProgramCounts()" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-extrabold rounded-xl flex items-center gap-1.5 transition" title="تحديث أرصدة البرنامج الحالية">
+                                <i class="fa-solid fa-rotate text-blue-600"></i>
+                                <span>تحديث العدد بالبرنامج</span>
+                            </button>
+                            <button type="button" onclick="exportStocktakeExcel()" class="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-extrabold rounded-xl flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-file-export"></i>
+                                <span>تصدير</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- رسالة تأكيد داخل شاشة الجرد -->
+                    <div id="stocktakeBannerMsg" class="hidden bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-2xl flex items-center justify-between text-xs font-extrabold">
+                        <span class="flex items-center gap-2">
+                            <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                            <span id="stocktakeBannerText">تم استيراد منتجات المخزن بنجاح</span>
+                        </span>
+                        <button type="button" onclick="document.getElementById('stocktakeBannerMsg').classList.add('hidden')" class="text-emerald-600 hover:text-emerald-900">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <!-- شريط بحث سريع داخل جدول الجرد -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-slate-400"></i>
+                            <input type="text" id="stocktakeSearchInput" oninput="renderStocktakeTable()" placeholder="ابحث باسم المنتج داخل قائمة الجرد..." class="w-full pr-10 pl-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="flex items-center gap-3 text-xs font-extrabold text-slate-600">
+                            <span id="stocktakeRangeLabel" class="bg-slate-100 px-3 py-2 rounded-xl">0 - 0 من 0</span>
+                            <button type="button" onclick="clearStocktakeList()" class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl transition">
+                                تفريغ القائمة
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- جدول الجرد التفصيلي -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-900 text-white text-xs font-extrabold">
+                                        <th class="py-3.5 px-4 min-w-[230px]">اسم المنتج بالتفصيل</th>
+                                        <th class="py-3.5 px-3 text-center whitespace-nowrap">العدد الفعلي<br><span class="text-[10px] text-amber-300">(مخزن التحلية)</span></th>
+                                        <th class="py-3.5 px-3 text-center whitespace-nowrap">العدد الفعلي<br><span class="text-[10px] text-sky-300">(مخزن السامر)</span></th>
+                                        <th class="py-3.5 px-3 text-center whitespace-nowrap">الإجمالي الفعلي<br><span class="text-[10px] text-emerald-300">(السامر + التحلية)</span></th>
+                                        <th class="py-3.5 px-3 text-center whitespace-nowrap">العدد بالبرنامج<br><span class="text-[10px] text-slate-300">(مخزن التحلية)</span></th>
+                                        <th class="py-3.5 px-3 text-center whitespace-nowrap">العدد بالبرنامج<br><span class="text-[10px] text-slate-300">(مخزن السامر)</span></th>
+                                        <th class="py-3.5 px-3 text-center whitespace-nowrap">نقص / زيادة</th>
+                                        <th class="py-3.5 px-3 min-w-[170px]">ملاحظات</th>
+                                        <th class="py-3.5 px-3 text-center">الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stocktakeTableBody" class="divide-y divide-slate-100 text-sm font-bold">
+                                    <!-- يتم التعبئة ديناميكياً -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- سجل عمليات الجرد المعتمدة السابقة -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                        <h3 class="text-sm font-black text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left text-blue-600"></i>
+                            <span>سجل عمليات الجرد المعتمدة السابقة</span>
+                        </h3>
+                        <div id="stocktakeHistoryList" class="text-xs font-bold text-slate-500">
+                            لا توجد عمليات جرد معتمدة سابقة.
                         </div>
                     </div>
                 </section>
@@ -1256,6 +1359,25 @@
         </div>
     </div>
 
+    <!-- نافذة إضافة عنصر لقائمة الجرد -->
+    <div id="stocktakeAddItemModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="text-lg font-black text-slate-900">إضافة منتج إلى قائمة الجرد</h3>
+                <button type="button" onclick="closeStocktakeAddItemModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="searchable-select-wrapper relative">
+                <label class="block text-xs font-extrabold text-slate-700 mb-1.5">اختر المنتج من المستودع</label>
+                <input type="text" id="stAddItemSearch" oninput="filterSearchableSelect('stAddItemSearch', 'stAddItemSelect')" onfocus="showSearchableDropdown('stAddItemSelect')" placeholder="ابحث باسم المنتج..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                <select id="stAddItemSelect" size="6" onchange="syncSearchableInput('stAddItemSelect', 'stAddItemSearch')" onclick="syncSearchableInput('stAddItemSelect', 'stAddItemSearch')" class="hidden absolute z-30 w-full mt-1 bg-white border border-slate-300 rounded-xl shadow-xl text-sm font-bold p-1"></select>
+            </div>
+            <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="closeStocktakeAddItemModal()" class="px-4 py-2.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl">إلغاء</button>
+                <button type="button" onclick="confirmAddStocktakeItem()" class="px-6 py-2.5 bg-teal-600 text-white text-xs font-extrabold rounded-xl">إضافة للجرد</button>
+            </div>
+        </div>
+    </div>
+
     <!-- محرك المزامنة السحابية الحية -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -1370,7 +1492,9 @@
             ],
             items: [],
             customers: [],
-            transactions: []
+            transactions: [],
+            stocktakeLines: [],
+            stocktakeHistory: []
         };
 
         let saleCart = [];
@@ -1499,6 +1623,8 @@
             appState.items = Array.isArray(remote.items) ? remote.items : [];
             appState.customers = Array.isArray(remote.customers) ? remote.customers : [];
             appState.transactions = Array.isArray(remote.transactions) ? remote.transactions : [];
+            appState.stocktakeLines = Array.isArray(remote.stocktakeLines) ? remote.stocktakeLines : [];
+            appState.stocktakeHistory = Array.isArray(remote.stocktakeHistory) ? remote.stocktakeHistory : [];
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
             } catch (e) {}
@@ -1517,6 +1643,8 @@
                     appState.items = Array.isArray(parsed.items) ? parsed.items : [];
                     appState.customers = Array.isArray(parsed.customers) ? parsed.customers : [];
                     appState.transactions = Array.isArray(parsed.transactions) ? parsed.transactions : [];
+                    appState.stocktakeLines = Array.isArray(parsed.stocktakeLines) ? parsed.stocktakeLines : [];
+                    appState.stocktakeHistory = Array.isArray(parsed.stocktakeHistory) ? parsed.stocktakeHistory : [];
                 }
             } catch (e) {
                 console.error('Error loading state', e);
@@ -1606,6 +1734,9 @@
             updateNavButtonsTheme();
 
             if (tabId === 'inbound') document.getElementById('inDate').value = getNowLocalInputStr();
+            if (tabId === 'stocktake' && appState.stocktakeLines.length === 0 && appState.items.length > 0) {
+                loadAllWarehouseItemsToStocktake(true);
+            }
 
             if (window.innerWidth < 1024) {
                 document.getElementById('sidebarNav').classList.add('hidden');
@@ -1670,7 +1801,7 @@
                 const totalR = (Number(it.stockSamir || 0) + Number(it.stockTahlia || 0)).toFixed(2);
                 return `<option value="${it.id}">${it.name} (متوفر: ${totalR} رول)</option>`;
             }).join('');
-            ['inItemSelect', 'saleItemSelect', 'trItemSelect', 'retItemSelect'].forEach(id => {
+            ['inItemSelect', 'saleItemSelect', 'trItemSelect', 'retItemSelect', 'stAddItemSelect'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.innerHTML = itemsHtml;
             });
@@ -1695,6 +1826,7 @@
             populateSelects();
             renderDashboard();
             renderInventoryTable();
+            renderStocktakeTable();
             renderSalesOrdersTable();
             renderCustomersTable();
             renderLogsTable();
@@ -2946,6 +3078,373 @@
             a.download = `نسخة_احتياطية_الطريق_الأمثل_${new Date().toISOString().slice(0, 10)}.json`;
             a.click();
             URL.revokeObjectURL(url);
+        }
+
+        // ==========================================
+        // 9. إدارة الجرد الفعلي ومطابقة المخازن
+        // ==========================================
+        function showStocktakeBanner(msg) {
+            const banner = document.getElementById('stocktakeBannerMsg');
+            const text = document.getElementById('stocktakeBannerText');
+            if (banner && text) {
+                text.textContent = msg;
+                banner.classList.remove('hidden');
+            }
+        }
+
+        function loadAllWarehouseItemsToStocktake(silent = false) {
+            if (!appState.items || appState.items.length === 0) {
+                if (!silent) showToast('لا توجد أصناف مسجلة في المستودع لإضافتها', true);
+                return;
+            }
+            let addedCount = 0;
+            appState.items.forEach(it => {
+                const exists = appState.stocktakeLines.find(l => l.itemId === it.id);
+                if (!exists) {
+                    appState.stocktakeLines.push({
+                        itemId: it.id,
+                        itemName: it.name,
+                        length: it.length,
+                        width: it.width,
+                        actualTahlia: '',
+                        actualSamir: '',
+                        progTahlia: Number(it.stockTahlia || 0),
+                        progSamir: Number(it.stockSamir || 0),
+                        note: ''
+                    });
+                    addedCount++;
+                } else {
+                    exists.itemName = it.name;
+                    exists.progTahlia = Number(it.stockTahlia || 0);
+                    exists.progSamir = Number(it.stockSamir || 0);
+                }
+            });
+            saveState();
+            renderStocktakeTable();
+            if (!silent) {
+                showStocktakeBanner(`تم استيراد منتجات المخزن بنجاح (${appState.stocktakeLines.length} منتج)`);
+            }
+        }
+
+        function syncStocktakeProgramCounts() {
+            appState.stocktakeLines.forEach(line => {
+                const it = appState.items.find(x => x.id === line.itemId);
+                if (it) {
+                    line.itemName = it.name;
+                    line.progTahlia = Number(it.stockTahlia || 0);
+                    line.progSamir = Number(it.stockSamir || 0);
+                }
+            });
+            saveState();
+            renderStocktakeTable();
+            showToast('تم تحديث أرصدة البرنامج في جدول الجرد');
+        }
+
+        function openStocktakeAddItemModal() {
+            document.getElementById('stAddItemSearch').value = '';
+            document.getElementById('stAddItemSelect').selectedIndex = -1;
+            document.getElementById('stocktakeAddItemModal').classList.remove('hidden');
+        }
+
+        function closeStocktakeAddItemModal() {
+            document.getElementById('stocktakeAddItemModal').classList.add('hidden');
+        }
+
+        function confirmAddStocktakeItem() {
+            const sel = document.getElementById('stAddItemSelect');
+            const searchTxt = (document.getElementById('stAddItemSearch').value || '').trim();
+            let itemId = sel ? sel.value : '';
+            if (!itemId && searchTxt) {
+                const found = appState.items.find(x => searchTxt.includes(x.name) || x.name.toLowerCase().includes(searchTxt.toLowerCase()));
+                if (found) itemId = found.id;
+            }
+            const it = appState.items.find(x => x.id === itemId);
+            if (!it) {
+                showToast('يرجى اختيار منتج صحيح من القائمة', true);
+                return;
+            }
+            if (appState.stocktakeLines.some(l => l.itemId === it.id)) {
+                showToast('هذا المنتج مضاف بالفعل في جدول الجرد', true);
+                closeStocktakeAddItemModal();
+                return;
+            }
+            appState.stocktakeLines.unshift({
+                itemId: it.id,
+                itemName: it.name,
+                length: it.length,
+                width: it.width,
+                actualTahlia: '',
+                actualSamir: '',
+                progTahlia: Number(it.stockTahlia || 0),
+                progSamir: Number(it.stockSamir || 0),
+                note: ''
+            });
+            saveState();
+            closeStocktakeAddItemModal();
+            renderStocktakeTable();
+            showToast('تم إضافة المنتج إلى قائمة الجرد');
+        }
+
+        function updateStocktakeField(itemId, field, value) {
+            const line = appState.stocktakeLines.find(l => l.itemId === itemId);
+            if (!line) return;
+            if (field === 'note') {
+                line.note = value;
+            } else {
+                line[field] = value === '' ? '' : (parseFloat(value) || 0);
+            }
+            saveState();
+            updateStocktakeRowMetrics(itemId);
+        }
+
+        function updateStocktakeRowMetrics(itemId) {
+            const line = appState.stocktakeLines.find(l => l.itemId === itemId);
+            if (!line) return;
+
+            const hasTahlia = line.actualTahlia !== '' && line.actualTahlia !== null && !isNaN(line.actualTahlia);
+            const hasSamir = line.actualSamir !== '' && line.actualSamir !== null && !isNaN(line.actualSamir);
+            const actTahlia = hasTahlia ? Number(line.actualTahlia) : 0;
+            const actSamir = hasSamir ? Number(line.actualSamir) : 0;
+            const totalActual = actTahlia + actSamir;
+
+            const progTahlia = Number(line.progTahlia || 0);
+            const progSamir = Number(line.progSamir || 0);
+            const totalProg = progTahlia + progSamir;
+
+            const diff = (hasTahlia || hasSamir) ? (totalActual - totalProg) : 0;
+
+            const totEl = document.getElementById('stTotalAct_' + itemId);
+            const diffEl = document.getElementById('stDiff_' + itemId);
+
+            if (totEl) {
+                totEl.textContent = (hasTahlia || hasSamir) ? totalActual.toFixed(2) : '-';
+            }
+            if (diffEl) {
+                if (!hasTahlia && !hasSamir) {
+                    diffEl.textContent = '0';
+                    diffEl.className = 'py-3 px-3 text-center font-black text-slate-400';
+                } else if (diff > 0) {
+                    diffEl.textContent = '+' + Number(diff.toFixed(2));
+                    diffEl.className = 'py-3 px-3 text-center font-black text-emerald-600';
+                } else if (diff < 0) {
+                    diffEl.textContent = Number(diff.toFixed(2)).toString();
+                    diffEl.className = 'py-3 px-3 text-center font-black text-rose-600';
+                } else {
+                    diffEl.textContent = '0';
+                    diffEl.className = 'py-3 px-3 text-center font-black text-slate-700';
+                }
+            }
+            updateStocktakeHeaderCounters();
+        }
+
+        function updateStocktakeHeaderCounters() {
+            const nextNum = String((appState.stocktakeHistory?.length || 0) + 1).padStart(6, '0');
+            const docEl = document.getElementById('stocktakeDocNumber');
+            if (docEl) docEl.textContent = `جرد المخزون #${nextNum}`;
+
+            const total = appState.stocktakeLines.length;
+            const recorded = appState.stocktakeLines.filter(l =>
+                (l.actualTahlia !== '' && l.actualTahlia !== null) ||
+                (l.actualSamir !== '' && l.actualSamir !== null)
+            ).length;
+
+            const badge = document.getElementById('stocktakeRecordedBadge');
+            if (badge) badge.textContent = `${recorded} / ${total} المنتجات المسجلة`;
+        }
+
+        function removeStocktakeLine(itemId) {
+            appState.stocktakeLines = appState.stocktakeLines.filter(l => l.itemId !== itemId);
+            saveState();
+            renderStocktakeTable();
+            showToast('تم حذف العنصر من قائمة الجرد');
+        }
+
+        function clearStocktakeList() {
+            appState.stocktakeLines = [];
+            saveState();
+            renderStocktakeTable();
+            showToast('تم تفريغ قائمة الجرد');
+        }
+
+        function renderStocktakeTable() {
+            const tbody = document.getElementById('stocktakeTableBody');
+            if (!tbody) return;
+
+            updateStocktakeHeaderCounters();
+            const search = (document.getElementById('stocktakeSearchInput')?.value || '').trim().toLowerCase();
+            const filtered = appState.stocktakeLines.filter(l => !search || (l.itemName || '').toLowerCase().includes(search));
+
+            const rangeEl = document.getElementById('stocktakeRangeLabel');
+            if (rangeEl) {
+                rangeEl.textContent = filtered.length > 0
+                    ? `1 - ${filtered.length} من ${filtered.length}`
+                    : '0 - 0 من 0';
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="py-10 text-center text-slate-400">لا توجد منتجات في قائمة الجرد حالياً. اضغط على "إضافة جميع المنتجات من المستودع" أو "إضافة عنصر".</td></tr>';
+            } else {
+                tbody.innerHTML = filtered.map((line, idx) => {
+                    const hasTahlia = line.actualTahlia !== '' && line.actualTahlia !== null && !isNaN(line.actualTahlia);
+                    const hasSamir = line.actualSamir !== '' && line.actualSamir !== null && !isNaN(line.actualSamir);
+                    const actTahlia = hasTahlia ? Number(line.actualTahlia) : 0;
+                    const actSamir = hasSamir ? Number(line.actualSamir) : 0;
+                    const totalActual = actTahlia + actSamir;
+
+                    const progTahlia = Number(line.progTahlia || 0);
+                    const progSamir = Number(line.progSamir || 0);
+                    const totalProg = progTahlia + progSamir;
+                    const diff = (hasTahlia || hasSamir) ? (totalActual - totalProg) : 0;
+
+                    let diffText = '0';
+                    let diffClass = 'text-slate-400';
+                    if (hasTahlia || hasSamir) {
+                        if (diff > 0) {
+                            diffText = '+' + Number(diff.toFixed(2));
+                            diffClass = 'text-emerald-600';
+                        } else if (diff < 0) {
+                            diffText = Number(diff.toFixed(2)).toString();
+                            diffClass = 'text-rose-600';
+                        } else {
+                            diffText = '0';
+                            diffClass = 'text-slate-700';
+                        }
+                    }
+
+                    const codeBadge = '#' + String(idx + 1).padStart(6, '0');
+
+                    return `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="py-3 px-4">
+                                <div class="font-extrabold text-slate-900">${line.itemName}</div>
+                                <div class="text-[11px] text-blue-600 font-bold mt-0.5">${codeBadge} • المقاس: ${line.length || 50}م × ${line.width || 1}م</div>
+                            </td>
+                            <td class="py-3 px-3 text-center">
+                                <input type="number" step="any" min="0" value="${hasTahlia ? line.actualTahlia : ''}" oninput="updateStocktakeField('${line.itemId}', 'actualTahlia', this.value)" placeholder="العدد الفعلي" class="w-24 p-2 bg-slate-50 border border-slate-300 rounded-xl text-center text-sm font-black outline-none focus:ring-2 focus:ring-blue-500">
+                            </td>
+                            <td class="py-3 px-3 text-center">
+                                <input type="number" step="any" min="0" value="${hasSamir ? line.actualSamir : ''}" oninput="updateStocktakeField('${line.itemId}', 'actualSamir', this.value)" placeholder="العدد الفعلي" class="w-24 p-2 bg-slate-50 border border-slate-300 rounded-xl text-center text-sm font-black outline-none focus:ring-2 focus:ring-blue-500">
+                            </td>
+                            <td id="stTotalAct_${line.itemId}" class="py-3 px-3 text-center font-black text-blue-700">
+                                ${(hasTahlia || hasSamir) ? totalActual.toFixed(2) : '-'}
+                            </td>
+                            <td class="py-3 px-3 text-center text-slate-700 font-extrabold">
+                                ${progTahlia.toFixed(2)}
+                            </td>
+                            <td class="py-3 px-3 text-center text-slate-700 font-extrabold">
+                                ${progSamir.toFixed(2)}
+                            </td>
+                            <td id="stDiff_${line.itemId}" class="py-3 px-3 text-center font-black ${diffClass}">
+                                ${diffText}
+                            </td>
+                            <td class="py-3 px-3">
+                                <input type="text" value="${(line.note || '').replace(/"/g, '&quot;')}" oninput="updateStocktakeField('${line.itemId}', 'note', this.value)" placeholder="ملاحظة..." class="w-full min-w-[140px] p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                            </td>
+                            <td class="py-3 px-3 text-center">
+                                <button type="button" onclick="removeStocktakeLine('${line.itemId}')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-extrabold inline-flex items-center gap-1.5 transition">
+                                    <i class="fa-solid fa-circle-minus"></i>
+                                    <span>حذف</span>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // عرض سجل عمليات الجرد المعتمدة السابقة
+            const histEl = document.getElementById('stocktakeHistoryList');
+            if (histEl) {
+                const hist = appState.stocktakeHistory || [];
+                if (hist.length === 0) {
+                    histEl.innerHTML = 'لا توجد عمليات جرد معتمدة سابقة.';
+                } else {
+                    histEl.innerHTML = hist.slice().reverse().map(h => `
+                        <div class="flex flex-wrap items-center justify-between gap-2 py-2.5 px-3.5 bg-slate-50 rounded-xl border border-slate-200 mb-2">
+                            <span class="font-black text-slate-900">${h.docId} • بتاريخ: ${formatDateTimeAr(h.date)}</span>
+                            <span class="text-emerald-700 font-extrabold">تمت مطابقة واعتماد ${h.adjustedCount} صنف</span>
+                        </div>
+                    `).join('');
+                }
+            }
+        }
+
+        function completeStocktake() {
+            const recordedLines = appState.stocktakeLines.filter(l =>
+                (l.actualTahlia !== '' && l.actualTahlia !== null && !isNaN(l.actualTahlia)) ||
+                (l.actualSamir !== '' && l.actualSamir !== null && !isNaN(l.actualSamir))
+            );
+
+            if (recordedLines.length === 0) {
+                showToast('يرجى إدخال العدد الفعلي لمنتج واحد على الأقل قبل الضغط على منجز', true);
+                return;
+            }
+
+            const docNum = '#' + String((appState.stocktakeHistory?.length || 0) + 1).padStart(6, '0');
+            let adjustedCount = 0;
+
+            recordedLines.forEach(line => {
+                const it = appState.items.find(x => x.id === line.itemId);
+                if (!it) return;
+
+                const hasTahlia = line.actualTahlia !== '' && line.actualTahlia !== null && !isNaN(line.actualTahlia);
+                const hasSamir = line.actualSamir !== '' && line.actualSamir !== null && !isNaN(line.actualSamir);
+
+                const newTahlia = hasTahlia ? Number(line.actualTahlia) : Number(it.stockTahlia || 0);
+                const newSamir = hasSamir ? Number(line.actualSamir) : Number(it.stockSamir || 0);
+
+                const oldTotal = Number(it.stockTahlia || 0) + Number(it.stockSamir || 0);
+                const newTotal = newTahlia + newSamir;
+                const diff = newTotal - oldTotal;
+
+                it.stockTahlia = newTahlia;
+                it.stockSamir = newSamir;
+                line.progTahlia = newTahlia;
+                line.progSamir = newSamir;
+                adjustedCount++;
+
+                if (diff !== 0) {
+                    appState.transactions.push({
+                        id: 'ADJ-' + (1000 + appState.transactions.length + 1),
+                        seq: Date.now() + adjustedCount,
+                        type: 'inbound',
+                        date: getNowLocalInputStr(),
+                        itemId: it.id,
+                        itemName: `${it.name} (تسوية جرد ${docNum}: ${diff > 0 ? '+' + diff.toFixed(2) : diff.toFixed(2)} رول)`,
+                        rolls: diff,
+                        sqm: diff * (it.length || 50) * (it.width || 1),
+                        notes: line.note || `تسوية جرد المخزون ${docNum}`
+                    });
+                }
+            });
+
+            appState.stocktakeHistory = appState.stocktakeHistory || [];
+            appState.stocktakeHistory.push({
+                docId: `جرد المخزون ${docNum}`,
+                date: getNowLocalInputStr(),
+                adjustedCount
+            });
+
+            saveState();
+            refreshAllViews();
+            showStocktakeBanner(`تم إنجاز واعتماد ${docNum} وتحديث أرصدة ${adjustedCount} منتج في البرنامج بنجاح!`);
+            showToast(`تم إنجاز الجرد واعتماد الأرصدة الفعلية (${adjustedCount} منتج)`);
+        }
+
+        function exportStocktakeExcel() {
+            const data = [['اسم المنتج بالتفصيل', 'العدد الفعلي (التحلية)', 'العدد الفعلي (السامر)', 'الإجمالي الفعلي', 'العدد بالبرنامج (التحلية)', 'العدد بالبرنامج (السامر)', 'نقص / زيادة', 'ملاحظات']];
+            appState.stocktakeLines.forEach(l => {
+                const actT = l.actualTahlia !== '' && l.actualTahlia !== null ? Number(l.actualTahlia) : 0;
+                const actS = l.actualSamir !== '' && l.actualSamir !== null ? Number(l.actualSamir) : 0;
+                const totAct = actT + actS;
+                const progT = Number(l.progTahlia || 0);
+                const progS = Number(l.progSamir || 0);
+                const diff = totAct - (progT + progS);
+                data.push([l.itemName, actT, actS, totAct, progT, progS, diff, l.note || '']);
+            });
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            XLSX.utils.book_append_sheet(wb, ws, 'جرد المخزون');
+            XLSX.writeFile(wb, `جرد_المخزون_${new Date().toISOString().slice(0, 10)}.xlsx`);
         }
 
         // تشغيل التهيئة فور تحميل الصفحة
