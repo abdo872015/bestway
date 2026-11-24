@@ -481,8 +481,41 @@
         <div class="login-orb-2 absolute -bottom-24 -left-20 w-96 h-96 rounded-full bg-orange-500/20 blur-3xl pointer-events-none"></div>
         <div class="login-orb-3 absolute top-1/3 left-1/4 w-64 h-64 rounded-full bg-pink-500/15 blur-3xl pointer-events-none"></div>
 
-        <!-- حاوية ثنائية الأعمدة: بطاقة تسجيل الدخول على اليمين + عرض الهوية المتحركة على اليسار -->
-        <div class="relative z-10 w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch my-auto">
+        <!-- خطوط ضوئية متموجة مدمجة بالكامل في خلفية شاشة تسجيل الدخول -->
+        <svg viewBox="0 0 1200 700" preserveAspectRatio="none" class="absolute inset-0 w-full h-full opacity-75 pointer-events-none">
+            <defs>
+                <linearGradient id="beamCyan" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#0EA5E9" stop-opacity="0"/>
+                    <stop offset="50%" stop-color="#38BDF8" stop-opacity="0.95"/>
+                    <stop offset="100%" stop-color="#0284C7" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="beamOrange" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#F97316" stop-opacity="0"/>
+                    <stop offset="50%" stop-color="#FB923C" stop-opacity="0.95"/>
+                    <stop offset="100%" stop-color="#EA580C" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="beamPink" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#EC4899" stop-opacity="0"/>
+                    <stop offset="50%" stop-color="#F472B6" stop-opacity="0.9"/>
+                    <stop offset="100%" stop-color="#DB2777" stop-opacity="0"/>
+                </linearGradient>
+            </defs>
+            <path class="brand-beam-anim" d="M-60,180 C280,50 560,460 1260,220" fill="none" stroke="url(#beamPink)" stroke-width="3.5"/>
+            <path class="brand-beam-anim" d="M-60,310 C340,510 780,110 1260,340" fill="none" stroke="url(#beamOrange)" stroke-width="4"/>
+            <path class="brand-beam-anim" d="M-60,440 C400,160 720,580 1260,390" fill="none" stroke="url(#beamCyan)" stroke-width="4.5"/>
+            <path class="brand-beam-anim" d="M-60,540 C300,380 840,210 1260,510" fill="none" stroke="url(#beamOrange)" stroke-width="2.5"/>
+        </svg>
+
+        <!-- جزيئات ضوئية عائمة في الخلفية -->
+        <div class="brand-particles-anim absolute inset-0 pointer-events-none">
+            <span class="absolute top-16 right-24 w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_12px_#38bdf8]"></span>
+            <span class="absolute top-28 left-32 w-2.5 h-2.5 rounded-full bg-orange-400 shadow-[0_0_14px_#fb923c]"></span>
+            <span class="absolute bottom-24 right-1/3 w-2 h-2 rounded-full bg-pink-400 shadow-[0_0_12px_#f472b6]"></span>
+            <span class="absolute bottom-32 left-24 w-1.5 h-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_#67e8f9]"></span>
+        </div>
+
+        <!-- حاوية ثنائية الأعمدة: بطاقة تسجيل الدخول على اليمين + عرض الهوية المتحرك مدمج مع الخلفية على اليسار بدون أي إطار -->
+        <div class="relative z-10 w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto">
 
             <!-- 1. بطاقة تسجيل الدخول (العمود الأيمن) -->
             <div id="loginCardBox" class="lg:col-span-5 modal-card-animate bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/40 flex flex-col justify-center">
@@ -532,81 +565,22 @@
                 </div>
             </div>
 
-            <!-- 2. شاشة العرض الترويجي المتحركة على يسار بطاقة الدخول (الفراغ الأيسر) -->
-            <div class="lg:col-span-7 modal-card-animate relative rounded-3xl overflow-hidden border border-sky-400/30 bg-slate-950/90 backdrop-blur-xl shadow-2xl flex flex-col justify-between min-h-[290px] sm:min-h-[440px]">
-                <!-- عنصر الفيديو الفعلي (يعمل تلقائياً عند اختيار ملف فيديو MP4/WebM) -->
-                <video id="loginBrandVideoEl" class="hidden absolute inset-0 w-full h-full object-cover z-20" autoplay loop muted playsinline></video>
-
-                <!-- عرض الهوية البصرية المتحرك المدمج (مطابق لمشهد الفيديو بألوان الشعار وخيوط الضوء) -->
-                <div id="loginMotionCanvas" class="relative z-10 flex-1 flex flex-col items-center justify-center p-6 sm:p-10 text-center overflow-hidden">
-                    <!-- خلفية خطوط ضوئية متموجة (سماوي، برتقالي، وردي) -->
-                    <svg viewBox="0 0 800 500" preserveAspectRatio="none" class="absolute inset-0 w-full h-full opacity-75 pointer-events-none">
-                        <defs>
-                            <linearGradient id="beamCyan" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stop-color="#0EA5E9" stop-opacity="0"/>
-                                <stop offset="50%" stop-color="#38BDF8" stop-opacity="0.95"/>
-                                <stop offset="100%" stop-color="#0284C7" stop-opacity="0"/>
-                            </linearGradient>
-                            <linearGradient id="beamOrange" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stop-color="#F97316" stop-opacity="0"/>
-                                <stop offset="50%" stop-color="#FB923C" stop-opacity="0.95"/>
-                                <stop offset="100%" stop-color="#EA580C" stop-opacity="0"/>
-                            </linearGradient>
-                            <linearGradient id="beamPink" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stop-color="#EC4899" stop-opacity="0"/>
-                                <stop offset="50%" stop-color="#F472B6" stop-opacity="0.9"/>
-                                <stop offset="100%" stop-color="#DB2777" stop-opacity="0"/>
-                            </linearGradient>
-                        </defs>
-                        <path class="brand-beam-anim" d="M-40,140 C180,40 360,340 840,180" fill="none" stroke="url(#beamPink)" stroke-width="3.5"/>
-                        <path class="brand-beam-anim" d="M-40,220 C220,360 520,80 840,240" fill="none" stroke="url(#beamOrange)" stroke-width="4"/>
-                        <path class="brand-beam-anim" d="M-40,310 C260,120 480,410 840,270" fill="none" stroke="url(#beamCyan)" stroke-width="4.5"/>
-                        <path class="brand-beam-anim" d="M-40,370 C200,260 560,150 840,350" fill="none" stroke="url(#beamOrange)" stroke-width="2.5"/>
-                    </svg>
-
-                    <!-- نجوم وجزيئات ضوئية عائمة -->
-                    <div class="brand-particles-anim absolute inset-0 pointer-events-none">
-                        <span class="absolute top-12 right-16 w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_12px_#38bdf8]"></span>
-                        <span class="absolute top-24 left-20 w-2.5 h-2.5 rounded-full bg-orange-400 shadow-[0_0_14px_#fb923c]"></span>
-                        <span class="absolute bottom-20 right-24 w-2 h-2 rounded-full bg-pink-400 shadow-[0_0_12px_#f472b6]"></span>
-                        <span class="absolute bottom-28 left-16 w-1.5 h-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_#67e8f9]"></span>
-                    </div>
-
-                    <!-- بطاقة الشعار المضيئة في منتصف العرض -->
-                    <div class="brand-logo-showcase relative z-10 w-44 sm:w-56 rounded-3xl bg-white/95 p-3 shadow-2xl border border-white/60 mb-5">
-                        <svg viewBox="0 0 260 245" class="w-full h-auto"><use href="#bestway-hd-logo"/></svg>
-                    </div>
-
-                    <!-- الشعار اللفظي والرسالة التسويقية من الفيديو -->
-                    <div class="relative z-10 space-y-2 max-w-md">
-                        <p class="text-sm sm:text-base font-extrabold text-sky-200 leading-relaxed">
-                            مع <span class="text-white font-black">الطريق الأمثل</span> نصنع لعلامتك التجارية أجمل الأفكار
-                        </p>
-                        <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-md text-xs font-black text-amber-300 tracking-wide">
-                            <span>السرعة</span>
-                            <span class="text-sky-400">•</span>
-                            <span>التميز</span>
-                            <span class="text-pink-400">•</span>
-                            <span>الابتكار</span>
-                        </div>
-                    </div>
+            <!-- 2. العرض الترويجي المتحرك مدمج مباشرة مع الخلفية بدون أي إطار أو شريط سفلي -->
+            <div class="lg:col-span-7 flex flex-col items-center justify-center text-center p-4 sm:p-8 select-none pointer-events-none">
+                <div class="brand-logo-showcase w-48 sm:w-64 rounded-3xl bg-white/95 p-3.5 shadow-2xl mb-6">
+                    <svg viewBox="0 0 260 245" class="w-full h-auto"><use href="#bestway-hd-logo"/></svg>
                 </div>
 
-                <!-- شريط سفلي أنيق للتحكم أو رفع ملف الفيديو الخاص بك -->
-                <div class="relative z-30 px-4 py-2.5 bg-slate-900/85 backdrop-blur-md border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-[11px] font-bold text-slate-300">
-                    <span class="flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span>هوية مؤسسة الطريق الأمثل للدعاية والإعلان</span>
-                    </span>
-                    <div class="flex items-center gap-2">
-                        <button type="button" onclick="document.getElementById('loginVideoFileInput').click()" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-sky-300 font-extrabold transition flex items-center gap-1">
-                            <i class="fa-solid fa-film"></i>
-                            <span>تشغيل ملف الفيديو MP4</span>
-                        </button>
-                        <button id="loginVideoMuteBtn" type="button" onclick="toggleLoginVideoAudio()" class="hidden px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white" title="تشغيل / كتم الصوت">
-                            <i id="loginVideoMuteIcon" class="fa-solid fa-volume-xmark"></i>
-                        </button>
-                        <input type="file" id="loginVideoFileInput" accept="video/mp4,video/webm,video/*" onchange="handleLoginBrandVideoUpload(event)" class="hidden">
+                <div class="space-y-3 max-w-md">
+                    <p class="text-base sm:text-xl font-extrabold text-sky-200 leading-relaxed drop-shadow">
+                        مع <span class="text-white font-black">الطريق الأمثل</span> نصنع لعلامتك التجارية أجمل الأفكار
+                    </p>
+                    <div class="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-white/10 backdrop-blur-md text-xs sm:text-sm font-black text-amber-300 tracking-wide">
+                        <span>السرعة</span>
+                        <span class="text-sky-400">•</span>
+                        <span>التميز</span>
+                        <span class="text-pink-400">•</span>
+                        <span>الابتكار</span>
                     </div>
                 </div>
             </div>
