@@ -455,6 +455,10 @@
                         <i class="fa-solid fa-user-shield w-5 text-center text-amber-600"></i>
                         <span>المستخدمين والصلاحيات</span>
                     </button>
+                    <button type="button" onclick="switchTab('opening')" data-tab="opening" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                        <i class="fa-solid fa-scale-balanced w-5 text-center text-cyan-600"></i>
+                        <span>الأرصدة الافتتاحية</span>
+                    </button>
                 </div>
 
                 <!-- 5. أدوات النظام والنسخ الاحتياطي -->
@@ -1620,12 +1624,101 @@
                                     </tr>
                                 </thead>
                                 <tbody id="systemUsersTableBody" class="divide-y divide-slate-100 font-bold"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 10. الأرصدة الافتتاحية (للعملاء والأصناف) -->
+            <section id="tab-opening" class="tab-section hidden space-y-6">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                    <div>
+                        <h1 class="text-2xl font-black text-slate-900">إدارة الأرصدة الافتتاحية (للعملاء والأصناف)</h1>
+                        <p class="text-sm text-slate-500 font-semibold mt-0.5">إدخال الأرصدة الافتتاحية السابقة للعملاء والأصناف ليتم احتسابها تلقائياً في كشوف الحساب والمخازن</p>
+                    </div>
+                    <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 self-start">
+                        <button type="button" id="opSubTabCustBtn" onclick="switchOpeningSubTab('customers')" class="px-4 py-2 rounded-lg text-xs font-black bg-white text-blue-700 shadow-xs transition">
+                            <i class="fa-solid fa-users ml-1"></i> الأرصدة الافتتاحية للعملاء
+                        </button>
+                        <button type="button" id="opSubTabItemsBtn" onclick="switchOpeningSubTab('items')" class="px-4 py-2 rounded-lg text-xs font-extrabold text-slate-600 hover:text-slate-900 transition">
+                            <i class="fa-solid fa-boxes-stacked ml-1"></i> الأرصدة الافتتاحية للأصناف
+                        </button>
+                    </div>
+                </div>
+
+                <!-- تبويب الأرصدة الافتتاحية للعملاء -->
+                <div id="openingCustomersPanel" class="space-y-4">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-slate-400"></i>
+                            <input type="text" id="opCustSearchInput" oninput="renderOpeningBalancesTab()" placeholder="ابحث باسم العميل أو المدينة لإدخال رصيده الافتتاحي..." class="w-full pr-10 pl-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span id="opCustTotalBadge" class="px-3.5 py-2 rounded-xl bg-blue-50 text-blue-800 text-xs font-black border border-blue-200">إجمالي افتتاحي العملاء: 0.00 ر.س</span>
+                            <button type="button" onclick="saveAllOpeningCustomers()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-sm flex items-center gap-2 transition">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span>حفظ أرصدة العملاء</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-900 text-white font-extrabold">
+                                        <th class="py-3.5 px-4">اسم العميل</th>
+                                        <th class="py-3.5 px-3">التصنيف / المدينة</th>
+                                        <th class="py-3.5 px-3 text-center">تاريخ الرصيد الافتتاحي</th>
+                                        <th class="py-3.5 px-3 text-center">الرصيد الافتتاحي (عليه + / له -)</th>
+                                        <th class="py-3.5 px-3">ملاحظات / بيان الرصيد</th>
+                                        <th class="py-3.5 px-3 text-center">الرصيد الحالي الإجمالي</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="openingCustomersTableBody" class="divide-y divide-slate-100 font-bold"></tbody>
                             </table>
                         </div>
                     </div>
-                </section>
+                </div>
 
-            </main>
+                <!-- تبويب الأرصدة الافتتاحية للأصناف -->
+                <div id="openingItemsPanel" class="hidden space-y-4">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-slate-400"></i>
+                            <input type="text" id="opItemSearchInput" oninput="renderOpeningBalancesTab()" placeholder="ابحث باسم الصنف لإدخال رصيده الافتتاحي..." class="w-full pr-10 pl-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span id="opItemsTotalBadge" class="px-3.5 py-2 rounded-xl bg-indigo-50 text-indigo-800 text-xs font-black border border-indigo-200">إجمالي افتتاحي الرولات: 0.00 رول</span>
+                            <button type="button" onclick="saveAllOpeningItems()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-sm flex items-center gap-2 transition">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span>حفظ أرصدة الأصناف</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-900 text-white font-extrabold">
+                                        <th class="py-3.5 px-4">اسم الصنف</th>
+                                        <th class="py-3.5 px-3 text-center">المقاس (طول × عرض)</th>
+                                        <th class="py-3.5 px-3 text-center">تاريخ الرصيد الافتتاحي</th>
+                                        <th class="py-3.5 px-3 text-center">افتتاحي السامر (رول)</th>
+                                        <th class="py-3.5 px-3 text-center">افتتاحي التحلية (رول)</th>
+                                        <th class="py-3.5 px-3 text-center">إجمالي الافتتاحي (م²)</th>
+                                        <th class="py-3.5 px-3 text-center">الرصيد الفعلي الحالي</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="openingItemsTableBody" class="divide-y divide-slate-100 font-bold"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
         </div>
     </div>
 
@@ -2314,458 +2407,19 @@
             stagnant: 'تتبع الأصناف الراكدة بالمستودعات',
             customers: 'العملاء وكشوف الحساب',
             logs: 'السجل العام للحركات',
-            users: 'إدارة المستخدمين والصلاحيات'
+            users: 'إدارة المستخدمين والصلاحيات',
+            opening: 'الأرصدة الافتتاحية للعملاء والأصناف'
         };
-
-        // ==========================================
-        // 2. دوال المساعدة، الصلاحيات، الثيم، والتخزين
-        // ==========================================
-        function showToast(msg, isError = false) {
-            const box = document.getElementById('toastBox');
-            const txt = document.getElementById('toastText');
-            const icon = document.getElementById('toastIcon');
-            if (!box || !txt) return;
-            txt.textContent = msg;
-            if (icon) {
-                icon.className = isError
-                    ? 'fa-solid fa-circle-exclamation text-rose-400 text-lg'
-                    : 'fa-solid fa-circle-check text-emerald-400 text-lg';
-            }
-            box.classList.remove('hidden');
-            clearTimeout(window._toastTimer);
-            window._toastTimer = setTimeout(() => box.classList.add('hidden'), 3500);
-        }
-
-        function getNowLocalInputStr() {
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            return now.toISOString().slice(0, 16);
-        }
-
-        function formatDateTimeAr(dateStr) {
-            if (!dateStr) return '-';
-            const d = new Date(dateStr);
-            if (isNaN(d.getTime())) return dateStr;
-            return d.toLocaleDateString('ar-SA') + ' ' + d.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
-        }
-
-        function setAppTheme(mode) {
-            const htmlEl = document.documentElement;
-            const metaScheme = document.getElementById('metaColorScheme');
-            const lightBtn = document.getElementById('themeLightBtn');
-            const darkBtn = document.getElementById('themeDarkBtn');
-
-            if (mode === 'dark') {
-                htmlEl.classList.add('dark');
-                htmlEl.classList.remove('light-theme');
-                if (metaScheme) metaScheme.setAttribute('content', 'dark');
-                if (darkBtn) darkBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 bg-slate-800 text-amber-300 shadow-xs transition';
-                if (lightBtn) lightBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 text-slate-500 hover:text-slate-800 transition';
-            } else {
-                htmlEl.classList.remove('dark');
-                htmlEl.classList.add('light-theme');
-                if (metaScheme) metaScheme.setAttribute('content', 'only light');
-                if (lightBtn) lightBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 bg-white text-amber-600 shadow-xs transition';
-                if (darkBtn) darkBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 text-slate-600 hover:text-slate-900 transition';
-            }
-            localStorage.setItem(THEME_KEY, mode);
-        }
-
-        function saveState() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-                if (typeof window.pushCloudState === 'function') {
-                    window.pushCloudState(appState);
-                }
-            } catch (e) {
-                console.error('Save state error:', e);
-            }
-        }
-
-        function loadState() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    if (parsed && typeof parsed === 'object') {
-                        appState = {
-                            warehouses: [
-                                { id: 'wh_samir', name: 'مخزن السامر' },
-                                { id: 'wh_tahlia', name: 'مخزن التحلية' }
-                            ],
-                            items: Array.isArray(parsed.items) ? parsed.items : [],
-                            customers: Array.isArray(parsed.customers) ? parsed.customers : [],
-                            transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
-                            stocktakeLines: Array.isArray(parsed.stocktakeLines) ? parsed.stocktakeLines : [],
-                            stocktakeHistory: Array.isArray(parsed.stocktakeHistory) ? parsed.stocktakeHistory : [],
-                            users: (Array.isArray(parsed.users) && parsed.users.length > 0)
-                                ? parsed.users
-                                : [{ id: 'user_admin', fullName: 'مدير النظام', username: 'admin', password: '1234', role: 'admin' }]
-                        };
-                    }
-                }
-            } catch (e) {
-                console.error('Load state error:', e);
-            }
-        }
-
-        window.getAppState = function() {
-            return appState;
-        };
-
-        window.applyRemoteState = function(remoteState) {
-            if (!remoteState || typeof remoteState !== 'object') return;
-            appState.items = Array.isArray(remoteState.items) ? remoteState.items : appState.items;
-            appState.customers = Array.isArray(remoteState.customers) ? remoteState.customers : appState.customers;
-            appState.transactions = Array.isArray(remoteState.transactions) ? remoteState.transactions : appState.transactions;
-            appState.stocktakeLines = Array.isArray(remoteState.stocktakeLines) ? remoteState.stocktakeLines : appState.stocktakeLines;
-            appState.stocktakeHistory = Array.isArray(remoteState.stocktakeHistory) ? remoteState.stocktakeHistory : appState.stocktakeHistory;
-            if (Array.isArray(remoteState.users) && remoteState.users.length > 0) {
-                appState.users = remoteState.users;
-            }
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-            refreshAllViews();
-        };
-
-        function isAdminUser() {
-            return (currentUser?.role || 'admin') === 'admin';
-        }
-
-        function canDeleteRecords() {
-            return isAdminUser();
-        }
-
-        function canEditMasterData() {
-            const r = currentUser?.role || 'admin';
-            return r === 'admin' || r === 'storekeeper';
-        }
-
-        // ==========================================
-        // 3. تسجيل الدخول، الملف الشخصي، والتنقل
-        // ==========================================
-        function doDirectLogin() {
-            const u = (document.getElementById('loginUsername')?.value || '').trim();
-            const p = (document.getElementById('loginPassword')?.value || '').trim();
-            const errEl = document.getElementById('loginErrorMsg');
-
-            const matched = (appState.users || []).find(
-                usr => usr.username.toLowerCase() === u.toLowerCase() && usr.password === p
-            );
-
-            if (matched) {
-                currentUser = matched;
-                localStorage.setItem(SESSION_KEY, '1');
-                localStorage.setItem(CURRENT_USER_KEY, matched.id);
-                if (errEl) errEl.classList.add('hidden');
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                updateHeaderProfileDisplay();
-                refreshAllViews();
-                showToast(`مرحباً بك، ${matched.fullName}`);
-            } else {
-                if (errEl) errEl.classList.remove('hidden');
-            }
-        }
-
-        function restoreUserSession() {
-            const loggedIn = localStorage.getItem(SESSION_KEY) === '1';
-            const savedUserId = localStorage.getItem(CURRENT_USER_KEY);
-            const foundUser = (appState.users || []).find(u => u.id === savedUserId) || appState.users[0];
-            if (foundUser) currentUser = foundUser;
-
-            if (loggedIn) {
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-            }
-        }
-
-        function logoutUser() {
-            localStorage.removeItem(SESSION_KEY);
-            document.getElementById('mainApp').classList.add('hidden');
-            document.getElementById('loginScreen').classList.remove('hidden');
-            const dd = document.getElementById('userProfileDropdown');
-            if (dd) dd.classList.add('hidden');
-        }
-
-        function updateHeaderProfileDisplay() {
-            if (!currentUser) return;
-            const letter = (currentUser.fullName || 'م').trim().charAt(0);
-            const roleText = ROLE_LABELS[currentUser.role] || ROLE_LABELS.admin;
-
-            if (document.getElementById('headerUserAvatarLetter')) document.getElementById('headerUserAvatarLetter').textContent = letter;
-            if (document.getElementById('headerUserName')) document.getElementById('headerUserName').textContent = currentUser.fullName;
-            if (document.getElementById('headerUserRole')) document.getElementById('headerUserRole').textContent = roleText;
-            if (document.getElementById('dropdownUserName')) document.getElementById('dropdownUserName').textContent = currentUser.fullName;
-            if (document.getElementById('dropdownUserUsername')) document.getElementById('dropdownUserUsername').textContent = '@' + currentUser.username;
-
-            const adminOnlyEls = ['navBtnUsers', 'dropBtnManageUsers', 'btnRestoreBackupSidebar'];
-            adminOnlyEls.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    if (isAdminUser()) el.classList.remove('hidden');
-                    else el.classList.add('hidden');
-                }
-            });
-        }
-
-        function toggleProfileDropdown() {
-            const dd = document.getElementById('userProfileDropdown');
-            if (dd) dd.classList.toggle('hidden');
-        }
-
-        function openUserProfileModal() {
-            toggleProfileDropdown();
-            if (!currentUser) return;
-            document.getElementById('profFullNameInput').value = currentUser.fullName || '';
-            document.getElementById('profUsernameInput').value = currentUser.username || '';
-            document.getElementById('profPasswordInput').value = currentUser.password || '';
-            document.getElementById('userProfileModal').classList.remove('hidden');
-        }
-
-        function closeUserProfileModal() {
-            document.getElementById('userProfileModal').classList.add('hidden');
-        }
-
-        function saveUserProfile() {
-            if (!currentUser) return;
-            const fullName = (document.getElementById('profFullNameInput').value || '').trim();
-            const username = (document.getElementById('profUsernameInput').value || '').trim();
-            const password = (document.getElementById('profPasswordInput').value || '').trim();
-            if (!fullName || !username || !password) {
-                showToast('يرجى تعبئة جميع الحقول', true);
-                return;
-            }
-            currentUser.fullName = fullName;
-            currentUser.username = username;
-            currentUser.password = password;
-            const idx = appState.users.findIndex(u => u.id === currentUser.id);
-            if (idx !== -1) appState.users[idx] = { ...currentUser };
-            saveState();
-            updateHeaderProfileDisplay();
-            closeUserProfileModal();
-            showToast('تم حفظ بيانات حسابك بنجاح');
-        }
-
-        function renderSystemUsersTable() {
-            const tbody = document.getElementById('systemUsersTableBody');
-            if (!tbody) return;
-            tbody.innerHTML = (appState.users || []).map(u => {
-                const isAdm = u.role === 'admin';
-                return `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="py-3.5 px-4 font-extrabold text-slate-900">${u.fullName}</td>
-                        <td class="py-3.5 px-4 text-slate-600" dir="ltr">${u.username}</td>
-                        <td class="py-3.5 px-4">
-                            <span class="px-2.5 py-1 rounded-lg text-xs font-black ${isAdm ? 'bg-blue-100 text-blue-800' : (u.role === 'storekeeper' ? 'bg-emerald-100 text-emerald-800' : 'bg-purple-100 text-purple-800')}">
-                                ${ROLE_LABELS[u.role] || u.role}
-                            </span>
-                        </td>
-                        <td class="py-3.5 px-4 text-center">${isAdm ? '<i class="fa-solid fa-circle-check text-emerald-600"></i>' : '<i class="fa-solid fa-circle-xmark text-rose-400"></i>'}</td>
-                        <td class="py-3.5 px-4 text-center">${isAdm ? '<i class="fa-solid fa-circle-check text-emerald-600"></i>' : '<i class="fa-solid fa-circle-xmark text-rose-400"></i>'}</td>
-                        <td class="py-3.5 px-4 text-center">
-                            <div class="inline-flex items-center gap-1.5">
-                                <button type="button" onclick="openEditSystemUserModal('${u.id}')" class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl text-xs font-extrabold">
-                                    <i class="fa-solid fa-pen"></i>
-                                </button>
-                                ${u.id !== 'user_admin' ? `
-                                <button type="button" onclick="deleteSystemUser('${u.id}')" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-extrabold">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>` : ''}
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function openAddSystemUserModal() {
-            document.getElementById('sysUserModalTitle').textContent = 'إضافة مستخدم جديد';
-            document.getElementById('editSysUserId').value = '';
-            document.getElementById('sysUserFullName').value = '';
-            document.getElementById('sysUserRoleSelect').value = 'storekeeper';
-            document.getElementById('sysUserUsername').value = '';
-            document.getElementById('sysUserPassword').value = '';
-            document.getElementById('systemUserModal').classList.remove('hidden');
-        }
-
-        function openEditSystemUserModal(id) {
-            const u = appState.users.find(x => x.id === id);
-            if (!u) return;
-            document.getElementById('sysUserModalTitle').textContent = 'تعديل بيانات وصلاحيات المستخدم';
-            document.getElementById('editSysUserId').value = u.id;
-            document.getElementById('sysUserFullName').value = u.fullName;
-            document.getElementById('sysUserRoleSelect').value = u.role;
-            document.getElementById('sysUserUsername').value = u.username;
-            document.getElementById('sysUserPassword').value = u.password;
-            document.getElementById('systemUserModal').classList.remove('hidden');
-        }
-
-        function closeSystemUserModal() {
-            document.getElementById('systemUserModal').classList.add('hidden');
-        }
-
-        function saveSystemUser() {
-            const id = document.getElementById('editSysUserId').value;
-            const fullName = (document.getElementById('sysUserFullName').value || '').trim();
-            const role = document.getElementById('sysUserRoleSelect').value;
-            const username = (document.getElementById('sysUserUsername').value || '').trim();
-            const password = (document.getElementById('sysUserPassword').value || '').trim();
-
-            if (!fullName || !username || !password) {
-                showToast('يرجى إدخال الاسم واسم المستخدم وكلمة المرور', true);
-                return;
-            }
-
-            if (id) {
-                const idx = appState.users.findIndex(x => x.id === id);
-                if (idx !== -1) appState.users[idx] = { ...appState.users[idx], fullName, role, username, password };
-                showToast('تم تحديث بيانات المستخدم');
-            } else {
-                appState.users.push({
-                    id: 'user_' + Date.now(),
-                    fullName,
-                    role,
-                    username,
-                    password
-                });
-                showToast('تم إضافة المستخدم الجديد بنجاح');
-            }
-            saveState();
-            closeSystemUserModal();
-            renderSystemUsersTable();
-        }
-
-        function deleteSystemUser(id) {
-            if (id === 'user_admin') return;
-            appState.users = appState.users.filter(x => x.id !== id);
-            saveState();
-            renderSystemUsersTable();
-            showToast('تم حذف المستخدم');
-        }
-
-        function toggleMobileMenu() {
-            const nav = document.getElementById('sidebarNav');
-            if (nav) nav.classList.toggle('hidden');
-        }
-
-        function switchTab(tabKey) {
-            document.querySelectorAll('.tab-section').forEach(sec => {
-                sec.classList.add('hidden');
-                sec.classList.remove('tab-animate-in');
-            });
-
-            const target = document.getElementById('tab-' + tabKey);
-            if (target) {
-                target.classList.remove('hidden');
-                void target.offsetWidth;
-                target.classList.add('tab-animate-in');
-            }
-
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                const isTarget = btn.getAttribute('data-tab') === tabKey;
-                if (isTarget) {
-                    btn.className = 'nav-btn active-nav w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold bg-blue-600 text-white shadow-md';
-                } else {
-                    btn.className = 'nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700';
-                }
-            });
-
-            const titleSpan = document.querySelector('#headerActiveScreenTitle span');
-            if (titleSpan && TAB_TITLES[tabKey]) {
-                titleSpan.textContent = TAB_TITLES[tabKey];
-            }
-
-            if (window.innerWidth < 1024) {
-                const nav = document.getElementById('sidebarNav');
-                if (nav) nav.classList.add('hidden');
-            }
-
+// ... existing code ... -->
             if (tabKey === 'reports') renderReportsTab();
             if (tabKey === 'overdue') renderOverdueInvoicesReport();
             if (tabKey === 'stagnant') renderStagnantItemsTab();
+            if (tabKey === 'opening') renderOpeningBalancesTab();
             if (tabKey === 'inbound' && !document.getElementById('inDate').value) {
-                document.getElementById('inDate').value = getNowLocalInputStr();
-            }
-            if (tabKey === 'waste' && !document.getElementById('wasteDate').value) {
-                document.getElementById('wasteDate').value = getNowLocalInputStr();
-            }
-        }
-
-        function populateSelects() {
-            const whSelectIds = ['inWarehouse', 'saleWarehouse', 'trFromWarehouse', 'trToWarehouse', 'retWarehouse', 'wasteWarehouse', 'importItemsWarehouse'];
-            whSelectIds.forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                const prev = el.value;
-                el.innerHTML = appState.warehouses.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
-                if (prev && appState.warehouses.some(w => w.id === prev)) el.value = prev;
-                else if (id === 'trToWarehouse' && appState.warehouses[1]) el.value = appState.warehouses[1].id;
-            });
-
-            const itemSelectIds = ['inItemSelect', 'saleItemSelect', 'trItemSelect', 'retItemSelect', 'wasteItemSelect', 'stAddItemSelect', 'movItemSelect'];
-            itemSelectIds.forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                const prev = el.value;
-                el.innerHTML = appState.items.map(it =>
-                    `<option value="${it.id}">${it.name} (السامر: ${Number(it.stockSamir || 0).toFixed(2)} | التحلية: ${Number(it.stockTahlia || 0).toFixed(2)})</option>`
-                ).join('');
-                if (prev) el.value = prev;
-            });
-
-            const custSelectIds = ['saleCustomerSelect', 'retCustomerSelect'];
-            custSelectIds.forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                const prev = el.value;
-                el.innerHTML = appState.customers.map(c =>
-                    `<option value="${c.id}">${c.name}${c.city ? ' - ' + c.city : ''}</option>`
-                ).join('');
-                if (prev) el.value = prev;
-            });
-        }
-
-        function showSearchableDropdown(selectId) {
-            document.querySelectorAll('.searchable-select-wrapper select').forEach(s => {
-                if (s.id !== selectId) s.classList.add('hidden');
-            });
-            const sel = document.getElementById(selectId);
-            if (sel && sel.options.length > 0) sel.classList.remove('hidden');
-        }
-
-        function filterSearchableSelect(inputId, selectId) {
-            const term = (document.getElementById(inputId)?.value || '').trim().toLowerCase();
-            const sel = document.getElementById(selectId);
-            if (!sel) return;
-            sel.classList.remove('hidden');
-            Array.from(sel.options).forEach(opt => {
-                opt.hidden = term ? !opt.text.toLowerCase().includes(term) : false;
-            });
-        }
-
-        function syncSearchableInput(selectId, inputId) {
-            const sel = document.getElementById(selectId);
-            const inp = document.getElementById(inputId);
-            if (sel && inp && sel.selectedIndex >= 0) {
-                inp.value = sel.options[sel.selectedIndex].text;
-                sel.classList.add('hidden');
-            }
-        }
-
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.searchable-select-wrapper')) {
-                document.querySelectorAll('.searchable-select-wrapper select').forEach(s => s.classList.add('hidden'));
-            }
-            if (!e.target.closest('.action-dropdown') && !e.target.closest('button')) {
-                document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden'));
-            }
-            if (!e.target.closest('.profile-menu-wrapper')) {
-                const dd = document.getElementById('userProfileDropdown');
-                if (dd) dd.classList.add('hidden');
-            }
-        });
-
+// ... existing code ... -->
         function getCustomerStats(customerId) {
+            const cust = appState.customers.find(c => c.id === customerId);
+            const openingBal = Number(cust?.openingBalance || 0);
             let salesTotal = 0;
             let salesSqm = 0;
             let paymentsTotal = 0;
@@ -2783,8 +2437,8 @@
                 }
             });
 
-            const balance = Number((salesTotal - paymentsTotal - returnsTotal).toFixed(2));
-            return { salesTotal, salesSqm, paymentsTotal, returnsTotal, balance };
+            const balance = Number((openingBal + salesTotal - paymentsTotal - returnsTotal).toFixed(2));
+            return { openingBal, salesTotal, salesSqm, paymentsTotal, returnsTotal, balance };
         }
 
         // ==========================================
@@ -2794,15 +2448,17 @@
             const now = new Date();
             const openInvoices = [];
 
-            const customerIds = new Set(
-                appState.transactions
+            const customerIds = new Set([
+                ...appState.customers.filter(c => Number(c.openingBalance || 0) > 0.01).map(c => c.id),
+                ...appState.transactions
                     .filter(t => t.customerId && (t.type === 'sale' || t.type === 'payment' || t.type === 'return'))
                     .map(t => t.customerId)
-            );
+            ]);
 
             customerIds.forEach(cid => {
                 const cust = appState.customers.find(c => c.id === cid);
                 const custName = cust ? cust.name : 'عميل';
+                const openingBal = Number(cust?.openingBalance || 0);
 
                 const custTx = appState.transactions
                     .filter(t => t.customerId === cid && (t.type === 'sale' || t.type === 'payment' || t.type === 'return'))
@@ -2813,8 +2469,17 @@
                         return (a.seq || 0) - (b.seq || 0);
                     });
 
-                let totalCredits = 0;
+                let totalCredits = openingBal < 0 ? Math.abs(openingBal) : 0;
                 const salesList = [];
+
+                if (openingBal > 0.01) {
+                    salesList.push({
+                        id: 'OPEN-BAL',
+                        date: cust?.openingDate ? (cust.openingDate + 'T00:00:00') : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+                        totalAmount: openingBal,
+                        quoteRef: 'رصيد افتتاحي'
+                    });
+                }
 
                 custTx.forEach(t => {
                     if (t.type === 'sale') {
@@ -2981,131 +2646,8 @@
             if (!document.getElementById('tab-reports')?.classList.contains('hidden')) {
                 renderReportsTab();
             }
-        }
-
-        function renderDashboard() {
-            let samirSqm = 0, tahliaSqm = 0, totalRolls = 0;
-            const lowStockItems = [];
-
-            appState.items.forEach(it => {
-                const rS = Number(it.stockSamir || 0);
-                const rT = Number(it.stockTahlia || 0);
-                const rTotal = rS + rT;
-                const area = Number(it.length || 50) * Number(it.width || 1);
-                samirSqm += rS * area;
-                tahliaSqm += rT * area;
-                totalRolls += rTotal;
-                if (rTotal <= 10) {
-                    lowStockItems.push({ ...it, rTotal });
-                }
-            });
-
-            let totalSales = 0, totalCollected = 0;
-            const itemSalesSqm = {};
-
-            appState.transactions.forEach(t => {
-                if (t.type === 'sale') {
-                    totalSales += Number(t.totalAmount || 0);
-                    (t.lines || []).forEach(ln => {
-                        const key = ln.itemName || 'صنف';
-                        itemSalesSqm[key] = (itemSalesSqm[key] || 0) + Number(ln.sqm || 0);
-                    });
-                } else if (t.type === 'payment') {
-                    totalCollected += Number(t.amount || 0);
-                }
-            });
-
-            let totalDebt = 0;
-            let topBuyer = null, topPayer = null, topDebtor = null, leastBuyer = null;
-
-            appState.customers.forEach(c => {
-                const st = getCustomerStats(c.id);
-                if (st.balance > 0) totalDebt += st.balance;
-
-                if (st.salesTotal > 0 && (!topBuyer || st.salesTotal > topBuyer.val)) {
-                    topBuyer = { id: c.id, name: c.name, val: st.salesTotal, sqm: st.salesSqm };
-                }
-                if (st.paymentsTotal > 0 && (!topPayer || st.paymentsTotal > topPayer.val)) {
-                    topPayer = { id: c.id, name: c.name, val: st.paymentsTotal };
-                }
-                if (st.balance > 0 && (!topDebtor || st.balance > topDebtor.val)) {
-                    topDebtor = { id: c.id, name: c.name, val: st.balance };
-                }
-                if (st.salesTotal > 0 && (!leastBuyer || st.salesTotal < leastBuyer.val)) {
-                    leastBuyer = { id: c.id, name: c.name, val: st.salesTotal };
-                }
-            });
-
-            dashboardCustomerRefs = {
-                topBuyer: topBuyer?.id || null,
-                topPayer: topPayer?.id || null,
-                topDebtor: topDebtor?.id || null,
-                leastBuyer: leastBuyer?.id || null
-            };
-
-            document.getElementById('dashTotalSqm').textContent = (samirSqm + tahliaSqm).toFixed(2) + ' م²';
-            document.getElementById('dashWarehouseSplit').textContent = `السامر: ${samirSqm.toFixed(0)} م² | التحلية: ${tahliaSqm.toFixed(0)} م²`;
-            document.getElementById('dashTotalRolls').textContent = totalRolls.toFixed(2) + ' رول';
-            document.getElementById('dashItemsCount').textContent = `عدد الأصناف: ${appState.items.length} صنف`;
-            document.getElementById('dashTotalSales').textContent = totalSales.toFixed(2) + ' ر.س';
-            document.getElementById('dashTotalCollected').textContent = `المحصل: ${totalCollected.toFixed(2)} ر.س`;
-            document.getElementById('dashTotalDebt').textContent = totalDebt.toFixed(2) + ' ر.س';
-            document.getElementById('dashAlertsCount').textContent = `تنبيهات المخزون: ${lowStockItems.length}`;
-
-            document.getElementById('cardTopBuyerName').textContent = topBuyer ? topBuyer.name : 'لا يوجد بيانات';
-            document.getElementById('cardTopBuyerVal').textContent = topBuyer ? `${topBuyer.val.toFixed(2)} ر.س (${topBuyer.sqm.toFixed(1)} م²)` : '0.00 ر.س (0 م²)';
-
-            document.getElementById('cardTopPayerName').textContent = topPayer ? topPayer.name : 'لا يوجد بيانات';
-            document.getElementById('cardTopPayerVal').textContent = topPayer ? `${topPayer.val.toFixed(2)} ر.س` : '0.00 ر.س';
-
-            document.getElementById('cardTopDebtorName').textContent = topDebtor ? topDebtor.name : 'لا يوجد مديونيات';
-            document.getElementById('cardTopDebtorVal').textContent = topDebtor ? `${topDebtor.val.toFixed(2)} ر.س` : '0.00 ر.س';
-
-            document.getElementById('cardLeastBuyerName').textContent = leastBuyer ? leastBuyer.name : 'لا يوجد بيانات';
-            document.getElementById('cardLeastBuyerVal').textContent = leastBuyer ? `${leastBuyer.val.toFixed(2)} ر.س` : '0.00 ر.س';
-
-            let topItemName = 'لا يوجد بيانات', topItemSqm = 0;
-            Object.entries(itemSalesSqm).forEach(([k, v]) => {
-                if (v > topItemSqm) {
-                    topItemSqm = v;
-                    topItemName = k;
-                }
-            });
-            document.getElementById('cardTopItemName').textContent = topItemName;
-            document.getElementById('cardTopItemVal').textContent = `${topItemSqm.toFixed(2)} م²`;
-
-            const lowListEl = document.getElementById('dashLowStockList');
-            if (lowStockItems.length === 0) {
-                lowListEl.innerHTML = '<p class="text-sm text-slate-400 font-semibold col-span-3">جميع الأصناف متوفرة بكميات آمنة (أكثر من 10 رولات).</p>';
-            } else {
-                lowListEl.innerHTML = lowStockItems.map(it => {
-                    const isCritical = it.rTotal <= 5;
-                    return `
-                        <div class="p-3.5 rounded-xl border ${isCritical ? 'bg-red-50 border-red-200 text-red-900' : 'bg-amber-50 border-amber-200 text-amber-900'} flex items-center justify-between gap-2">
-                            <span class="text-xs font-extrabold truncate">${it.name}</span>
-                            <span class="px-2.5 py-1 rounded-lg text-xs font-black shrink-0 ${isCritical ? 'bg-red-600 text-white' : 'bg-amber-500 text-white'}">
-                                ${it.rTotal.toFixed(2)} رول
-                            </span>
-                        </div>
-                    `;
-                }).join('');
-            }
-
-            const overdueInvoices = getOverdueInvoicesList().filter(x => x.status === 'overdue');
-            const overdueSum = overdueInvoices.reduce((s, x) => s + x.remaining, 0);
-            const dashOvdEl = document.getElementById('dashOverdueSummary');
-            if (dashOvdEl) {
-                dashOvdEl.textContent = overdueInvoices.length > 0
-                    ? `${overdueInvoices.length} فاتورة متأخرة بإجمالي (${overdueSum.toFixed(2)} ر.س)`
-                    : 'لا توجد فواتير متأخرة حالياً';
-            }
-
-            const stagnantItems = getStagnantItemsList(60);
-            const dashStagEl = document.getElementById('dashStagnantSummary');
-            if (dashStagEl) {
-                dashStagEl.textContent = stagnantItems.length > 0
-                    ? `${stagnantItems.length} صنف لم يُصرف منذ 60 يوماً`
-                    : 'جميع الأصناف المتوفرة نشطة الحركة';
+            if (!document.getElementById('tab-opening')?.classList.contains('hidden')) {
+                renderOpeningBalancesTab();
             }
         }
 
@@ -5395,10 +4937,29 @@ ${balanceLine}
                     return (a.seq || 0) - (b.seq || 0);
                 });
 
+            const rawOpeningBal = Number(c.openingBalance || 0);
+            const openingDateObj = c.openingDate ? new Date(c.openingDate + 'T00:00:00') : null;
+
             let prevBalance = 0;
             let periodSales = 0;
             let periodPayments = 0;
             const periodTx = [];
+
+            // احتساب الرصيد الافتتاحي للعميل سواء قبل الفترة (كرصيد سابق) أو داخل الفترة
+            if (Math.abs(rawOpeningBal) > 0.001) {
+                if (fromDate && (!openingDateObj || openingDateObj < fromDate)) {
+                    prevBalance += rawOpeningBal;
+                } else if (!toDate || !openingDateObj || openingDateObj <= toDate) {
+                    periodTx.push({
+                        id: 'OPEN-BAL',
+                        type: 'opening',
+                        date: c.openingDate ? (c.openingDate + 'T00:00:00') : '',
+                        goodsValue: rawOpeningBal > 0 ? rawOpeningBal : 0,
+                        paidOrReturn: rawOpeningBal < 0 ? Math.abs(rawOpeningBal) : 0,
+                        notes: c.openingNote || 'رصيد افتتاحي سابق'
+                    });
+                }
+            }
 
             allCustTx.forEach(t => {
                 const td = new Date(t.date);
@@ -5457,18 +5018,45 @@ ${balanceLine}
             }
 
             const tbody = document.getElementById('stmtTableBody');
-            if (periodTx.length === 0) {
+            let running = prevBalance;
+            const rowsArr = [];
+
+            // إظهار سطر الرصيد السابق في بداية كشف الحساب دائماً عند التصفية من تاريخ إلى تاريخ أو وجود رصيد سابق
+            if (fromStr || Math.abs(prevBalance) > 0.009) {
+                const prevRunLabel = prevBalance > 0.009
+                    ? `<span class="text-slate-900 font-black">${prevBalance.toFixed(2)} ر.س</span>`
+                    : (Math.abs(prevBalance) <= 0.009
+                        ? `<span class="text-slate-600 font-black">0.00 ر.س</span>`
+                        : `<span class="text-emerald-700 font-black">${Math.abs(prevBalance).toFixed(2)} ر.س (لكم)</span>`);
+
+                rowsArr.push(`
+                    <tr class="bg-amber-50/80 border-b-2 border-amber-200">
+                        <td class="py-3 px-2 whitespace-nowrap text-slate-700 text-[11px]">${fromStr || '-'}</td>
+                        <td class="py-3 px-2 whitespace-nowrap"><span class="inline-block px-2 py-0.5 rounded-lg bg-amber-100 text-amber-800 font-black text-[11px]">رصيد سابق</span></td>
+                        <td class="py-3 px-2 font-black text-slate-700 whitespace-nowrap">-</td>
+                        <td class="py-3 px-3 min-w-[330px] font-black text-amber-900">رصيد سابق مرحّل ما قبل تاريخ (${fromStr || 'بداية الفترة'})</td>
+                        <td class="py-3 px-2 text-center text-blue-700 font-black whitespace-nowrap">${prevBalance > 0 ? '+' + prevBalance.toFixed(2) + ' ر.س' : '-'}</td>
+                        <td class="py-3 px-2 text-center text-emerald-700 font-black whitespace-nowrap">${prevBalance < 0 ? '-' + Math.abs(prevBalance).toFixed(2) + ' ر.س' : '-'}</td>
+                        <td class="py-3 px-2 text-center whitespace-nowrap">${prevRunLabel}</td>
+                        <td class="py-3 px-2 text-center no-print">-</td>
+                    </tr>
+                `);
+            }
+
+            if (periodTx.length === 0 && rowsArr.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-400">لا توجد معاملات مسجلة في هذه الفترة</td></tr>';
                 return;
             }
 
-            let running = prevBalance;
-            tbody.innerHTML = periodTx.map(t => {
+            periodTx.forEach(t => {
                 running += (t.goodsValue - t.paidOrReturn);
                 let typeBadge = '';
                 let detailsHtml = '';
 
-                if (t.type === 'sale') {
+                if (t.type === 'opening') {
+                    typeBadge = '<span class="inline-block px-2 py-0.5 rounded-lg bg-cyan-100 text-cyan-800 font-black text-[11px]">رصيد افتتاحي</span>';
+                    detailsHtml = `<div class="text-cyan-900 font-extrabold">${t.notes || 'رصيد افتتاحي أول المدة'}</div>`;
+                } else if (t.type === 'sale') {
                     typeBadge = '<span class="inline-block px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 font-black text-[11px]">بضاعة مسحوبة</span>';
                     const quoteBadge = t.quoteRef ? `<span class="inline-block mb-1 px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">بيان أسعار رقم: ${t.quoteRef}</span>` : '';
 
@@ -5498,24 +5086,24 @@ ${balanceLine}
                         ? `<span class="text-emerald-700 font-black">0.00 ر.س (خالص)</span>`
                         : `<span class="text-emerald-700 font-black">${Math.abs(running).toFixed(2)} ر.س (لكم)</span>`);
 
-                return `
+                const deleteCell = (t.type !== 'opening' && canDeleteRecords())
+                    ? `<button type="button" onclick="promptVoidTransaction('${t.id}')" title="إلغاء وحذف الحركة" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-extrabold"><i class="fa-solid fa-trash"></i></button>`
+                    : '-';
+
+                rowsArr.push(`
                     <tr class="hover:bg-slate-50 align-top">
-                        <td class="py-3 px-2 whitespace-nowrap text-slate-700 text-[11px]">${formatDateTimeAr(t.date)}</td>
+                        <td class="py-3 px-2 whitespace-nowrap text-slate-700 text-[11px]">${t.date ? formatDateTimeAr(t.date) : '-'}</td>
                         <td class="py-3 px-2 whitespace-nowrap">${typeBadge}</td>
                         <td class="py-3 px-2 font-black text-slate-900 whitespace-nowrap">${t.id}</td>
                         <td class="py-3 px-3 min-w-[330px] leading-relaxed">${detailsHtml}</td>
                         <td class="py-3 px-2 text-center text-blue-700 font-black whitespace-nowrap">${t.goodsValue > 0 ? '+' + t.goodsValue.toFixed(2) + ' ر.س' : '-'}</td>
                         <td class="py-3 px-2 text-center text-emerald-700 font-black whitespace-nowrap">${t.paidOrReturn > 0 ? '-' + t.paidOrReturn.toFixed(2) + ' ر.س' : '-'}</td>
                         <td class="py-3 px-2 text-center whitespace-nowrap">${runningLabel}</td>
-                        <td class="py-3 px-2 text-center no-print">
-                            ${canDeleteRecords() ? `
-                            <button type="button" onclick="promptVoidTransaction('${t.id}')" title="إلغاء وحذف الحركة" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-extrabold">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>` : '-'}
-                        </td>
+                        <td class="py-3 px-2 text-center no-print">${deleteCell}</td>
                     </tr>
-                `;
-            }).join('');
+                `);
+            });
+            tbody.innerHTML = rowsArr.join('');
         }
 
         function openPaymentModal() {
@@ -5561,462 +5149,163 @@ ${balanceLine}
         }
 
         // ==========================================
-        // 8. سجل الحركات الشامل والنسخ الاحتياطي والاستعادة
+        // 10. إدارة الأرصدة الافتتاحية (للعملاء والأصناف)
         // ==========================================
-        function renderLogsTable() {
-            const tbody = document.getElementById('logsTableBody');
-            const sorted = [...appState.transactions].sort((a, b) => (b.seq || 0) - (a.seq || 0));
-            if (sorted.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400">لا توجد حركات مسجلة بعد</td></tr>';
-                return;
-            }
+        function switchOpeningSubTab(sub) {
+            const custPanel = document.getElementById('openingCustomersPanel');
+            const itemPanel = document.getElementById('openingItemsPanel');
+            const custBtn = document.getElementById('opSubTabCustBtn');
+            const itemBtn = document.getElementById('opSubTabItemsBtn');
+            if (!custPanel || !itemPanel) return;
 
-            const typeNames = {
-                inbound: 'وارد مخزن',
-                sale: 'منصرف / مبيعات',
-                payment: 'سند قبض',
-                transfer: 'تحويل مخزني',
-                return: 'مرتجع',
-                waste: 'هالك / تالف'
-            };
-
-            tbody.innerHTML = sorted.map(t => {
-                const val = t.totalAmount || t.amount || 0;
-                const desc = t.customerName
-                    ? `${t.customerName} ${t.itemName ? '- ' + t.itemName : ''}`
-                    : (t.itemName ? `${t.itemName}${t.reason ? ' (' + t.reason + ')' : ''}` : '-');
-                return `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-3.5">${formatDateTimeAr(t.date)}</td>
-                        <td class="p-3.5 text-blue-700">${typeNames[t.type] || t.type}</td>
-                        <td class="p-3.5 font-black">${t.id}</td>
-                        <td class="p-3.5">${desc}</td>
-                        <td class="p-3.5 text-center font-black">${val > 0 ? Number(val).toFixed(2) + ' ر.س' : '-'}</td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function exportFullBackup() {
-            const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `نسخة_احتياطية_الطريق_الأمثل_${new Date().toISOString().slice(0, 10)}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('تم تحميل ملف النسخة الاحتياطية بنجاح');
-        }
-
-        function triggerRestoreBackup() {
-            if (!isAdminUser()) {
-                showToast('استعادة النسخة الاحتياطية متاحة للمدير العام فقط', true);
-                return;
-            }
-            const inp = document.getElementById('restoreBackupFileInput');
-            if (inp) {
-                inp.value = '';
-                inp.click();
-            }
-        }
-
-        function handleRestoreBackupFile(event) {
-            const file = event.target.files?.[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const parsed = JSON.parse(e.target.result);
-                    if (!parsed || (!Array.isArray(parsed.items) && !Array.isArray(parsed.customers))) {
-                        showToast('ملف النسخة الاحتياطية غير صالح أو تالف!', true);
-                        return;
-                    }
-                    appState.warehouses = [
-                        { id: 'wh_samir', name: 'مخزن السامر' },
-                        { id: 'wh_tahlia', name: 'مخزن التحلية' }
-                    ];
-                    appState.items = Array.isArray(parsed.items) ? parsed.items : [];
-                    appState.customers = Array.isArray(parsed.customers) ? parsed.customers : [];
-                    appState.transactions = Array.isArray(parsed.transactions) ? parsed.transactions : [];
-                    appState.stocktakeLines = Array.isArray(parsed.stocktakeLines) ? parsed.stocktakeLines : [];
-                    appState.stocktakeHistory = Array.isArray(parsed.stocktakeHistory) ? parsed.stocktakeHistory : [];
-                    if (Array.isArray(parsed.users) && parsed.users.length > 0) {
-                        appState.users = parsed.users;
-                    }
-
-                    saveState();
-                    refreshAllViews();
-                    showToast(`تمت استعادة النسخة الاحتياطية بنجاح (${appState.items.length} صنف، ${appState.customers.length} عميل)`);
-                } catch (err) {
-                    console.error('Restore backup error:', err);
-                    showToast('تعذر قراءة ملف النسخة الاحتياطية!', true);
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        // ==========================================
-        // 9. إدارة الجرد الفعلي ومطابقة المخازن
-        // ==========================================
-        function showStocktakeBanner(msg) {
-            const banner = document.getElementById('stocktakeBannerMsg');
-            const text = document.getElementById('stocktakeBannerText');
-            if (banner && text) {
-                text.textContent = msg;
-                banner.classList.remove('hidden');
-            }
-        }
-
-        function loadAllWarehouseItemsToStocktake(silent = false) {
-            if (!appState.items || appState.items.length === 0) {
-                if (!silent) showToast('لا توجد أصناف مسجلة في المستودع لإضافتها', true);
-                return;
-            }
-            appState.items.forEach(it => {
-                const exists = appState.stocktakeLines.find(l => l.itemId === it.id);
-                if (!exists) {
-                    appState.stocktakeLines.push({
-                        itemId: it.id,
-                        itemName: it.name,
-                        length: it.length,
-                        width: it.width,
-                        actualTahlia: '',
-                        actualSamir: '',
-                        progTahlia: Number(it.stockTahlia || 0),
-                        progSamir: Number(it.stockSamir || 0),
-                        note: ''
-                    });
-                } else {
-                    exists.itemName = it.name;
-                    exists.progTahlia = Number(it.stockTahlia || 0);
-                    exists.progSamir = Number(it.stockSamir || 0);
-                }
-            });
-            saveState();
-            renderStocktakeTable();
-            if (!silent) {
-                showStocktakeBanner(`تم استيراد منتجات المخزن بنجاح (${appState.stocktakeLines.length} منتج)`);
-            }
-        }
-
-        function syncStocktakeProgramCounts() {
-            appState.stocktakeLines.forEach(line => {
-                const it = appState.items.find(x => x.id === line.itemId);
-                if (it) {
-                    line.itemName = it.name;
-                    line.progTahlia = Number(it.stockTahlia || 0);
-                    line.progSamir = Number(it.stockSamir || 0);
-                }
-            });
-            saveState();
-            renderStocktakeTable();
-            showToast('تم تحديث أرصدة البرنامج في جدول الجرد');
-        }
-
-        function openStocktakeAddItemModal() {
-            document.getElementById('stAddItemSearch').value = '';
-            document.getElementById('stAddItemSelect').selectedIndex = -1;
-            document.getElementById('stocktakeAddItemModal').classList.remove('hidden');
-        }
-
-        function closeStocktakeAddItemModal() {
-            document.getElementById('stocktakeAddItemModal').classList.add('hidden');
-        }
-
-        function confirmAddStocktakeItem() {
-            const sel = document.getElementById('stAddItemSelect');
-            const searchTxt = (document.getElementById('stAddItemSearch').value || '').trim();
-            let itemId = sel ? sel.value : '';
-            if (!itemId && searchTxt) {
-                const found = appState.items.find(x => searchTxt.includes(x.name) || x.name.toLowerCase().includes(searchTxt.toLowerCase()));
-                if (found) itemId = found.id;
-            }
-            const it = appState.items.find(x => x.id === itemId);
-            if (!it) {
-                showToast('يرجى اختيار منتج صحيح من القائمة', true);
-                return;
-            }
-            if (appState.stocktakeLines.some(l => l.itemId === it.id)) {
-                showToast('هذا المنتج مضاف بالفعل في جدول الجرد', true);
-                closeStocktakeAddItemModal();
-                return;
-            }
-            appState.stocktakeLines.unshift({
-                itemId: it.id,
-                itemName: it.name,
-                length: it.length,
-                width: it.width,
-                actualTahlia: '',
-                actualSamir: '',
-                progTahlia: Number(it.stockTahlia || 0),
-                progSamir: Number(it.stockSamir || 0),
-                note: ''
-            });
-            saveState();
-            closeStocktakeAddItemModal();
-            renderStocktakeTable();
-            showToast('تم إضافة المنتج إلى قائمة الجرد');
-        }
-
-        function updateStocktakeField(itemId, field, value) {
-            const line = appState.stocktakeLines.find(l => l.itemId === itemId);
-            if (!line) return;
-            if (field === 'note') {
-                line.note = value;
+            if (sub === 'items') {
+                custPanel.classList.add('hidden');
+                itemPanel.classList.remove('hidden');
+                itemBtn.className = 'px-4 py-2 rounded-lg text-xs font-black bg-white text-blue-700 shadow-xs transition';
+                custBtn.className = 'px-4 py-2 rounded-lg text-xs font-extrabold text-slate-600 hover:text-slate-900 transition';
             } else {
-                line[field] = value === '' ? '' : (parseFloat(value) || 0);
+                itemPanel.classList.add('hidden');
+                custPanel.classList.remove('hidden');
+                custBtn.className = 'px-4 py-2 rounded-lg text-xs font-black bg-white text-blue-700 shadow-xs transition';
+                itemBtn.className = 'px-4 py-2 rounded-lg text-xs font-extrabold text-slate-600 hover:text-slate-900 transition';
             }
-            saveState();
-            updateStocktakeRowMetrics(itemId);
+            renderOpeningBalancesTab();
         }
 
-        function updateStocktakeRowMetrics(itemId) {
-            const line = appState.stocktakeLines.find(l => l.itemId === itemId);
-            if (!line) return;
+        function renderOpeningBalancesTab() {
+            const custTbody = document.getElementById('openingCustomersTableBody');
+            if (custTbody) {
+                const term = (document.getElementById('opCustSearchInput')?.value || '').trim().toLowerCase();
+                const filteredCust = appState.customers.filter(c =>
+                    !term || (c.name || '').toLowerCase().includes(term) || (c.city || '').toLowerCase().includes(term)
+                );
 
-            const hasTahlia = line.actualTahlia !== '' && line.actualTahlia !== null && !isNaN(line.actualTahlia);
-            const hasSamir = line.actualSamir !== '' && line.actualSamir !== null && !isNaN(line.actualSamir);
-            const actTahlia = hasTahlia ? Number(line.actualTahlia) : 0;
-            const actSamir = hasSamir ? Number(line.actualSamir) : 0;
-            const totalActual = actTahlia + actSamir;
+                const totalOpCust = appState.customers.reduce((acc, c) => acc + Number(c.openingBalance || 0), 0);
+                const badgeCust = document.getElementById('opCustTotalBadge');
+                if (badgeCust) badgeCust.textContent = `إجمالي افتتاحي العملاء: ${totalOpCust.toFixed(2)} ر.س`;
 
-            const progTahlia = Number(line.progTahlia || 0);
-            const progSamir = Number(line.progSamir || 0);
-            const totalProg = progTahlia + progSamir;
-
-            const diff = (hasTahlia || hasSamir) ? (totalActual - totalProg) : 0;
-
-            const totEl = document.getElementById('stTotalAct_' + itemId);
-            const diffEl = document.getElementById('stDiff_' + itemId);
-
-            if (totEl) {
-                totEl.textContent = (hasTahlia || hasSamir) ? totalActual.toFixed(2) : '-';
-            }
-            if (diffEl) {
-                if (!hasTahlia && !hasSamir) {
-                    diffEl.textContent = '0';
-                    diffEl.className = 'py-3 px-3 text-center font-black text-slate-400';
-                } else if (diff > 0) {
-                    diffEl.textContent = '+' + Number(diff.toFixed(2));
-                    diffEl.className = 'py-3 px-3 text-center font-black text-emerald-600';
-                } else if (diff < 0) {
-                    diffEl.textContent = Number(diff.toFixed(2)).toString();
-                    diffEl.className = 'py-3 px-3 text-center font-black text-rose-600';
+                if (filteredCust.length === 0) {
+                    custTbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-400">لا يوجد عملاء مسجلون حالياً. قم بإضافة العملاء أولاً من قسم العملاء.</td></tr>';
                 } else {
-                    diffEl.textContent = '0';
-                    diffEl.className = 'py-3 px-3 text-center font-black text-slate-700';
+                    const defaultDate = new Date().toISOString().slice(0, 10);
+                    custTbody.innerHTML = filteredCust.map(c => {
+                        const st = getCustomerStats(c.id);
+                        const opVal = c.openingBalance !== undefined && c.openingBalance !== null ? c.openingBalance : 0;
+                        const opDate = c.openingDate || defaultDate;
+                        const opNote = c.openingNote || '';
+                        return `
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="py-3 px-4 font-extrabold text-slate-900">${c.name}</td>
+                                <td class="py-3 px-3 text-slate-600">${c.type || 'عميل'}${c.city ? ' - ' + c.city : ''}</td>
+                                <td class="py-3 px-3 text-center">
+                                    <input type="date" data-op-cust-date="${c.id}" value="${opDate}" class="p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                                </td>
+                                <td class="py-3 px-3 text-center">
+                                    <input type="number" step="any" data-op-cust-val="${c.id}" value="${opVal}" placeholder="0.00" class="w-32 p-2 bg-slate-50 border border-slate-300 rounded-xl text-center text-sm font-black text-blue-700 outline-none focus:ring-2 focus:ring-blue-500">
+                                </td>
+                                <td class="py-3 px-3">
+                                    <input type="text" data-op-cust-note="${c.id}" value="${opNote.replace(/"/g, '&quot;')}" placeholder="مثال: رصيد مرحل من العام السابق" class="w-full min-w-[180px] p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                                </td>
+                                <td class="py-3 px-3 text-center font-black ${st.balance > 0 ? 'text-rose-600' : 'text-emerald-700'}">
+                                    ${st.balance.toFixed(2)} ر.س
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
                 }
             }
-            updateStocktakeHeaderCounters();
-        }
 
-        function updateStocktakeHeaderCounters() {
-            const nextNum = String((appState.stocktakeHistory?.length || 0) + 1).padStart(6, '0');
-            const docEl = document.getElementById('stocktakeDocNumber');
-            if (docEl) docEl.textContent = `جرد المخزون #${nextNum}`;
+            const itemTbody = document.getElementById('openingItemsTableBody');
+            if (itemTbody) {
+                const term = (document.getElementById('opItemSearchInput')?.value || '').trim().toLowerCase();
+                const filteredItems = appState.items.filter(it => !term || (it.name || '').toLowerCase().includes(term));
 
-            const total = appState.stocktakeLines.length;
-            const recorded = appState.stocktakeLines.filter(l =>
-                (l.actualTahlia !== '' && l.actualTahlia !== null) ||
-                (l.actualSamir !== '' && l.actualSamir !== null)
-            ).length;
+                const totalOpRolls = appState.items.reduce((acc, it) =>
+                    acc + Number(it.openingSamir ?? it.stockSamir ?? 0) + Number(it.openingTahlia ?? it.stockTahlia ?? 0), 0
+                );
+                const badgeItems = document.getElementById('opItemsTotalBadge');
+                if (badgeItems) badgeItems.textContent = `إجمالي افتتاحي الرولات: ${totalOpRolls.toFixed(2)} رول`;
 
-            const badge = document.getElementById('stocktakeRecordedBadge');
-            if (badge) badge.textContent = `${recorded} / ${total} المنتجات المسجلة`;
-        }
-
-        function removeStocktakeLine(itemId) {
-            appState.stocktakeLines = appState.stocktakeLines.filter(l => l.itemId !== itemId);
-            saveState();
-            renderStocktakeTable();
-            showToast('تم حذف العنصر من قائمة الجرد');
-        }
-
-        function clearStocktakeList() {
-            appState.stocktakeLines = [];
-            saveState();
-            renderStocktakeTable();
-            showToast('تم تفريغ قائمة الجرد');
-        }
-
-        function renderStocktakeTable() {
-            const tbody = document.getElementById('stocktakeTableBody');
-            if (!tbody) return;
-
-            updateStocktakeHeaderCounters();
-            const search = (document.getElementById('stocktakeSearchInput')?.value || '').trim().toLowerCase();
-            const filtered = appState.stocktakeLines.filter(l => !search || (l.itemName || '').toLowerCase().includes(search));
-
-            const rangeEl = document.getElementById('stocktakeRangeLabel');
-            if (rangeEl) {
-                rangeEl.textContent = filtered.length > 0
-                    ? `1 - ${filtered.length} من ${filtered.length}`
-                    : '0 - 0 من 0';
-            }
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="py-10 text-center text-slate-400">لا توجد منتجات في قائمة الجرد حالياً. اضغط على "إضافة جميع المنتجات من المستودع" أو "إضافة عنصر".</td></tr>';
-            } else {
-                tbody.innerHTML = filtered.map((line, idx) => {
-                    const hasTahlia = line.actualTahlia !== '' && line.actualTahlia !== null && !isNaN(line.actualTahlia);
-                    const hasSamir = line.actualSamir !== '' && line.actualSamir !== null && !isNaN(line.actualSamir);
-                    const actTahlia = hasTahlia ? Number(line.actualTahlia) : 0;
-                    const actSamir = hasSamir ? Number(line.actualSamir) : 0;
-                    const totalActual = actTahlia + actSamir;
-
-                    const progTahlia = Number(line.progTahlia || 0);
-                    const progSamir = Number(line.progSamir || 0);
-                    const totalProg = progTahlia + progSamir;
-                    const diff = (hasTahlia || hasSamir) ? (totalActual - totalProg) : 0;
-
-                    let diffText = '0';
-                    let diffClass = 'text-slate-400';
-                    if (hasTahlia || hasSamir) {
-                        if (diff > 0) {
-                            diffText = '+' + Number(diff.toFixed(2));
-                            diffClass = 'text-emerald-600';
-                        } else if (diff < 0) {
-                            diffText = Number(diff.toFixed(2)).toString();
-                            diffClass = 'text-rose-600';
-                        } else {
-                            diffText = '0';
-                            diffClass = 'text-slate-700';
-                        }
-                    }
-
-                    const codeBadge = '#' + String(idx + 1).padStart(6, '0');
-
-                    return `
-                        <tr class="hover:bg-slate-50 transition">
-                            <td class="py-3 px-4">
-                                <div class="font-extrabold text-slate-900">${line.itemName}</div>
-                                <div class="text-[11px] text-blue-600 font-bold mt-0.5">${codeBadge} • المقاس: ${line.length || 50}م × ${line.width || 1}م</div>
-                            </td>
-                            <td class="py-3 px-3 text-center">
-                                <input type="number" step="any" min="0" value="${hasTahlia ? line.actualTahlia : ''}" oninput="updateStocktakeField('${line.itemId}', 'actualTahlia', this.value)" placeholder="العدد الفعلي" class="w-24 p-2 bg-slate-50 border border-slate-300 rounded-xl text-center text-sm font-black outline-none focus:ring-2 focus:ring-blue-500">
-                            </td>
-                            <td class="py-3 px-3 text-center">
-                                <input type="number" step="any" min="0" value="${hasSamir ? line.actualSamir : ''}" oninput="updateStocktakeField('${line.itemId}', 'actualSamir', this.value)" placeholder="العدد الفعلي" class="w-24 p-2 bg-slate-50 border border-slate-300 rounded-xl text-center text-sm font-black outline-none focus:ring-2 focus:ring-blue-500">
-                            </td>
-                            <td id="stTotalAct_${line.itemId}" class="py-3 px-3 text-center font-black text-blue-700">
-                                ${(hasTahlia || hasSamir) ? totalActual.toFixed(2) : '-'}
-                            </td>
-                            <td class="py-3 px-3 text-center text-slate-700 font-extrabold">
-                                ${progTahlia.toFixed(2)}
-                            </td>
-                            <td class="py-3 px-3 text-center text-slate-700 font-extrabold">
-                                ${progSamir.toFixed(2)}
-                            </td>
-                            <td id="stDiff_${line.itemId}" class="py-3 px-3 text-center font-black ${diffClass}">
-                                ${diffText}
-                            </td>
-                            <td class="py-3 px-3">
-                                <input type="text" value="${(line.note || '').replace(/"/g, '&quot;')}" oninput="updateStocktakeField('${line.itemId}', 'note', this.value)" placeholder="ملاحظة..." class="w-full min-w-[140px] p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500">
-                            </td>
-                            <td class="py-3 px-3 text-center">
-                                <button type="button" onclick="removeStocktakeLine('${line.itemId}')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-extrabold inline-flex items-center gap-1.5 transition">
-                                    <i class="fa-solid fa-circle-minus"></i>
-                                    <span>حذف</span>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-            }
-
-            const histEl = document.getElementById('stocktakeHistoryList');
-            if (histEl) {
-                const hist = appState.stocktakeHistory || [];
-                if (hist.length === 0) {
-                    histEl.innerHTML = 'لا توجد عمليات جرد معتمدة سابقة.';
+                if (filteredItems.length === 0) {
+                    itemTbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400">لا توجد أصناف مسجلة حالياً.</td></tr>';
                 } else {
-                    histEl.innerHTML = hist.slice().reverse().map(h => `
-                        <div class="flex flex-wrap items-center justify-between gap-2 py-2.5 px-3.5 bg-slate-50 rounded-xl border border-slate-200 mb-2">
-                            <span class="font-black text-slate-900">${h.docId} • بتاريخ: ${formatDateTimeAr(h.date)}</span>
-                            <span class="text-emerald-700 font-extrabold">تمت مطابقة واعتماد ${h.adjustedCount} صنف</span>
-                        </div>
-                    `).join('');
+                    const defaultDate = new Date().toISOString().slice(0, 10);
+                    itemTbody.innerHTML = filteredItems.map(it => {
+                        const opSamir = it.openingSamir !== undefined ? Number(it.openingSamir) : Number(it.stockSamir || 0);
+                        const opTahlia = it.openingTahlia !== undefined ? Number(it.openingTahlia) : Number(it.stockTahlia || 0);
+                        const opDate = it.openingDate || defaultDate;
+                        const area = Number(it.length || 50) * Number(it.width || 1);
+                        const opSqm = (opSamir + opTahlia) * area;
+                        const curTot = Number(it.stockSamir || 0) + Number(it.stockTahlia || 0);
+
+                        return `
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="py-3 px-4 font-extrabold text-slate-900">${it.name}</td>
+                                <td class="py-3 px-3 text-center text-slate-600">${it.length || 50}م × ${it.width || 1}م</td>
+                                <td class="py-3 px-3 text-center">
+                                    <input type="date" data-op-item-date="${it.id}" value="${opDate}" class="p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                                </td>
+                                <td class="py-3 px-3 text-center">
+                                    <input type="number" step="any" min="0" data-op-item-samir="${it.id}" value="${opSamir}" class="w-24 p-2 bg-slate-50 border border-slate-300 rounded-xl text-center text-sm font-black text-sky-700 outline-none focus:ring-2 focus:ring-blue-500">
+                                </td>
+                                <td class="py-3 px-3 text-center">
+                                    <input type="number" step="any" min="0" data-op-item-tahlia="${it.id}" value="${opTahlia}" class="w-24 p-2 bg-slate-50 border border-slate-300 rounded-xl text-center text-sm font-black text-amber-700 outline-none focus:ring-2 focus:ring-blue-500">
+                                </td>
+                                <td class="py-3 px-3 text-center font-black text-indigo-700">${opSqm.toFixed(2)} م²</td>
+                                <td class="py-3 px-3 text-center font-black text-slate-800">${curTot.toFixed(2)} رول</td>
+                            </tr>
+                        `;
+                    }).join('');
                 }
             }
         }
 
-        function completeStocktake() {
-            const recordedLines = appState.stocktakeLines.filter(l =>
-                (l.actualTahlia !== '' && l.actualTahlia !== null && !isNaN(l.actualTahlia)) ||
-                (l.actualSamir !== '' && l.actualSamir !== null && !isNaN(l.actualSamir))
-            );
-
-            if (recordedLines.length === 0) {
-                showToast('يرجى إدخال العدد الفعلي لمنتج واحد على الأقل قبل الضغط على منجز', true);
-                return;
-            }
-
-            const docNum = '#' + String((appState.stocktakeHistory?.length || 0) + 1).padStart(6, '0');
-            let adjustedCount = 0;
-
-            recordedLines.forEach(line => {
-                const it = appState.items.find(x => x.id === line.itemId);
-                if (!it) return;
-
-                const hasTahlia = line.actualTahlia !== '' && line.actualTahlia !== null && !isNaN(line.actualTahlia);
-                const hasSamir = line.actualSamir !== '' && line.actualSamir !== null && !isNaN(line.actualSamir);
-
-                const newTahlia = hasTahlia ? Number(line.actualTahlia) : Number(it.stockTahlia || 0);
-                const newSamir = hasSamir ? Number(line.actualSamir) : Number(it.stockSamir || 0);
-
-                const oldTotal = Number(it.stockTahlia || 0) + Number(it.stockSamir || 0);
-                const newTotal = newTahlia + newSamir;
-                const diff = newTotal - oldTotal;
-
-                it.stockTahlia = newTahlia;
-                it.stockSamir = newSamir;
-                line.progTahlia = newTahlia;
-                line.progSamir = newSamir;
-                adjustedCount++;
-
-                if (diff !== 0) {
-                    appState.transactions.push({
-                        id: 'ADJ-' + (1000 + appState.transactions.length + 1),
-                        seq: Date.now() + adjustedCount,
-                        type: 'inbound',
-                        date: getNowLocalInputStr(),
-                        itemId: it.id,
-                        itemName: `${it.name} (تسوية جرد ${docNum}: ${diff > 0 ? '+' + diff.toFixed(2) : diff.toFixed(2)} رول)`,
-                        rolls: diff,
-                        sqm: diff * (it.length || 50) * (it.width || 1),
-                        notes: line.note || `تسوية جرد المخزون ${docNum}`
-                    });
+        function saveAllOpeningCustomers() {
+            let updated = 0;
+            appState.customers.forEach(c => {
+                const valInp = document.querySelector(`[data-op-cust-val="${c.id}"]`);
+                const dateInp = document.querySelector(`[data-op-cust-date="${c.id}"]`);
+                const noteInp = document.querySelector(`[data-op-cust-note="${c.id}"]`);
+                if (valInp) {
+                    c.openingBalance = parseFloat(valInp.value) || 0;
+                    c.openingDate = dateInp ? dateInp.value : (c.openingDate || new Date().toISOString().slice(0, 10));
+                    c.openingNote = noteInp ? noteInp.value.trim() : '';
+                    updated++;
                 }
             });
-
-            appState.stocktakeHistory = appState.stocktakeHistory || [];
-            appState.stocktakeHistory.push({
-                docId: `جرد المخزون ${docNum}`,
-                date: getNowLocalInputStr(),
-                adjustedCount
-            });
-
             saveState();
             refreshAllViews();
-            showStocktakeBanner(`تم إنجاز واعتماد ${docNum} وتحديث أرصدة ${adjustedCount} منتج في البرنامج بنجاح!`);
-            showToast(`تم إنجاز الجرد واعتماد الأرصدة الفعلية (${adjustedCount} منتج)`);
+            showToast(`تم حفظ الأرصدة الافتتاحية لـ ${updated} عميل بنجاح`);
         }
 
-        function exportStocktakeExcel() {
-            const data = [['اسم المنتج بالتفصيل', 'العدد الفعلي (التحلية)', 'العدد الفعلي (السامر)', 'الإجمالي الفعلي', 'العدد بالبرنامج (التحلية)', 'العدد بالبرنامج (السامر)', 'نقص / زيادة', 'ملاحظات']];
-            appState.stocktakeLines.forEach(l => {
-                const actT = l.actualTahlia !== '' && l.actualTahlia !== null ? Number(l.actualTahlia) : 0;
-                const actS = l.actualSamir !== '' && l.actualSamir !== null ? Number(l.actualSamir) : 0;
-                const totAct = actT + actS;
-                const progT = Number(l.progTahlia || 0);
-                const progS = Number(l.progSamir || 0);
-                const diff = totAct - (progT + progS);
-                data.push([l.itemName, actT, actS, totAct, progT, progS, diff, l.note || '']);
+        function saveAllOpeningItems() {
+            let updated = 0;
+            appState.items.forEach(it => {
+                const samirInp = document.querySelector(`[data-op-item-samir="${it.id}"]`);
+                const tahliaInp = document.querySelector(`[data-op-item-tahlia="${it.id}"]`);
+                const dateInp = document.querySelector(`[data-op-item-date="${it.id}"]`);
+                if (samirInp && tahliaInp) {
+                    const prevOpSamir = it.openingSamir !== undefined ? Number(it.openingSamir) : Number(it.stockSamir || 0);
+                    const prevOpTahlia = it.openingTahlia !== undefined ? Number(it.openingTahlia) : Number(it.stockTahlia || 0);
+
+                    const newOpSamir = Math.max(0, parseFloat(samirInp.value) || 0);
+                    const newOpTahlia = Math.max(0, parseFloat(tahliaInp.value) || 0);
+
+                    const deltaSamir = newOpSamir - prevOpSamir;
+                    const deltaTahlia = newOpTahlia - prevOpTahlia;
+
+                    it.openingSamir = newOpSamir;
+                    it.openingTahlia = newOpTahlia;
+                    it.openingDate = dateInp ? dateInp.value : (it.openingDate || new Date().toISOString().slice(0, 10));
+
+                    it.stockSamir = Math.max(0, Number(it.stockSamir || 0) + deltaSamir);
+                    it.stockTahlia = Math.max(0, Number(it.stockTahlia || 0) + deltaTahlia);
+                    updated++;
+                }
             });
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(data);
-            XLSX.utils.book_append_sheet(wb, ws, 'جرد المخزون');
-            XLSX.writeFile(wb, `جرد_المخزون_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            saveState();
+            refreshAllViews();
+            showToast(`تم حفظ الأرصدة الافتتاحية لـ ${updated} صنف وتحديث المخازن بنجاح`);
         }
 
         // تشغيل التهيئة فور تحميل الصفحة
