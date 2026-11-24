@@ -77,10 +77,23 @@
         }
         .nav-btn {
             position: relative;
+            text-align: right;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .nav-btn:hover {
             transform: translateX(-3px);
+        }
+        .nav-btn .nav-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.5rem;
+            margin-left: 0.75rem;
+            flex-shrink: 0;
+        }
+        .nav-btn .nav-label {
+            flex: 1;
+            text-align: right;
         }
         .nav-btn.active-nav::before {
             content: '';
@@ -91,6 +104,22 @@
             width: 4px;
             border-radius: 99px;
             background: #2563eb;
+        }
+        .action-dropdown button,
+        #userProfileDropdown button {
+            text-align: right;
+            justify-content: flex-start;
+        }
+        .action-dropdown i,
+        #userProfileDropdown i {
+            margin-left: 0.65rem;
+            width: 1.1rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        select, option {
+            direction: rtl;
+            text-align: right;
         }
         button:active {
             transform: scale(0.97);
@@ -364,116 +393,116 @@
                 </div>
             </div>
 
-            <nav id="sidebarNav" class="hidden lg:flex flex-col flex-1 p-3.5 space-y-4 overflow-y-auto">
+            <nav id="sidebarNav" class="hidden lg:flex flex-col flex-1 p-3.5 space-y-4 overflow-y-auto text-right">
                 
                 <!-- 1. النظرة العامة والتقارير -->
                 <div class="space-y-1">
-                    <div class="px-3 text-[10px] font-black text-slate-400 tracking-wider uppercase">الرئيسية والتقارير</div>
-                    <button type="button" onclick="switchTab('dashboard')" data-tab="dashboard" class="nav-btn active-nav w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-blue-600 text-white shadow-md">
-                        <i class="fa-solid fa-gauge-high w-5 text-center"></i>
-                        <span>لوحة القيادة والملخص</span>
+                    <div class="px-3 text-[10px] font-black text-slate-400 tracking-wider uppercase text-right">الرئيسية والتقارير</div>
+                    <button type="button" onclick="switchTab('dashboard')" data-tab="dashboard" class="nav-btn active-nav w-full flex items-center justify-start px-3.5 py-2.5 rounded-xl text-sm font-bold bg-blue-600 text-white shadow-md">
+                        <i class="fa-solid fa-gauge-high nav-icon"></i>
+                        <span class="nav-label">لوحة القيادة والملخص</span>
                     </button>
-                    <button type="button" onclick="switchTab('reports')" data-tab="reports" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                        <i class="fa-solid fa-chart-column w-5 text-center text-indigo-600"></i>
-                        <span>التقارير والرسوم البيانية</span>
+                    <button type="button" onclick="switchTab('reports')" data-tab="reports" class="nav-btn w-full flex items-center justify-start px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                        <i class="fa-solid fa-chart-column nav-icon text-indigo-600"></i>
+                        <span class="nav-label">التقارير والرسوم البيانية</span>
                     </button>
                     <button type="button" onclick="switchTab('overdue')" data-tab="overdue" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-solid fa-bell-concierge w-5 text-center text-rose-600"></i>
-                            <span>الفواتير المتأخرة (25 يوم)</span>
+                        <span class="flex items-center flex-1 text-right">
+                            <i class="fa-solid fa-bell-concierge nav-icon text-rose-600"></i>
+                            <span class="nav-label">الفواتير المتأخرة (25 يوم)</span>
                         </span>
-                        <span id="navBadgeOverdue" class="hidden text-[10px] font-black px-2 py-0.5 rounded-lg bg-rose-100 text-rose-700">0</span>
+                        <span id="navBadgeOverdue" class="hidden text-[10px] font-black px-2 py-0.5 rounded-lg bg-rose-100 text-rose-700 mr-2 shrink-0">0</span>
                     </button>
                 </div>
 
                 <!-- 2. العمليات المخزنية اليومية -->
                 <div class="space-y-1">
-                    <div class="px-3 text-[10px] font-black text-slate-400 tracking-wider uppercase">العمليات اليومية</div>
+                    <div class="px-3 text-[10px] font-black text-slate-400 tracking-wider uppercase text-right">العمليات اليومية</div>
                     <button type="button" onclick="switchTab('sales')" data-tab="sales" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-solid fa-file-invoice-dollar w-5 text-center text-blue-600"></i>
-                            <span>إذون الصرف والمبيعات</span>
+                        <span class="flex items-center flex-1 text-right">
+                            <i class="fa-solid fa-file-invoice-dollar nav-icon text-blue-600"></i>
+                            <span class="nav-label">إذون الصرف والمبيعات</span>
                         </span>
-                        <span id="navBadgeSales" class="text-[10px] font-black px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700">0</span>
+                        <span id="navBadgeSales" class="text-[10px] font-black px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 mr-2 shrink-0">0</span>
                     </button>
-                    <button type="button" onclick="switchTab('inbound')" data-tab="inbound" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                        <i class="fa-solid fa-truck-ramp-box w-5 text-center text-emerald-600"></i>
-                        <span>توريد وتغذية المخزن</span>
+                    <button type="button" onclick="switchTab('inbound')" data-tab="inbound" class="nav-btn w-full flex items-center justify-start px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                        <i class="fa-solid fa-truck-ramp-box nav-icon text-emerald-600"></i>
+                        <span class="nav-label">توريد وتغذية المخزن</span>
                     </button>
-                    <button type="button" onclick="switchTab('transfers')" data-tab="transfers" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                        <i class="fa-solid fa-right-left w-5 text-center text-indigo-600"></i>
-                        <span>التحويل بين المستودعات</span>
+                    <button type="button" onclick="switchTab('transfers')" data-tab="transfers" class="nav-btn w-full flex items-center justify-start px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                        <i class="fa-solid fa-right-left nav-icon text-indigo-600"></i>
+                        <span class="nav-label">التحويل بين المستودعات</span>
                     </button>
-                    <button type="button" onclick="switchTab('returns')" data-tab="returns" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                        <i class="fa-solid fa-rotate-left w-5 text-center text-amber-600"></i>
-                        <span>مرتجعات العملاء</span>
+                    <button type="button" onclick="switchTab('returns')" data-tab="returns" class="nav-btn w-full flex items-center justify-start px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                        <i class="fa-solid fa-rotate-left nav-icon text-amber-600"></i>
+                        <span class="nav-label">مرتجعات العملاء</span>
                     </button>
                 </div>
 
                 <!-- 3. إدارة المستودعات والأصناف -->
                 <div class="space-y-1">
-                    <div class="px-3 text-[10px] font-black text-slate-400 tracking-wider uppercase">المستودعات والجرد</div>
+                    <div class="px-3 text-[10px] font-black text-slate-400 tracking-wider uppercase text-right">المستودعات والجرد</div>
                     <button type="button" onclick="switchTab('inventory')" data-tab="inventory" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-solid fa-boxes-stacked w-5 text-center text-sky-600"></i>
-                            <span>الأصناف وأرصدة الرولات</span>
+                        <span class="flex items-center flex-1 text-right">
+                            <i class="fa-solid fa-boxes-stacked nav-icon text-sky-600"></i>
+                            <span class="nav-label">الأصناف وأرصدة الرولات</span>
                         </span>
-                        <span id="navBadgeLowStock" class="hidden text-[10px] font-black px-2 py-0.5 rounded-lg bg-rose-100 text-rose-700">0</span>
+                        <span id="navBadgeLowStock" class="hidden text-[10px] font-black px-2 py-0.5 rounded-lg bg-rose-100 text-rose-700 mr-2 shrink-0">0</span>
                     </button>
-                    <button type="button" onclick="switchTab('stocktake')" data-tab="stocktake" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                        <i class="fa-solid fa-clipboard-check w-5 text-center text-teal-600"></i>
-                        <span>الجرد الفعلي والمطابقة</span>
+                    <button type="button" onclick="switchTab('stocktake')" data-tab="stocktake" class="nav-btn w-full flex items-center justify-start px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                        <i class="fa-solid fa-clipboard-check nav-icon text-teal-600"></i>
+                        <span class="nav-label">الجرد الفعلي والمطابقة</span>
                     </button>
-                    <button type="button" onclick="switchTab('waste')" data-tab="waste" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                        <i class="fa-solid fa-scissors w-5 text-center text-rose-600"></i>
-                        <span>الهالك والتالف والقصاقيص</span>
+                    <button type="button" onclick="switchTab('waste')" data-tab="waste" class="nav-btn w-full flex items-center justify-start px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                        <i class="fa-solid fa-scissors nav-icon text-rose-600"></i>
+                        <span class="nav-label">الهالك والتالف والقصاقيص</span>
                     </button>
                     <button type="button" onclick="switchTab('stagnant')" data-tab="stagnant" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-solid fa-hourglass-half w-5 text-center text-orange-600"></i>
-                            <span>الأصناف الراكدة (60 يوم)</span>
+                        <span class="flex items-center flex-1 text-right">
+                            <i class="fa-solid fa-hourglass-half nav-icon text-orange-600"></i>
+                            <span class="nav-label">الأصناف الراكدة (60 يوم)</span>
                         </span>
-                        <span id="navBadgeStagnant" class="hidden text-[10px] font-black px-2 py-0.5 rounded-lg bg-orange-100 text-orange-700">0</span>
+                        <span id="navBadgeStagnant" class="hidden text-[10px] font-black px-2 py-0.5 rounded-lg bg-orange-100 text-orange-700 mr-2 shrink-0">0</span>
                     </button>
                 </div>
 
                 <!-- 4. الحسابات والصلاحيات -->
                 <div class="space-y-1">
-                    <div class="px-3 text-[10px] font-black text-slate-400 tracking-wider uppercase">الحسابات والإدارة</div>
+                    <div class="px-3 text-[10px] font-black text-slate-400 tracking-wider uppercase text-right">الحسابات والإدارة</div>
                     <button type="button" onclick="switchTab('customers')" data-tab="customers" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-solid fa-users w-5 text-center text-purple-600"></i>
-                            <span>العملاء وكشوف الحساب</span>
+                        <span class="flex items-center flex-1 text-right">
+                            <i class="fa-solid fa-users nav-icon text-purple-600"></i>
+                            <span class="nav-label">العملاء وكشوف الحساب</span>
                         </span>
-                        <span id="navBadgeCustomers" class="text-[10px] font-black px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700">0</span>
+                        <span id="navBadgeCustomers" class="text-[10px] font-black px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 mr-2 shrink-0">0</span>
                     </button>
-                    <button type="button" onclick="switchTab('logs')" data-tab="logs" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                        <i class="fa-solid fa-clock-rotate-left w-5 text-center text-slate-500"></i>
-                        <span>السجل العام للحركات</span>
+                    <button type="button" onclick="switchTab('logs')" data-tab="logs" class="nav-btn w-full flex items-center justify-start px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                        <i class="fa-solid fa-clock-rotate-left nav-icon text-slate-500"></i>
+                        <span class="nav-label">السجل العام للحركات</span>
                     </button>
-                    <button type="button" id="navBtnUsers" onclick="switchTab('users')" data-tab="users" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                        <i class="fa-solid fa-user-shield w-5 text-center text-amber-600"></i>
-                        <span>المستخدمين والصلاحيات</span>
+                    <button type="button" id="navBtnUsers" onclick="switchTab('users')" data-tab="users" class="nav-btn w-full flex items-center justify-start px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                        <i class="fa-solid fa-user-shield nav-icon text-amber-600"></i>
+                        <span class="nav-label">المستخدمين والصلاحيات</span>
                     </button>
-                    <button type="button" onclick="switchTab('opening')" data-tab="opening" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                        <i class="fa-solid fa-scale-balanced w-5 text-center text-cyan-600"></i>
-                        <span>الأرصدة الافتتاحية</span>
+                    <button type="button" onclick="switchTab('opening')" data-tab="opening" class="nav-btn w-full flex items-center justify-start px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                        <i class="fa-solid fa-scale-balanced nav-icon text-cyan-600"></i>
+                        <span class="nav-label">الأرصدة الافتتاحية</span>
                     </button>
                 </div>
 
                 <!-- 5. أدوات النظام والنسخ الاحتياطي -->
                 <div class="pt-3 mt-auto border-t border-slate-800 space-y-1">
-                    <button type="button" onclick="exportFullBackup()" class="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-extrabold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-800 transition">
-                        <i class="fa-solid fa-download w-5 text-center"></i>
-                        <span>حفظ نسخة احتياطية (JSON)</span>
+                    <button type="button" onclick="exportFullBackup()" class="w-full flex items-center justify-start text-right px-3.5 py-2 rounded-xl text-xs font-extrabold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-800 transition">
+                        <i class="fa-solid fa-download w-6 ml-3 text-center shrink-0"></i>
+                        <span class="flex-1 text-right">حفظ نسخة احتياطية (JSON)</span>
                     </button>
-                    <button type="button" id="btnRestoreBackupSidebar" onclick="triggerRestoreBackup()" class="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-extrabold text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 transition">
-                        <i class="fa-solid fa-upload w-5 text-center"></i>
-                        <span>استعادة نسخة احتياطية</span>
+                    <button type="button" id="btnRestoreBackupSidebar" onclick="triggerRestoreBackup()" class="w-full flex items-center justify-start text-right px-3.5 py-2 rounded-xl text-xs font-extrabold text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 transition">
+                        <i class="fa-solid fa-upload w-6 ml-3 text-center shrink-0"></i>
+                        <span class="flex-1 text-right">استعادة نسخة احتياطية</span>
                     </button>
-                    <button type="button" onclick="logoutUser()" class="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-extrabold text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800 transition">
-                        <i class="fa-solid fa-right-from-bracket w-5 text-center"></i>
-                        <span>تسجيل الخروج</span>
+                    <button type="button" onclick="logoutUser()" class="w-full flex items-center justify-start text-right px-3.5 py-2 rounded-xl text-xs font-extrabold text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800 transition">
+                        <i class="fa-solid fa-right-from-bracket w-6 ml-3 text-center shrink-0"></i>
+                        <span class="flex-1 text-right">تسجيل الخروج</span>
                     </button>
                 </div>
             </nav>
@@ -525,28 +554,28 @@
                         </button>
 
                         <!-- القائمة المنسدلة للملف الشخصي -->
-                        <div id="userProfileDropdown" class="modal-card-animate hidden absolute left-0 mt-2 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl z-40 overflow-hidden">
-                            <div class="p-4 border-b border-slate-100 bg-slate-50">
+                        <div id="userProfileDropdown" class="modal-card-animate hidden absolute left-0 mt-2 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl z-40 overflow-hidden text-right">
+                            <div class="p-4 border-b border-slate-100 bg-slate-50 text-right">
                                 <p id="dropdownUserName" class="text-sm font-black text-slate-900">مدير النظام</p>
-                                <p id="dropdownUserUsername" class="text-xs font-bold text-slate-500 mt-0.5" dir="ltr">@admin</p>
+                                <p id="dropdownUserUsername" class="text-xs font-bold text-slate-500 mt-0.5 text-right" dir="ltr">@admin</p>
                             </div>
                             <div class="p-1.5 space-y-1">
-                                <button type="button" onclick="openUserProfileModal()" class="w-full px-3.5 py-2.5 text-xs font-extrabold text-slate-700 hover:bg-blue-50 hover:text-blue-700 rounded-xl flex items-center gap-2.5 transition">
-                                    <i class="fa-solid fa-user-gear text-blue-600 w-4"></i>
-                                    <span>إعدادات حسابي</span>
+                                <button type="button" onclick="openUserProfileModal()" class="w-full px-3.5 py-2.5 text-xs font-extrabold text-slate-700 hover:bg-blue-50 hover:text-blue-700 rounded-xl flex items-center justify-start text-right transition">
+                                    <i class="fa-solid fa-user-gear text-blue-600"></i>
+                                    <span class="flex-1 text-right">إعدادات حسابي</span>
                                 </button>
-                                <button type="button" id="dropBtnManageUsers" onclick="toggleProfileDropdown(); switchTab('users');" class="w-full px-3.5 py-2.5 text-xs font-extrabold text-slate-700 hover:bg-amber-50 hover:text-amber-700 rounded-xl flex items-center gap-2.5 transition">
-                                    <i class="fa-solid fa-user-shield text-amber-600 w-4"></i>
-                                    <span>إدارة المستخدمين والصلاحيات</span>
+                                <button type="button" id="dropBtnManageUsers" onclick="toggleProfileDropdown(); switchTab('users');" class="w-full px-3.5 py-2.5 text-xs font-extrabold text-slate-700 hover:bg-amber-50 hover:text-amber-700 rounded-xl flex items-center justify-start text-right transition">
+                                    <i class="fa-solid fa-user-shield text-amber-600"></i>
+                                    <span class="flex-1 text-right">إدارة المستخدمين والصلاحيات</span>
                                 </button>
-                                <button type="button" onclick="exportFullBackup(); toggleProfileDropdown();" class="w-full px-3.5 py-2.5 text-xs font-extrabold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 rounded-xl flex items-center gap-2.5 transition">
-                                    <i class="fa-solid fa-database text-emerald-600 w-4"></i>
-                                    <span>نسخة احتياطية للبيانات</span>
+                                <button type="button" onclick="exportFullBackup(); toggleProfileDropdown();" class="w-full px-3.5 py-2.5 text-xs font-extrabold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 rounded-xl flex items-center justify-start text-right transition">
+                                    <i class="fa-solid fa-database text-emerald-600"></i>
+                                    <span class="flex-1 text-right">نسخة احتياطية للبيانات</span>
                                 </button>
                                 <div class="border-t border-slate-100 my-1"></div>
-                                <button type="button" onclick="logoutUser()" class="w-full px-3.5 py-2.5 text-xs font-extrabold text-rose-600 hover:bg-rose-50 rounded-xl flex items-center gap-2.5 transition">
-                                    <i class="fa-solid fa-right-from-bracket w-4"></i>
-                                    <span>تسجيل الخروج</span>
+                                <button type="button" onclick="logoutUser()" class="w-full px-3.5 py-2.5 text-xs font-extrabold text-rose-600 hover:bg-rose-50 rounded-xl flex items-center justify-start text-right transition">
+                                    <i class="fa-solid fa-right-from-bracket"></i>
+                                    <span class="flex-1 text-right">تسجيل الخروج</span>
                                 </button>
                             </div>
                         </div>
@@ -4156,20 +4185,20 @@ ${statusLine}
                             <button type="button" onclick="toggleActionMenu('itemMenu_${it.id}')" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold">
                                 الإجراءات <i class="fa-solid fa-chevron-down mr-1"></i>
                             </button>
-                            <div id="itemMenu_${it.id}" class="action-dropdown hidden absolute left-4 mt-1 w-36 bg-white border border-slate-200 rounded-xl shadow-xl z-30 text-right overflow-hidden">
-                                <button type="button" onclick="viewRollDetails('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-                                    <i class="fa-solid fa-eye text-blue-600"></i> عرض
+                            <div id="itemMenu_${it.id}" class="action-dropdown hidden absolute left-4 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-30 text-right overflow-hidden">
+                                <button type="button" onclick="viewRollDetails('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center justify-start text-right">
+                                    <i class="fa-solid fa-eye text-blue-600"></i> <span class="flex-1 text-right">عرض</span>
                                 </button>
-                                <button type="button" onclick="openItemMovementModal('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-50 flex items-center gap-2">
-                                    <i class="fa-solid fa-arrows-left-right-to-line text-indigo-600"></i> حركة الصنف
+                                <button type="button" onclick="openItemMovementModal('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-50 flex items-center justify-start text-right">
+                                    <i class="fa-solid fa-arrows-left-right-to-line text-indigo-600"></i> <span class="flex-1 text-right">حركة الصنف</span>
                                 </button>
                                 ${hasPermission('inventory', 'edit') ? `
-                                <button type="button" onclick="openEditRollModal('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-                                    <i class="fa-solid fa-pen-to-square text-amber-600"></i> تعديل
+                                <button type="button" onclick="openEditRollModal('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center justify-start text-right">
+                                    <i class="fa-solid fa-pen-to-square text-amber-600"></i> <span class="flex-1 text-right">تعديل</span>
                                 </button>` : ''}
                                 ${hasPermission('inventory', 'delete') ? `
-                                <button type="button" onclick="deleteRollItem('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-2">
-                                    <i class="fa-solid fa-trash"></i> حذف
+                                <button type="button" onclick="deleteRollItem('${it.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center justify-start text-right">
+                                    <i class="fa-solid fa-trash"></i> <span class="flex-1 text-right">حذف</span>
                                 </button>` : ''}
                             </div>
                         </td>
@@ -4993,20 +5022,20 @@ ${linesTxt}
                         <td class="py-3.5 px-4 text-slate-600">${whName}</td>
                         <td class="py-3.5 px-4 text-center text-indigo-700 font-black">${Number(t.totalSqm || 0).toFixed(2)} م²</td>
                         <td class="py-3.5 px-4 text-center text-emerald-700 font-black">${Number(t.totalAmount || 0).toFixed(2)} ر.س</td>
-                        <td class="py-3.5 px-4 text-center">
-                            <div class="inline-flex items-center gap-1.5">
-                                <button type="button" onclick="viewSaleOrderDetails('${t.id}')" title="عرض البنود" class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-extrabold transition">
-                                    <i class="fa-solid fa-eye"></i>
+                            <div id="custMenu_${c.id}" class="action-dropdown hidden absolute left-4 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-30 text-right overflow-hidden">
+                                <button type="button" onclick="openCustomerStatement('${c.id}')" class="w-full px-3.5 py-2.5 text-xs font-extrabold text-blue-700 hover:bg-blue-50 flex items-center justify-start text-right">
+                                    <i class="fa-solid fa-file-invoice"></i> <span class="flex-1 text-right">كشف حساب العميل</span>
                                 </button>
-                                <button type="button" onclick="printSaleOrder('${t.id}')" title="طباعة إذن الصرف" class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-extrabold transition">
-                                    <i class="fa-solid fa-print"></i>
+                                <button type="button" onclick="sendCustomerWhatsApp('${c.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-green-700 hover:bg-green-50 flex items-center justify-start text-right">
+                                    <i class="fa-brands fa-whatsapp"></i> <span class="flex-1 text-right">إرسال كشف واتساب</span>
                                 </button>
-                                <button type="button" onclick="sendSaleOrderWhatsApp('${t.id}')" title="إرسال واتساب للعميل" class="px-2.5 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl text-xs font-extrabold transition">
-                                    <i class="fa-brands fa-whatsapp"></i>
-                                </button>
-                                ${hasPermission('sales', 'delete') ? `
-                                <button type="button" onclick="promptVoidTransaction('${t.id}')" title="إلغاء الإذن وإعادة الرصيد" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-extrabold transition">
-                                    <i class="fa-solid fa-trash"></i>
+                                ${hasPermission('customers', 'edit') ? `
+                                <button type="button" onclick="openEditCustomerModal('${c.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center justify-start text-right">
+                                    <i class="fa-solid fa-pen-to-square text-amber-600"></i> <span class="flex-1 text-right">تعديل</span>
+                                </button>` : ''}
+                                ${hasPermission('customers', 'delete') ? `
+                                <button type="button" onclick="deleteCustomer('${c.id}')" class="w-full px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center justify-start text-right">
+                                    <i class="fa-solid fa-trash"></i> <span class="flex-1 text-right">حذف</span>
                                 </button>` : ''}
                             </div>
                         </td>
