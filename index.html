@@ -1030,155 +1030,12 @@
                             <input type="date" id="salesToDate" onchange="renderSalesOrdersTable()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
                             <button type="button" onclick="resetSalesFilters()" class="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-extrabold">إعادة ضبط</button>
                         </div>
-                        <button type="button" onclick="openNewSaleOrderModal()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-md flex items-center gap-2">
-                            <i class="fa-solid fa-plus"></i> <span>إضافة إذن صرف جديد</span>
-                        </button>
-                    </div>
-
-                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right text-xs font-bold">
-                                <thead class="bg-slate-900 text-white">
-                                    <tr>
-                                        <th class="py-3.5 px-4">رقم الإذن</th>
-                                        <th class="py-3.5 px-4">التاريخ والوقت</th>
-                                        <th class="py-3.5 px-4">العميل</th>
-                                        <th class="py-3.5 px-4">بيان الأسعار</th>
-                                        <th class="py-3.5 px-4">المستودع</th>
-                                        <th class="py-3.5 px-4 text-center">إجمالي الأمتار</th>
-                                        <th class="py-3.5 px-4 text-center">الإجمالي</th>
-                                        <th class="py-3.5 px-4 text-center">الإجراءات</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="salesOrdersTableBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 5. توريد وتغذية المخزن -->
-                <section id="tab-inbound" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-6 max-w-3xl space-y-4">
-                        <h3 class="text-base font-black text-slate-900 flex items-center gap-2"><i class="fa-solid fa-truck-ramp-box text-emerald-600"></i> تسجيل توريد بضاعة (رولات) للمخزن</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">المخزن المستلم</label>
-                                <select id="inWarehouse" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">تاريخ التوريد</label>
-                                <input type="datetime-local" id="inDate" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">الصنف المورد</label>
-                                <select id="inItemSelect" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">عدد الرولات الواردة</label>
-                                <input type="number" step="any" min="0" id="inRollsQty" placeholder="مثال: 20" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-black">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">رقم البوليصة / المرجع</label>
-                                <input type="text" id="inWaybillRef" placeholder="اختياري..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">اسم السائق / شركة النقل</label>
-                                <input type="text" id="inDriverName" placeholder="اختياري..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">ملاحظات التوريد</label>
-                                <input type="text" id="inNotes" placeholder="ملاحظات إضافية..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                        </div>
-                        <button type="button" onclick="submitInbound()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-md">
-                            <i class="fa-solid fa-check ml-1"></i> اعتماد وإضافة الرولات للمخزن
-                        </button>
-                    </div>
-                </section>
-
-                <!-- 6. التحويل بين المستودعات -->
-                <section id="tab-transfers" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-6 max-w-3xl space-y-4">
-                        <h3 class="text-base font-black text-slate-900 flex items-center gap-2"><i class="fa-solid fa-right-left text-indigo-600"></i> تحويل رولات بين مستودعي السامر والتحلية</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">من مستودع</label>
-                                <select id="trFromWarehouse" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">إلى مستودع</label>
-                                <select id="trToWarehouse" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">الصنف المراد تحويله</label>
-                                <select id="trItemSelect" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">عدد الرولات المحولة</label>
-                                <input type="number" step="any" min="0" id="trRollsQty" placeholder="0" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-black">
-                            </div>
-                        </div>
-                        <button type="button" onclick="submitTransfer()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black shadow-md">
-                            <i class="fa-solid fa-right-left ml-1"></i> تنفيذ التحويل المخزني
-                        </button>
-                    </div>
-                </section>
-
-                <!-- 7. مرتجعات العملاء -->
-                <section id="tab-returns" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-6 max-w-3xl space-y-4">
-                        <h3 class="text-base font-black text-slate-900 flex items-center gap-2"><i class="fa-solid fa-rotate-left text-amber-600"></i> تسجيل مرتجع بضاعة من عميل</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">العميل</label>
-                                <select id="retCustomerSelect" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">المستودع المستلم للمرتجع</label>
-                                <select id="retWarehouse" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">الصنف المرتجع</label>
-                                <select id="retItemSelect" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">المساحة المرتجعة (م²)</label>
-                                <input type="number" step="any" min="0" id="retSqm" placeholder="0.00" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-black">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">قيمة المرتجع (تُخصم من حساب العميل)</label>
-                                <input type="number" step="any" min="0" id="retAmount" placeholder="0.00" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-black">
-                            </div>
-                        </div>
-                        <button type="button" onclick="submitReturn()" class="px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black shadow-md">
-                            <i class="fa-solid fa-check ml-1"></i> اعتماد المرتجع
-                        </button>
-                    </div>
-                </section>
-
-                <!-- 8. الأصناف وأرصدة الرولات -->
-                <section id="tab-inventory" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex flex-wrap items-center gap-2.5 flex-1">
-                            <input type="text" id="invSearchInput" oninput="renderInventoryTable()" placeholder="ابحث باسم الصنف أو المقاس..." class="w-full sm:w-72 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            <select id="invAlertFilter" onchange="renderInventoryTable()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black">
-                                <option value="all">جميع الأصناف</option>
-                                <option value="critical">رصيد حرج (≤ 5 رولات)</option>
-                                <option value="low">رصيد منخفض (6 - 10 رولات)</option>
-                            </select>
-                        </div>
                         <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" onclick="openItemMovementModal()" class="px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-black">
-                                <i class="fa-solid fa-arrows-left-right-to-line ml-1"></i> كارت حركة صنف
+                            <button type="button" onclick="openQuickReceiptModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-md flex items-center gap-2">
+                                <i class="fa-solid fa-hand-holding-dollar"></i> <span>سند قبض</span>
                             </button>
-                            <button type="button" onclick="openImportItemsModal()" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-black">
-                                <i class="fa-solid fa-file-import text-blue-600 ml-1"></i> استيراد Excel
-                            </button>
-                            <button type="button" onclick="exportInventoryExcel()" class="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black">
-                                <i class="fa-solid fa-file-excel ml-1"></i> تصدير Excel
-                            </button>
-                            <button type="button" onclick="openAddRollModal()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-md">
-                                <i class="fa-solid fa-plus ml-1"></i> صنف جديد
+                            <button type="button" onclick="openNewSaleOrderModal()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-md flex items-center gap-2">
+                                <i class="fa-solid fa-plus"></i> <span>إضافة إذن صرف جديد</span>
                             </button>
                         </div>
                     </div>
@@ -2172,6 +2029,54 @@
         </div>
     </div>
 
+    <!-- نافذة تسجيل سند قبض مباشر من شاشة إذون الصرف والمبيعات -->
+    <div id="quickReceiptModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="modal-card-animate bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-hand-holding-dollar text-emerald-600"></i>
+                    <span>تسجيل سند قبض من عميل</span>
+                </h3>
+                <button type="button" onclick="closeQuickReceiptModal()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div class="searchable-select-wrapper relative">
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">اسم العميل</label>
+                    <input type="text" id="qPayCustomerSearch" onfocus="showSearchableDropdown('qPayCustomerSelect')" oninput="filterSearchableSelect('qPayCustomerSearch', 'qPayCustomerSelect')" placeholder="ابحث واختر العميل..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                    <select id="qPayCustomerSelect" size="5" onchange="syncSearchableInput('qPayCustomerSelect', 'qPayCustomerSearch'); updateQuickReceiptBalanceHint();" class="hidden absolute left-0 right-0 mt-1 bg-white border border-slate-300 rounded-xl shadow-xl z-40 text-xs font-bold p-1"></select>
+                    <p id="qPayCustomerBalanceHint" class="text-[11px] font-extrabold text-slate-500 mt-1"></p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-700 mb-1">المبلغ المقبوض (ر.س)</label>
+                        <input type="number" step="any" min="0" id="qPayAmountInput" placeholder="0.00" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-black text-emerald-700">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-700 mb-1">تاريخ القبض</label>
+                        <input type="datetime-local" id="qPayDateInput" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">طريقة الدفع</label>
+                    <select id="qPayMethodInput" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                        <option value="تحويل بنكي">تحويل بنكي</option>
+                        <option value="كاش">كاش</option>
+                        <option value="شبكة / مدى">شبكة / مدى</option>
+                        <option value="شيك">شيك</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">ملاحظات / رقم الحوالة أو المرجع</label>
+                    <input type="text" id="qPayNotesInput" placeholder="اختياري..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closeQuickReceiptModal()" class="px-4 py-2 bg-slate-100 rounded-xl text-xs font-extrabold">إلغاء</button>
+                <button type="button" onclick="submitQuickReceipt()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black">اعتماد وحفظ سند القبض</button>
+            </div>
+        </div>
+    </div>
+
     <!-- نافذة إضافة صنف للجرد -->
     <div id="stocktakeAddItemModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
         <div class="modal-card-animate bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-4">
@@ -2479,6 +2384,7 @@
             { key: 'customers', label: 'العملاء وكشوف الحساب', icon: 'fa-users', color: 'text-purple-600' },
             { key: 'logs', label: 'السجل العام للحركات', icon: 'fa-clock-rotate-left', color: 'text-slate-500' },
             { key: 'opening', label: 'الأرصدة الافتتاحية', icon: 'fa-scale-balanced', color: 'text-cyan-600' },
+            { key: 'settings', label: 'الإعدادات وهوية الشركة', icon: 'fa-gear', color: 'text-slate-700' },
             { key: 'users', label: 'المستخدمين والصلاحيات', icon: 'fa-user-shield', color: 'text-amber-600' },
             { key: 'audit', label: 'سجل نشاط المستخدمين', icon: 'fa-fingerprint', color: 'text-violet-600' }
         ];
@@ -2498,14 +2404,27 @@
                     perms[m.key] = { view: m.key === 'dashboard', edit: false, delete: false };
                 }
             });
+            perms.settings = { view: role === 'admin', edit: role === 'admin', delete: false };
             return perms;
         }
+
+        const DEFAULT_COMPANY_SETTINGS = {
+            companyName: 'مؤسسة الطريق الأمثل للدعاية والإعلان',
+            brandShort: 'Best Way',
+            crNumber: '',
+            vatNumber: '',
+            phone1: '',
+            phone2: '',
+            address: '',
+            logoDataUrl: ''
+        };
 
         let appState = {
             warehouses: [
                 { id: 'wh_samir', name: 'مخزن السامر' },
                 { id: 'wh_tahlia', name: 'مخزن التحلية' }
             ],
+            companySettings: { ...DEFAULT_COMPANY_SETTINGS },
             items: [],
             customers: [],
             transactions: [],
@@ -2552,8 +2471,135 @@
             logs: 'السجل العام للحركات',
             users: 'إدارة المستخدمين والصلاحيات',
             opening: 'الأرصدة الافتتاحية للعملاء والأصناف',
+            settings: 'إعدادات النظام وبيانات الشركة والشعار',
             audit: 'سجل مراقبة نشاط المستخدمين (Audit Log)'
         };
+
+        function getCompanySettings() {
+            return {
+                ...DEFAULT_COMPANY_SETTINGS,
+                ...(appState.companySettings || {})
+            };
+        }
+
+        function getBrandLogoMarkup(extraClasses = 'w-full h-full object-contain') {
+            const cfg = getCompanySettings();
+            if (cfg.logoDataUrl) {
+                return `<img src="${cfg.logoDataUrl}" alt="${cfg.companyName}" class="${extraClasses}">`;
+            }
+            return `<svg viewBox="0 0 260 245" class="w-full h-full"><use href="#bestway-hd-logo"/></svg>`;
+        }
+
+        function applyCompanyBrandingToUI() {
+            const cfg = getCompanySettings();
+            const logoHtml = getBrandLogoMarkup('w-full h-full object-contain rounded-xl');
+
+            document.querySelectorAll('.brand-logo-slot').forEach(slot => {
+                slot.innerHTML = logoHtml;
+            });
+
+            const previewBox = document.getElementById('cfgLogoPreviewBox');
+            if (previewBox) {
+                previewBox.innerHTML = cfg.logoDataUrl
+                    ? `<img src="${cfg.logoDataUrl}" alt="${cfg.companyName}" class="w-full h-full object-contain rounded-xl">`
+                    : `<svg viewBox="0 0 260 245" class="w-full h-full"><use href="#bestway-hd-logo"/></svg>`;
+            }
+
+            setTextSafe('loginCompanyTitle', cfg.companyName);
+            setTextSafe('sidebarCompanyTitle', cfg.companyName);
+            setTextSafe('sidebarBrandSubtitle', `${cfg.brandShort} • إدارة المخازن`);
+            setTextSafe('stmtCompanyNameTitle', cfg.companyName);
+            const subMeta = [
+                cfg.brandShort ? `${cfg.brandShort} Advertising` : '',
+                cfg.vatNumber ? `الرقم الضريبي: ${cfg.vatNumber}` : '',
+                cfg.crNumber ? `س.ت: ${cfg.crNumber}` : '',
+                cfg.address || ''
+            ].filter(Boolean).join(' • ');
+            setTextSafe('stmtCompanySubMeta', subMeta || 'كشف حساب عميل تفصيلي • Best Way Advertising');
+        }
+
+        function loadCompanySettingsForm() {
+            const cfg = getCompanySettings();
+            const setVal = (id, v) => {
+                const el = document.getElementById(id);
+                if (el) el.value = v || '';
+            };
+            setVal('cfgCompanyName', cfg.companyName);
+            setVal('cfgBrandShort', cfg.brandShort);
+            setVal('cfgCrNumber', cfg.crNumber);
+            setVal('cfgVatNumber', cfg.vatNumber);
+            setVal('cfgPhone1', cfg.phone1);
+            setVal('cfgPhone2', cfg.phone2);
+            setVal('cfgAddress', cfg.address);
+            applyCompanyBrandingToUI();
+        }
+
+        function handleCompanyLogoUpload(event) {
+            if (!hasPermission('settings', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية تعديل الشعار والإعدادات', true);
+                return;
+            }
+            const file = event.target.files?.[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                showToast('يرجى اختيار ملف صورة صالح للشعار', true);
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target?.result;
+                if (!dataUrl) return;
+                appState.companySettings = {
+                    ...getCompanySettings(),
+                    logoDataUrl: dataUrl
+                };
+                saveState();
+                applyCompanyBrandingToUI();
+                showToast('تم رفع وتحديث شعار الشركة في كامل النظام فوراً!');
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        function resetCompanyLogoToDefault() {
+            if (!hasPermission('settings', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية تعديل الإعدادات', true);
+                return;
+            }
+            appState.companySettings = {
+                ...getCompanySettings(),
+                logoDataUrl: ''
+            };
+            saveState();
+            applyCompanyBrandingToUI();
+            showToast('تمت استعادة الشعار الافتراضي');
+        }
+
+        function saveCompanySettings() {
+            if (!hasPermission('settings', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية حفظ الإعدادات', true);
+                return;
+            }
+            const companyName = (document.getElementById('cfgCompanyName')?.value || '').trim();
+            if (!companyName) {
+                showToast('يرجى إدخال اسم الشركة / المؤسسة', true);
+                return;
+            }
+            appState.companySettings = {
+                ...getCompanySettings(),
+                companyName,
+                brandShort: (document.getElementById('cfgBrandShort')?.value || '').trim(),
+                crNumber: (document.getElementById('cfgCrNumber')?.value || '').trim(),
+                vatNumber: (document.getElementById('cfgVatNumber')?.value || '').trim(),
+                phone1: (document.getElementById('cfgPhone1')?.value || '').trim(),
+                phone2: (document.getElementById('cfgPhone2')?.value || '').trim(),
+                address: (document.getElementById('cfgAddress')?.value || '').trim()
+            };
+            logUserActivity('edit', 'الإعدادات', `تحديث بيانات الشركة وهوية الشعار (${companyName})`);
+            saveState();
+            applyCompanyBrandingToUI();
+            showToast('تم حفظ إعدادات الشركة وتحديثها في كافة أنحاء البرنامج بنجاح');
+        }
 
         function logUserActivity(actionType, moduleName, details) {
             if (!Array.isArray(appState.auditLogs)) appState.auditLogs = [];
@@ -2583,6 +2629,7 @@
                     if (parsed && typeof parsed === 'object') {
                         appState = {
                             warehouses: parsed.warehouses || appState.warehouses,
+                            companySettings: { ...DEFAULT_COMPANY_SETTINGS, ...(parsed.companySettings || {}) },
                             items: Array.isArray(parsed.items) ? parsed.items : [],
                             customers: Array.isArray(parsed.customers) ? parsed.customers : [],
                             transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
@@ -2809,6 +2856,7 @@
             }
 
             populateSelects();
+            applyCompanyBrandingToUI();
             renderDashboard();
             renderInventoryTable();
             renderSalesOrdersTable();
@@ -2876,6 +2924,7 @@
             if (!remoteState || typeof remoteState !== 'object') return;
             appState = {
                 warehouses: remoteState.warehouses || appState.warehouses,
+                companySettings: { ...DEFAULT_COMPANY_SETTINGS, ...(remoteState.companySettings || {}) },
                 items: Array.isArray(remoteState.items) ? remoteState.items : appState.items,
                 customers: Array.isArray(remoteState.customers) ? remoteState.customers : appState.customers,
                 transactions: Array.isArray(remoteState.transactions) ? remoteState.transactions : appState.transactions,
@@ -2946,6 +2995,13 @@
         // 3. تسجيل الدخول، الصلاحيات، والتنقل بين الشاشات
         // ==========================================
         function getUserModulePerm(moduleKey) {
+            if (moduleKey === 'settings') {
+                if (!currentUser) return { view: true, edit: true, delete: false };
+                if (currentUser.id === 'user_admin' || currentUser.role === 'admin') {
+                    return { view: true, edit: true, delete: false };
+                }
+                return currentUser.permissions?.settings || { view: true, edit: false, delete: false };
+            }
             if (!currentUser) return { view: true, edit: true, delete: true };
             if (currentUser.id === 'user_admin') return { view: true, edit: true, delete: true };
             if (currentUser.permissions && currentUser.permissions[moduleKey]) {
@@ -3201,6 +3257,7 @@
             if (tabKey === 'overdue') renderOverdueInvoicesReport();
             if (tabKey === 'stagnant') renderStagnantItemsTab();
             if (tabKey === 'opening') renderOpeningBalancesTab();
+            if (tabKey === 'settings') loadCompanySettingsForm();
             if (tabKey === 'audit') renderAuditLogTable();
             if (tabKey === 'inbound' && !document.getElementById('inDate').value) {
                 document.getElementById('inDate').value = getNowLocalInputStr();
@@ -3237,7 +3294,7 @@
             const custOptions = appState.customers.map(c =>
                 `<option value="${c.id}">${c.name}${c.city ? ' - ' + c.city : ''}</option>`
             ).join('');
-            ['saleCustomerSelect', 'retCustomerSelect'].forEach(id => {
+            ['saleCustomerSelect', 'retCustomerSelect', 'qPayCustomerSelect'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     const prev = el.value;
@@ -6432,8 +6489,9 @@ ${balanceLine}
             }
 
             const c = appState.customers.find(x => x.id === activeStatementCustomerId);
+            const payId = 'PAY-' + (5000 + appState.transactions.length + 1);
             appState.transactions.push({
-                id: 'PAY-' + (5000 + appState.transactions.length + 1),
+                id: payId,
                 seq: Date.now(),
                 type: 'payment',
                 date,
@@ -6444,10 +6502,89 @@ ${balanceLine}
                 notes
             });
 
+            logUserActivity('create', 'سندات القبض', `تسجيل سند قبض ${payId} من العميل (${c ? c.name : ''}) بقيمة ${amount.toFixed(2)} ر.س (${method})`);
             saveState();
             closePaymentModal();
             refreshAllViews();
             showToast('تم تسجيل سند القبض وترحيله لكشف الحساب');
+        }
+
+        function openQuickReceiptModal() {
+            if (!hasPermission('customers', 'edit') && !hasPermission('sales', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية تسجيل سندات القبض', true);
+                return;
+            }
+            populateSelects();
+            const sel = document.getElementById('qPayCustomerSelect');
+            const inp = document.getElementById('qPayCustomerSearch');
+            if (sel) sel.selectedIndex = -1;
+            if (inp) inp.value = '';
+            document.getElementById('qPayCustomerBalanceHint').textContent = '';
+            document.getElementById('qPayAmountInput').value = '';
+            document.getElementById('qPayDateInput').value = getNowLocalInputStr();
+            document.getElementById('qPayMethodInput').value = 'تحويل بنكي';
+            document.getElementById('qPayNotesInput').value = '';
+            document.getElementById('quickReceiptModal')?.classList.remove('hidden');
+        }
+
+        function closeQuickReceiptModal() {
+            document.getElementById('quickReceiptModal')?.classList.add('hidden');
+        }
+
+        function updateQuickReceiptBalanceHint() {
+            const hintEl = document.getElementById('qPayCustomerBalanceHint');
+            if (!hintEl) return;
+            const cid = document.getElementById('qPayCustomerSelect')?.value;
+            if (!cid) {
+                hintEl.textContent = '';
+                return;
+            }
+            const st = getCustomerStats(cid);
+            hintEl.innerHTML = `الرصيد الحالي المتبقي على العميل: <strong class="${st.balance > 0 ? 'text-rose-600' : 'text-emerald-700'}">${st.balance.toFixed(2)} ر.س</strong>`;
+        }
+
+        function submitQuickReceipt() {
+            const sel = document.getElementById('qPayCustomerSelect');
+            const searchTxt = (document.getElementById('qPayCustomerSearch')?.value || '').trim();
+            let customerId = sel ? sel.value : '';
+            if (!customerId && searchTxt) {
+                const matched = appState.customers.find(c => c.name.trim() === searchTxt || c.name.toLowerCase().includes(searchTxt.toLowerCase()));
+                if (matched) customerId = matched.id;
+            }
+
+            const amount = parseFloat(document.getElementById('qPayAmountInput')?.value) || 0;
+            const date = document.getElementById('qPayDateInput')?.value || getNowLocalInputStr();
+            const method = document.getElementById('qPayMethodInput')?.value || 'تحويل بنكي';
+            const notes = (document.getElementById('qPayNotesInput')?.value || '').trim();
+
+            if (!customerId) {
+                showToast('يرجى اختيار العميل أولاً', true);
+                return;
+            }
+            if (amount <= 0) {
+                showToast('يرجى إدخال مبلغ صحيح أكبر من الصفر', true);
+                return;
+            }
+
+            const c = appState.customers.find(x => x.id === customerId);
+            const payId = 'PAY-' + (5000 + appState.transactions.length + 1);
+            appState.transactions.push({
+                id: payId,
+                seq: Date.now(),
+                type: 'payment',
+                date,
+                customerId,
+                customerName: c ? c.name : searchTxt,
+                amount,
+                method,
+                notes
+            });
+
+            logUserActivity('create', 'سندات القبض', `تسجيل سند قبض ${payId} من العميل (${c ? c.name : searchTxt}) بقيمة ${amount.toFixed(2)} ر.س (${method})`);
+            closeQuickReceiptModal();
+            saveState();
+            refreshAllViews();
+            showToast(`تم تسجيل سند القبض (${payId}) بقيمة ${amount.toFixed(2)} ر.س بنجاح`);
         }
 
         // ==========================================
@@ -6810,6 +6947,7 @@ ${balanceLine}
             const savedTheme = localStorage.getItem(THEME_KEY) || 'light';
             setAppTheme(savedTheme);
             loadState();
+            applyCompanyBrandingToUI();
             updateHeaderProfileDisplay();
             restoreUserSession();
             refreshAllViews();
