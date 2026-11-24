@@ -687,6 +687,10 @@
                     <span class="nav-icon"><i class="fa-solid fa-fingerprint text-violet-600"></i></span>
                     <span class="nav-label">سجل نشاط المستخدمين</span>
                 </button>
+                <button type="button" data-tab="settings" onclick="switchTab('settings')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                    <span class="nav-icon"><i class="fa-solid fa-gear text-slate-700"></i></span>
+                    <span class="nav-label">الإعدادات</span>
+                </button>
                 <button type="button" data-tab="users" onclick="switchTab('users')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
                     <span class="nav-icon"><i class="fa-solid fa-user-shield text-amber-600"></i></span>
                     <span class="nav-label">المستخدمين والصلاحيات</span>
@@ -1635,6 +1639,77 @@
                                 </thead>
                                 <tbody id="auditLogTableBody" class="divide-y divide-slate-100"></tbody>
                             </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- شاشة الإعدادات وهوية الشركة -->
+                <section id="tab-settings" class="tab-section hidden space-y-5">
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-6">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+                            <div>
+                                <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                                    <i class="fa-solid fa-gear text-blue-600"></i>
+                                    <span>إعدادات النظام وبيانات الشركة والشعار</span>
+                                </h3>
+                                <p class="text-xs font-bold text-slate-500 mt-0.5">أي تعديل أو رفع للشعار هنا يتحدث تلقائياً في واجهة البرنامج والطباعة والمراسلات</p>
+                            </div>
+                            <button type="button" onclick="saveCompanySettings()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-md flex items-center gap-2">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span>حفظ الإعدادات</span>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                            <!-- رفع ومعاينة شعار الشركة -->
+                            <div class="lg:col-span-4 bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col items-center justify-between gap-4 text-center">
+                                <span class="text-xs font-black text-slate-700">شعار الشركة المعتمد</span>
+                                <div id="cfgLogoPreviewBox" class="w-40 h-36 rounded-2xl bg-white border border-slate-200 p-2 flex items-center justify-center shadow-xs overflow-hidden">
+                                    <svg viewBox="0 0 260 245" class="w-full h-full"><use href="#bestway-hd-logo"/></svg>
+                                </div>
+                                <div class="w-full space-y-2">
+                                    <label class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black cursor-pointer flex items-center justify-center gap-2 shadow-xs">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                        <span>رفع شعار جديد (تحديث فوري)</span>
+                                        <input type="file" id="cfgLogoFileInput" accept="image/*" onchange="handleCompanyLogoUpload(event)" class="hidden">
+                                    </label>
+                                    <button type="button" onclick="resetCompanyLogoToDefault()" class="w-full py-2 px-3 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold">
+                                        استعادة الشعار الافتراضي
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- بيانات الشركة الرسمية -->
+                            <div class="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">اسم الشركة / المؤسسة</label>
+                                    <input type="text" id="cfgCompanyName" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">الاسم المختصر / العلامة التجارية</label>
+                                    <input type="text" id="cfgBrandShort" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">رقم السجل التجاري</label>
+                                    <input type="text" id="cfgCrNumber" placeholder="مثال: 4030xxxxxx" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">الرقم الضريبي (VAT)</label>
+                                    <input type="text" id="cfgVatNumber" placeholder="مثال: 3xxxxxxxxxxxx03" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">رقم الهاتف / الجوال الأول</label>
+                                    <input type="text" id="cfgPhone1" dir="ltr" placeholder="05xxxxxxxx" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">رقم الهاتف / الجوال الثاني</label>
+                                    <input type="text" id="cfgPhone2" dir="ltr" placeholder="012xxxxxxx" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">العنوان التفصيلي</label>
+                                    <input type="text" id="cfgAddress" placeholder="المدينة - الحي - الشارع" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
