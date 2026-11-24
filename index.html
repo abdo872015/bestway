@@ -531,21 +531,259 @@
                 </section>
 
                 <!-- بقية الأقسام (يتم تفعيلها وتحديثها ديناميكياً) -->
-                <section id="tab-sales" class="tab-section hidden space-y-4"></section>
-                <section id="tab-inbound" class="tab-section hidden space-y-4"></section>
-                <section id="tab-transfers" class="tab-section hidden space-y-4"></section>
-                <section id="tab-returns" class="tab-section hidden space-y-4"></section>
-                <section id="tab-inventory" class="tab-section hidden space-y-4"></section>
-                <section id="tab-stocktake" class="tab-section hidden space-y-4"></section>
-                <section id="tab-waste" class="tab-section hidden space-y-4"></section>
-                <section id="tab-customers" class="tab-section hidden space-y-4"></section>
-                <section id="tab-overdue" class="tab-section hidden space-y-4"></section>
-                <section id="tab-stagnant" class="tab-section hidden space-y-4"></section>
-                <section id="tab-reports" class="tab-section hidden space-y-4"></section>
-                <section id="tab-opening" class="tab-section hidden space-y-4"></section>
-                <section id="tab-logs" class="tab-section hidden space-y-4"></section>
-                <section id="tab-audit" class="tab-section hidden space-y-4"></section>
-                <section id="tab-users" class="tab-section hidden space-y-4"></section>
+                <section id="tab-sales" class="tab-section hidden space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-black text-slate-900">إذون الصرف والمبيعات</h2>
+                            <p class="text-xs sm:text-sm font-bold text-slate-500">إصدار ومتابعة أذون صرف الرولات والمدفوعات</p>
+                        </div>
+                        <button type="button" onclick="quickCreateSaleDemo()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-black transition flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>إضافة إذن صرف سريع</span>
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs table-responsive-wrap">
+                        <table class="w-full text-right text-xs sm:text-sm min-w-[650px]">
+                            <thead>
+                                <tr class="border-b border-slate-200 text-slate-500 font-extrabold">
+                                    <th class="py-2.5 px-3">رقم الإذن</th>
+                                    <th class="py-2.5 px-3">التاريخ</th>
+                                    <th class="py-2.5 px-3">العميل</th>
+                                    <th class="py-2.5 px-3">المساحة (م²)</th>
+                                    <th class="py-2.5 px-3">الإجمالي (ر.س)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="salesTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="tab-inbound" class="tab-section hidden space-y-4">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-900">توريد المخزون</h2>
+                        <p class="text-xs sm:text-sm font-bold text-slate-500">إضافة رولات واردة وتسويات المخزون إلى السامر أو التحلية</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                            <select id="inboundItemSelect" class="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold"></select>
+                            <select id="inboundWarehouseSelect" class="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold">
+                                <option value="wh_samir">مخزن السامر</option>
+                                <option value="wh_tahlia">مخزن التحلية</option>
+                            </select>
+                            <input id="inboundRollsInput" type="number" step="0.5" placeholder="عدد الرولات" class="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold" />
+                            <button type="button" onclick="submitInboundStock()" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-black transition">اعتماد التوريد</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="tab-transfers" class="tab-section hidden space-y-4">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-900">التحويل بين المستودعات</h2>
+                        <p class="text-xs sm:text-sm font-bold text-slate-500">نقل الرولات بين مخزن السامر ومخزن التحلية</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <select id="transferItemSelect" class="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold"></select>
+                        <select id="transferDirectionSelect" class="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold">
+                            <option value="samir_to_tahlia">من السامر إلى التحلية</option>
+                            <option value="tahlia_to_samir">من التحلية إلى السامر</option>
+                        </select>
+                        <input id="transferRollsInput" type="number" step="0.5" placeholder="عدد الرولات" class="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold" />
+                        <button type="button" onclick="submitWarehouseTransfer()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-black transition">تنفيذ التحويل</button>
+                    </div>
+                </section>
+
+                <section id="tab-returns" class="tab-section hidden space-y-4">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-900">مرتجعات العملاء</h2>
+                        <p class="text-xs sm:text-sm font-bold text-slate-500">تسجيل مرتجعات البضاعة وإعادتها للمخزون وحساب العميل</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs text-xs sm:text-sm font-bold text-slate-600">
+                        يتم احتساب المرتجعات تلقائياً ضمن كشوف حساب العملاء وإجمالي الحركات المالية.
+                    </div>
+                </section>
+
+                <section id="tab-inventory" class="tab-section hidden space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-black text-slate-900">الأصناف وأرصدة الرولات</h2>
+                            <p class="text-xs sm:text-sm font-bold text-slate-500">عرض الأرصدة الحالية في مخزن السامر والتحلية والمساحة الإجمالية</p>
+                        </div>
+                        <input id="inventorySearchInput" type="text" oninput="renderInventoryTable()" placeholder="ابحث باسم الصنف أو المقاس..." class="w-full sm:w-72 px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold" />
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs table-responsive-wrap">
+                        <table class="w-full text-right text-xs sm:text-sm min-w-[700px]">
+                            <thead>
+                                <tr class="border-b border-slate-200 text-slate-500 font-extrabold">
+                                    <th class="py-2.5 px-3">اسم الصنف</th>
+                                    <th class="py-2.5 px-3">المقاس (عرض×طول)</th>
+                                    <th class="py-2.5 px-3">مخزن السامر</th>
+                                    <th class="py-2.5 px-3">مخزن التحلية</th>
+                                    <th class="py-2.5 px-3">الإجمالي (رول)</th>
+                                    <th class="py-2.5 px-3">المساحة (م²)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="tab-stocktake" class="tab-section hidden space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-black text-slate-900">الجرد الفعلي والتسوية</h2>
+                            <p class="text-xs sm:text-sm font-bold text-slate-500">مقارنة الرصيد الفعلي بالرصيد الدفتري في المخازن</p>
+                        </div>
+                        <button type="button" onclick="syncStocktakeLines()" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-black transition">مزامنة الأصناف للجرد</button>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs table-responsive-wrap">
+                        <table class="w-full text-right text-xs sm:text-sm min-w-[650px]">
+                            <thead>
+                                <tr class="border-b border-slate-200 text-slate-500 font-extrabold">
+                                    <th class="py-2.5 px-3">الصنف</th>
+                                    <th class="py-2.5 px-3">دفتري السامر</th>
+                                    <th class="py-2.5 px-3">دفتري التحلية</th>
+                                    <th class="py-2.5 px-3">فعلي السامر</th>
+                                    <th class="py-2.5 px-3">فعلي التحلية</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stocktakeTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="tab-waste" class="tab-section hidden space-y-4">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-900">الهالك والتالف</h2>
+                        <p class="text-xs sm:text-sm font-bold text-slate-500">متابعة الهالك والقصاقيص والفاقد المخزني</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs text-xs sm:text-sm font-bold text-slate-600">
+                        يمكن تسجيل أي تسوية هالك أو تالف عبر شاشة توريد/تسوية المخزون أو الجرد الفعلي.
+                    </div>
+                </section>
+
+                <section id="tab-customers" class="tab-section hidden space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-black text-slate-900">العملاء وكشوف الحساب</h2>
+                            <p class="text-xs sm:text-sm font-bold text-slate-500">قائمة العملاء وأرصدة المديونية والمدفوعات</p>
+                        </div>
+                        <input id="customerSearchInput" type="text" oninput="renderCustomersTable()" placeholder="ابحث باسم العميل أو المدينة..." class="w-full sm:w-72 px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold" />
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs table-responsive-wrap">
+                        <table class="w-full text-right text-xs sm:text-sm min-w-[650px]">
+                            <thead>
+                                <tr class="border-b border-slate-200 text-slate-500 font-extrabold">
+                                    <th class="py-2.5 px-3">اسم العميل</th>
+                                    <th class="py-2.5 px-3">المدينة</th>
+                                    <th class="py-2.5 px-3">المبيعات</th>
+                                    <th class="py-2.5 px-3">المدفوعات</th>
+                                    <th class="py-2.5 px-3">الرصيد المتبقي</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customersTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="tab-overdue" class="tab-section hidden space-y-4">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-900">الفواتير المتأخرة</h2>
+                        <p class="text-xs sm:text-sm font-bold text-slate-500">متابعة الفواتير المستحقة والعملاء ذوي الرصيد المفتوح</p>
+                    </div>
+                    <div id="overdueSummaryList" class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-2 text-xs sm:text-sm font-bold text-slate-700"></div>
+                </section>
+
+                <section id="tab-stagnant" class="tab-section hidden space-y-4">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-900">الأصناف الراكدة</h2>
+                        <p class="text-xs sm:text-sm font-bold text-slate-500">الأصناف المتوفرة بالمخزون التي لم تشهد حركة مبيعات حديثة</p>
+                    </div>
+                    <div id="stagnantItemsList" class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-2 text-xs sm:text-sm font-bold text-slate-700"></div>
+                </section>
+
+                <section id="tab-reports" class="tab-section hidden space-y-4">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-900">التقارير والتحليلات</h2>
+                        <p class="text-xs sm:text-sm font-bold text-slate-500">ملخص الأداء المخزني والمالي وتصدير البيانات</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-wrap items-center justify-between gap-4">
+                        <div id="reportsSummaryText" class="text-xs sm:text-sm font-extrabold text-slate-700"></div>
+                        <button type="button" onclick="exportSummaryExcel()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-black transition flex items-center gap-2">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <span>تصدير تقرير الأصناف Excel</span>
+                        </button>
+                    </div>
+                </section>
+
+                <section id="tab-opening" class="tab-section hidden space-y-4">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-900">الأرصدة الافتتاحية</h2>
+                        <p class="text-xs sm:text-sm font-bold text-slate-500">إدارة الأرصدة الافتتاحية للعملاء والأصناف</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs text-xs sm:text-sm font-bold text-slate-600">
+                        يمكنك استيراد أو تعديل الأرصدة الافتتاحية مباشرة عبر ملف النسخة الاحتياطية JSON أو من شاشة العملاء والأصناف.
+                    </div>
+                </section>
+
+                <section id="tab-logs" class="tab-section hidden space-y-4">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-900">السجل العام للحركات</h2>
+                        <p class="text-xs sm:text-sm font-bold text-slate-500">جميع حركات الصرف والتوريد والمدفوعات والتسويات</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs table-responsive-wrap">
+                        <table class="w-full text-right text-xs sm:text-sm min-w-[650px]">
+                            <thead>
+                                <tr class="border-b border-slate-200 text-slate-500 font-extrabold">
+                                    <th class="py-2.5 px-3">الرقم</th>
+                                    <th class="py-2.5 px-3">التاريخ</th>
+                                    <th class="py-2.5 px-3">النوع</th>
+                                    <th class="py-2.5 px-3">البيان / العميل</th>
+                                    <th class="py-2.5 px-3">القيمة / الكمية</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="tab-audit" class="tab-section hidden space-y-4">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-900">سجل نشاط المستخدمين</h2>
+                        <p class="text-xs sm:text-sm font-bold text-slate-500">مراقبة عمليات الدخول والتعديل والحفظ في النظام</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs table-responsive-wrap">
+                        <table class="w-full text-right text-xs sm:text-sm min-w-[650px]">
+                            <thead>
+                                <tr class="border-b border-slate-200 text-slate-500 font-extrabold">
+                                    <th class="py-2.5 px-3">الوقت</th>
+                                    <th class="py-2.5 px-3">المستخدم</th>
+                                    <th class="py-2.5 px-3">القسم</th>
+                                    <th class="py-2.5 px-3">التفاصيل</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="tab-users" class="tab-section hidden space-y-4">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-900">المستخدمين والصلاحيات</h2>
+                        <p class="text-xs sm:text-sm font-bold text-slate-500">إدارة حسابات المستخدمين وصلاحيات الوصول</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs table-responsive-wrap">
+                        <table class="w-full text-right text-xs sm:text-sm min-w-[500px]">
+                            <thead>
+                                <tr class="border-b border-slate-200 text-slate-500 font-extrabold">
+                                    <th class="py-2.5 px-3">الاسم الكامل</th>
+                                    <th class="py-2.5 px-3">اسم المستخدم</th>
+                                    <th class="py-2.5 px-3">الدور</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
             </main>
         </div>
     </div>
@@ -716,13 +954,18 @@
             const errBox = document.getElementById('loginErrorMsg');
             const card = document.getElementById('loginCardBox');
             const username = (uInput?.value || '').trim();
-            const password = (pInput?.value || '').trim();
+            const password = pInput?.value || '';
 
-            const found = (appState.users || []).find(
-                u => String(u.username || '').trim().toLowerCase() === username.toLowerCase() && String(u.password || '') === password
+            const users = Array.isArray(appState.users) && appState.users.length ? appState.users : [
+                { id: 'user_admin', fullName: 'مدير النظام', username: 'admin', password: '1234', role: 'admin' }
+            ];
+
+            const matched = users.find(u =>
+                String(u.username || '').trim().toLowerCase() === username.toLowerCase() &&
+                String(u.password || '') === String(password)
             );
 
-            if (!found) {
+            if (!matched) {
                 if (errBox) {
                     errBox.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة';
                     errBox.classList.remove('hidden');
@@ -735,55 +978,62 @@
                 return;
             }
 
-            currentUser = found;
-            try { localStorage.setItem(SESSION_KEY, found.id); } catch (e) {}
             if (errBox) errBox.classList.add('hidden');
+            currentUser = matched;
+            try {
+                sessionStorage.setItem(SESSION_KEY, JSON.stringify({ userId: matched.id, username: matched.username }));
+            } catch (e) {}
 
+            logUserActivity('auth', 'تسجيل الدخول', `تسجيل دخول المستخدم ${matched.fullName || matched.username}`);
+            saveState();
+
+            setTextSafe('currentUserNameLabel', matched.fullName || matched.username);
             document.getElementById('directLoginScreen')?.classList.add('hidden');
             document.getElementById('mainApp')?.classList.remove('hidden');
-            setTextSafe('currentUserNameLabel', found.fullName || found.username);
-
-            logUserActivity('auth', 'تسجيل الدخول', `قام المستخدم (${found.fullName || found.username}) بتسجيل الدخول`);
-            saveState();
-            refreshAllViews();
             switchTab('dashboard');
-            showToast(`مرحباً بك، ${found.fullName || found.username}`);
-        }
-
-        function restoreUserSession() {
-            try {
-                const savedId = localStorage.getItem(SESSION_KEY);
-                if (!savedId) return false;
-                const found = (appState.users || []).find(u => u.id === savedId);
-                if (!found) return false;
-                currentUser = found;
-                document.getElementById('directLoginScreen')?.classList.add('hidden');
-                document.getElementById('mainApp')?.classList.remove('hidden');
-                setTextSafe('currentUserNameLabel', found.fullName || found.username);
-                return true;
-            } catch (e) {
-                return false;
-            }
+            refreshAllViews();
+            populateSettingsForm();
+            showToast(`مرحباً بك، ${matched.fullName || matched.username}`);
         }
 
         function logoutUser() {
             if (currentUser) {
-                logUserActivity('auth', 'تسجيل الخروج', `قام المستخدم (${currentUser.fullName || currentUser.username}) بتسجيل الخروج`);
+                logUserActivity('auth', 'تسجيل الخروج', `خروج المستخدم ${currentUser.fullName || currentUser.username}`);
                 saveState();
             }
             currentUser = null;
-            try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+            try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
             document.getElementById('mainApp')?.classList.add('hidden');
             document.getElementById('directLoginScreen')?.classList.remove('hidden');
             const pInput = document.getElementById('loginPasswordInput');
             if (pInput) pInput.value = '';
         }
 
+        function restoreUserSession() {
+            try {
+                const raw = sessionStorage.getItem(SESSION_KEY);
+                if (!raw) return false;
+                const sess = JSON.parse(raw);
+                const found = (appState.users || []).find(u => u.id === sess.userId || u.username === sess.username);
+                if (!found) return false;
+                currentUser = found;
+                setTextSafe('currentUserNameLabel', found.fullName || found.username);
+                document.getElementById('directLoginScreen')?.classList.add('hidden');
+                document.getElementById('mainApp')?.classList.remove('hidden');
+                switchTab('dashboard');
+                populateSettingsForm();
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
         function toggleMobileSidebar(open) {
             const drawer = document.getElementById('sidebarDrawer');
             const backdrop = document.getElementById('mobileSidebarBackdrop');
             if (!drawer || !backdrop) return;
-            if (open) {
+            const shouldOpen = typeof open === 'boolean' ? open : drawer.classList.contains('translate-x-full');
+            if (shouldOpen) {
                 drawer.classList.remove('translate-x-full');
                 backdrop.classList.remove('hidden');
             } else {
@@ -794,50 +1044,44 @@
 
         function switchTab(tabKey) {
             document.querySelectorAll('.tab-section').forEach(sec => sec.classList.add('hidden'));
-            const targetSec = document.getElementById('tab-' + tabKey);
-            if (targetSec) targetSec.classList.remove('hidden');
+            const target = document.getElementById('tab-' + tabKey);
+            if (target) target.classList.remove('hidden');
 
             document.querySelectorAll('#sidebarNav .nav-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.getAttribute('data-tab') === tabKey);
             });
-
-            if (tabKey === 'settings') {
-                populateSettingsForm();
-            }
             toggleMobileSidebar(false);
         }
 
         function applyBrandingToUI() {
             const s = { ...DEFAULT_SETTINGS, ...(appState.settings || {}) };
-            const companyDisplay = s.companyName || DEFAULT_SETTINGS.companyName;
-            const shortDisplay = s.companyShortName || DEFAULT_SETTINGS.companyShortName;
-
-            setTextSafe('headerCompanyName', companyDisplay);
-            setTextSafe('loginCompanyTitle', companyDisplay);
-            setTextSafe('loginCompanySubtitle', `${shortDisplay} • نظام إدارة المخزون والمبيعات`);
-            document.title = `${companyDisplay} - ${shortDisplay}`;
+            const title = s.companyName || DEFAULT_SETTINGS.companyName;
+            const shortName = s.companyShortName || DEFAULT_SETTINGS.companyShortName;
+            setTextSafe('loginCompanyTitle', title);
+            setTextSafe('loginCompanySubtitle', `${shortName} • نظام إدارة المخزون والمبيعات`);
+            setTextSafe('headerCompanyName', title);
 
             const headerImg = document.getElementById('headerBrandLogoImg');
             const headerSvg = document.getElementById('headerBrandLogoSvg');
-            const previewImg = document.getElementById('settingsLogoPreviewImg');
-            const previewSvg = document.getElementById('settingsLogoPreviewSvg');
+            const settingsImg = document.getElementById('settingsLogoPreviewImg');
+            const settingsSvg = document.getElementById('settingsLogoPreviewSvg');
 
             if (s.logoDataUrl) {
                 if (headerImg) { headerImg.src = s.logoDataUrl; headerImg.classList.remove('hidden'); }
                 if (headerSvg) headerSvg.classList.add('hidden');
-                if (previewImg) { previewImg.src = s.logoDataUrl; previewImg.classList.remove('hidden'); }
-                if (previewSvg) previewSvg.classList.add('hidden');
+                if (settingsImg) { settingsImg.src = s.logoDataUrl; settingsImg.classList.remove('hidden'); }
+                if (settingsSvg) settingsSvg.classList.add('hidden');
             } else {
                 if (headerImg) { headerImg.src = ''; headerImg.classList.add('hidden'); }
                 if (headerSvg) headerSvg.classList.remove('hidden');
-                if (previewImg) { previewImg.src = ''; previewImg.classList.add('hidden'); }
-                if (previewSvg) previewSvg.classList.remove('hidden');
+                if (settingsImg) { settingsImg.src = ''; settingsImg.classList.add('hidden'); }
+                if (settingsSvg) settingsSvg.classList.remove('hidden');
             }
         }
 
         function populateSettingsForm() {
             const s = { ...DEFAULT_SETTINGS, ...(appState.settings || {}) };
-            const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+            const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
             setVal('setCompanyName', s.companyName);
             setVal('setCompanyShortName', s.companyShortName);
             setVal('setCommercialReg', s.commercialReg);
@@ -845,42 +1089,17 @@
             setVal('setPhonePrimary', s.phonePrimary);
             setVal('setPhoneSecondary', s.phoneSecondary);
             setVal('setAddress', s.address);
-            applyBrandingToUI();
-        }
-
-        function saveCompanySettings() {
-            const getVal = id => (document.getElementById(id)?.value || '').trim();
-            const currentLogo = appState.settings?.logoDataUrl || '';
-            appState.settings = {
-                companyName: getVal('setCompanyName') || DEFAULT_SETTINGS.companyName,
-                companyShortName: getVal('setCompanyShortName') || DEFAULT_SETTINGS.companyShortName,
-                commercialReg: getVal('setCommercialReg'),
-                vatNumber: getVal('setVatNumber'),
-                phonePrimary: getVal('setPhonePrimary'),
-                phoneSecondary: getVal('setPhoneSecondary'),
-                address: getVal('setAddress'),
-                logoDataUrl: currentLogo
-            };
-            logUserActivity('edit', 'الإعدادات', 'تم تحديث بيانات الشركة والهوية التجارية');
-            saveState();
-            applyBrandingToUI();
-            showToast('تم حفظ إعدادات الشركة وتحديث الهوية بنجاح');
         }
 
         function handleCompanyLogoUpload(event) {
             const file = event.target?.files?.[0];
             if (!file) return;
-            if (!file.type.startsWith('image/')) {
-                showToast('يرجى اختيار ملف صورة صالح', true);
-                return;
-            }
             const reader = new FileReader();
             reader.onload = function(e) {
-                appState.settings = { ...DEFAULT_SETTINGS, ...(appState.settings || {}), logoDataUrl: e.target.result };
-                logUserActivity('edit', 'الإعدادات', 'تم رفع وتحديث شعار الشركة');
-                saveState();
+                appState.settings = { ...DEFAULT_SETTINGS, ...(appState.settings || {}), logoDataUrl: e.target.result || '' };
                 applyBrandingToUI();
-                showToast('تم تحديث شعار الشركة في جميع أنحاء النظام');
+                saveState();
+                showToast('تم رفع وتحديث شعار الشركة بنجاح');
             };
             reader.readAsDataURL(file);
             event.target.value = '';
@@ -888,10 +1107,28 @@
 
         function resetDefaultCompanyLogo() {
             appState.settings = { ...DEFAULT_SETTINGS, ...(appState.settings || {}), logoDataUrl: '' };
-            logUserActivity('edit', 'الإعدادات', 'تمت استعادة الشعار الافتراضي للنظام');
+            applyBrandingToUI();
+            saveState();
+            showToast('تمت استعادة الشعار الافتراضي');
+        }
+
+        function saveCompanySettings() {
+            const getVal = id => (document.getElementById(id)?.value || '').trim();
+            appState.settings = {
+                ...DEFAULT_SETTINGS,
+                ...(appState.settings || {}),
+                companyName: getVal('setCompanyName') || DEFAULT_SETTINGS.companyName,
+                companyShortName: getVal('setCompanyShortName') || DEFAULT_SETTINGS.companyShortName,
+                commercialReg: getVal('setCommercialReg'),
+                vatNumber: getVal('setVatNumber'),
+                phonePrimary: getVal('setPhonePrimary'),
+                phoneSecondary: getVal('setPhoneSecondary'),
+                address: getVal('setAddress')
+            };
+            logUserActivity('edit', 'الإعدادات', 'تحديث بيانات الشركة والهوية التجارية');
             saveState();
             applyBrandingToUI();
-            showToast('تمت استعادة الشعار الافتراضي');
+            showToast('تم حفظ إعدادات الشركة بنجاح');
         }
 
         function getCustomerStats(customerId) {
@@ -923,50 +1160,296 @@
         }
 
         function renderDashboard() {
-            let samirRolls = 0, tahliaRolls = 0, totalSqm = 0;
-            (appState.items || []).forEach(it => {
+            const items = appState.items || [];
+            let totalRolls = 0, samirRolls = 0, tahliaRolls = 0, totalSqm = 0;
+            items.forEach(it => {
                 const s = Number(it.stockSamir || 0);
                 const t = Number(it.stockTahlia || 0);
+                const tot = s + t;
                 samirRolls += s;
                 tahliaRolls += t;
-                const area = (Number(it.length) || 50) * (Number(it.width) || 1);
-                totalSqm += (s + t) * area;
+                totalRolls += tot;
+                totalSqm += tot * (Number(it.width) || 1) * (Number(it.length) || 50);
             });
-            const totalRolls = samirRolls + tahliaRolls;
 
-            let totalSales = 0, salesCount = 0;
-            (appState.transactions || []).forEach(t => {
-                if (t.type === 'sale') {
-                    totalSales += Number(t.totalAmount || 0);
-                    salesCount++;
-                }
-            });
+            const salesList = (appState.transactions || []).filter(t => t.type === 'sale');
+            const totalSales = salesList.reduce((acc, t) => acc + Number(t.totalAmount || 0), 0);
 
             let totalReceivables = 0;
-            let topDebtCust = null, topDebtVal = -Infinity;
-            let topSalesCust = null, topSalesVal = -1;
+            let topDebt = { id: null, name: '-', amount: 0 };
+            let topSales = { id: null, name: '-', amount: 0 };
 
             (appState.customers || []).forEach(c => {
                 const st = getCustomerStats(c.id);
                 if (st.balance > 0) totalReceivables += st.balance;
-                if (st.balance > topDebtVal) { topDebtVal = st.balance; topDebtCust = c; }
-                if (st.salesTotal > topSalesVal) { topSalesVal = st.salesTotal; topSalesCust = c; }
+                if (st.balance > topDebt.amount) topDebt = { id: c.id, name: c.name, amount: st.balance };
+                if (st.salesTotal > topSales.amount) topSales = { id: c.id, name: c.name, amount: st.salesTotal };
             });
 
-            dashboardCustomerRefs.topDebt = topDebtCust ? topDebtCust.id : null;
-            dashboardCustomerRefs.topSales = topSalesCust ? topSalesCust.id : null;
+            dashboardCustomerRefs = { topDebt: topDebt.id, topSales: topSales.id };
 
-            setTextSafe('kpiTotalRolls', totalRolls.toFixed(2));
+            setTextSafe('kpiTotalRolls', totalRolls.toFixed(1));
             setTextSafe('kpiWarehousesBreakdown', `السامر: ${samirRolls.toFixed(1)} • التحلية: ${tahliaRolls.toFixed(1)}`);
-            setTextSafe('kpiTotalSqm', totalSqm.toFixed(2) + ' م²');
-            setTextSafe('kpiItemsCountLabel', `عدد الأصناف: ${(appState.items || []).length}`);
+            setTextSafe('kpiTotalSqm', totalSqm.toFixed(1) + ' م²');
+            setTextSafe('kpiItemsCountLabel', `عدد الأصناف: ${items.length}`);
             setTextSafe('kpiTotalSales', totalSales.toFixed(2) + ' ر.س');
-            setTextSafe('kpiSalesCountLabel', `عدد أذون الصرف: ${salesCount}`);
+            setTextSafe('kpiSalesCountLabel', `عدد أذون الصرف: ${salesList.length}`);
             setTextSafe('kpiTotalReceivables', totalReceivables.toFixed(2) + ' ر.س');
-            setTextSafe('dashTopDebtName', topDebtCust ? topDebtCust.name : 'لا يوجد عملاء مدينون');
-            setTextSafe('dashTopDebtAmount', topDebtCust ? topDebtVal.toFixed(2) + ' ر.س' : '0.00 ر.س');
-            setTextSafe('dashTopSalesName', topSalesCust ? topSalesCust.name : 'لا توجد مبيعات مسجلة');
-            setTextSafe('dashTopSalesAmount', topSalesCust ? topSalesVal.toFixed(2) + ' ر.س' : '0.00 ر.س');
+            setTextSafe('kpiOverdueBadgeText', `عدد العملاء: ${(appState.customers || []).length}`);
+
+            setTextSafe('dashTopDebtName', topDebt.name);
+            setTextSafe('dashTopDebtAmount', topDebt.amount.toFixed(2) + ' ر.س');
+            setTextSafe('dashTopSalesName', topSales.name);
+            setTextSafe('dashTopSalesAmount', topSales.amount.toFixed(2) + ' ر.س');
+        }
+
+        function populateItemSelects() {
+            const optionsHtml = (appState.items || []).map(it =>
+                `<option value="${it.id}">${it.name} (${it.width}م × ${it.length || 50}م)</option>`
+            ).join('');
+            const inSel = document.getElementById('inboundItemSelect');
+            const trSel = document.getElementById('transferItemSelect');
+            if (inSel) inSel.innerHTML = optionsHtml || '<option value="">لا توجد أصناف</option>';
+            if (trSel) trSel.innerHTML = optionsHtml || '<option value="">لا توجد أصناف</option>';
+        }
+
+        function renderInventoryTable() {
+            const tbody = document.getElementById('inventoryTableBody');
+            if (!tbody) return;
+            const term = (document.getElementById('inventorySearchInput')?.value || '').trim().toLowerCase();
+            const list = (appState.items || []).filter(it => !term || String(it.name || '').toLowerCase().includes(term));
+            if (!list.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400 font-bold">لا توجد أصناف مطابقة</td></tr>';
+                return;
+            }
+            tbody.innerHTML = list.map(it => {
+                const s = Number(it.stockSamir || 0);
+                const t = Number(it.stockTahlia || 0);
+                const tot = s + t;
+                const sqm = tot * (Number(it.width) || 1) * (Number(it.length) || 50);
+                return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50/70">
+                        <td class="py-2.5 px-3 font-extrabold text-slate-800">${it.name}</td>
+                        <td class="py-2.5 px-3 font-bold text-slate-500">${it.width}م × ${it.length || 50}م</td>
+                        <td class="py-2.5 px-3 font-bold">${s.toFixed(1)}</td>
+                        <td class="py-2.5 px-3 font-bold">${t.toFixed(1)}</td>
+                        <td class="py-2.5 px-3 font-black text-sky-700">${tot.toFixed(1)}</td>
+                        <td class="py-2.5 px-3 font-bold text-indigo-700">${sqm.toFixed(1)} م²</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderSalesAndLogsTables() {
+            const salesBody = document.getElementById('salesTableBody');
+            const logsBody = document.getElementById('logsTableBody');
+            const txs = Array.isArray(appState.transactions) ? appState.transactions : [];
+
+            if (salesBody) {
+                const sales = txs.filter(t => t.type === 'sale');
+                salesBody.innerHTML = sales.length
+                    ? sales.map(t => `
+                        <tr class="border-b border-slate-100">
+                            <td class="py-2.5 px-3 font-black text-emerald-700">${t.id || '-'}</td>
+                            <td class="py-2.5 px-3 text-slate-600">${t.date || '-'}</td>
+                            <td class="py-2.5 px-3 font-bold">${t.customerName || '-'}</td>
+                            <td class="py-2.5 px-3 font-bold">${Number(t.totalSqm || 0).toFixed(2)} م²</td>
+                            <td class="py-2.5 px-3 font-black">${Number(t.totalAmount || 0).toFixed(2)} ر.س</td>
+                        </tr>
+                    `).join('')
+                    : '<tr><td colspan="5" class="py-6 text-center text-slate-400 font-bold">لا توجد أذون صرف مسجلة</td></tr>';
+            }
+
+            if (logsBody) {
+                logsBody.innerHTML = txs.length
+                    ? txs.slice().reverse().slice(0, 100).map(t => `
+                        <tr class="border-b border-slate-100">
+                            <td class="py-2.5 px-3 font-bold">${t.id || '-'}</td>
+                            <td class="py-2.5 px-3 text-slate-500">${t.date || '-'}</td>
+                            <td class="py-2.5 px-3 font-extrabold text-sky-700">${t.type || '-'}</td>
+                            <td class="py-2.5 px-3 font-bold">${t.customerName || t.itemName || '-'}</td>
+                            <td class="py-2.5 px-3 font-black">${Number(t.totalAmount || t.amount || t.rolls || 0).toFixed(2)}</td>
+                        </tr>
+                    `).join('')
+                    : '<tr><td colspan="5" class="py-6 text-center text-slate-400 font-bold">لا توجد حركات مسجلة</td></tr>';
+            }
+        }
+
+        function renderCustomersTable() {
+            const tbody = document.getElementById('customersTableBody');
+            if (!tbody) return;
+            const term = (document.getElementById('customerSearchInput')?.value || '').trim().toLowerCase();
+            const list = (appState.customers || []).filter(c =>
+                !term || String(c.name || '').toLowerCase().includes(term) || String(c.city || '').toLowerCase().includes(term)
+            );
+            if (!list.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400 font-bold">لا يوجد عملاء مطابقون</td></tr>';
+                return;
+            }
+            tbody.innerHTML = list.slice(0, 100).map(c => {
+                const st = getCustomerStats(c.id);
+                return `
+                    <tr class="border-b border-slate-100">
+                        <td class="py-2.5 px-3 font-extrabold text-slate-800">${c.name}</td>
+                        <td class="py-2.5 px-3 text-slate-500">${c.city || '-'}</td>
+                        <td class="py-2.5 px-3 font-bold text-emerald-700">${st.salesTotal.toFixed(2)}</td>
+                        <td class="py-2.5 px-3 font-bold text-sky-700">${st.paymentsTotal.toFixed(2)}</td>
+                        <td class="py-2.5 px-3 font-black ${st.balance > 0 ? 'text-rose-700' : 'text-slate-700'}">${st.balance.toFixed(2)} ر.س</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderSecondaryTabs() {
+            const stBody = document.getElementById('stocktakeTableBody');
+            if (stBody) {
+                stBody.innerHTML = (appState.items || []).slice(0, 80).map(it => `
+                    <tr class="border-b border-slate-100">
+                        <td class="py-2 px-3 font-bold">${it.name}</td>
+                        <td class="py-2 px-3">${Number(it.stockSamir || 0).toFixed(1)}</td>
+                        <td class="py-2 px-3">${Number(it.stockTahlia || 0).toFixed(1)}</td>
+                        <td class="py-2 px-3"><input type="number" step="0.5" value="${Number(it.stockSamir || 0)}" onchange="updateActualStock('${it.id}','samir',this.value)" class="w-24 px-2 py-1 rounded-lg border border-slate-200 text-xs font-bold" /></td>
+                        <td class="py-2 px-3"><input type="number" step="0.5" value="${Number(it.stockTahlia || 0)}" onchange="updateActualStock('${it.id}','tahlia',this.value)" class="w-24 px-2 py-1 rounded-lg border border-slate-200 text-xs font-bold" /></td>
+                    </tr>
+                `).join('') || '<tr><td colspan="5" class="py-6 text-center text-slate-400 font-bold">لا توجد أصناف</td></tr>';
+            }
+
+            const ovdEl = document.getElementById('overdueSummaryList');
+            if (ovdEl) {
+                const debtors = (appState.customers || [])
+                    .map(c => ({ c, st: getCustomerStats(c.id) }))
+                    .filter(x => x.st.balance > 0)
+                    .sort((a, b) => b.st.balance - a.st.balance);
+                ovdEl.innerHTML = debtors.length
+                    ? debtors.slice(0, 30).map(x => `<div class="flex justify-between py-1.5 border-b border-slate-100"><span>${x.c.name}</span><span class="text-rose-700 font-black">${x.st.balance.toFixed(2)} ر.س</span></div>`).join('')
+                    : 'لا توجد فواتير أو أرصدة متأخرة حالياً.';
+            }
+
+            const stagEl = document.getElementById('stagnantItemsList');
+            if (stagEl) {
+                const zeroOrLow = (appState.items || []).filter(it => (Number(it.stockSamir || 0) + Number(it.stockTahlia || 0)) > 0).slice(0, 20);
+                stagEl.innerHTML = zeroOrLow.length
+                    ? zeroOrLow.map(it => `<div class="flex justify-between py-1.5 border-b border-slate-100"><span>${it.name}</span><span class="text-sky-700">${(Number(it.stockSamir || 0) + Number(it.stockTahlia || 0)).toFixed(1)} رول</span></div>`).join('')
+                    : 'لا توجد أصناف متوفرة حالياً.';
+            }
+
+            const repEl = document.getElementById('reportsSummaryText');
+            if (repEl) {
+                repEl.textContent = `إجمالي الأصناف: ${(appState.items || []).length} • إجمالي العملاء: ${(appState.customers || []).length} • إجمالي الحركات: ${(appState.transactions || []).length}`;
+            }
+
+            const auditBody = document.getElementById('auditTableBody');
+            if (auditBody) {
+                const logs = appState.auditLogs || [];
+                auditBody.innerHTML = logs.length
+                    ? logs.slice(0, 80).map(l => `<tr class="border-b border-slate-100"><td class="py-2 px-3 text-slate-500">${l.timestamp ? new Date(l.timestamp).toLocaleString('ar-SA') : '-'}</td><td class="py-2 px-3 font-bold">${l.fullName || '-'}</td><td class="py-2 px-3 text-violet-700 font-bold">${l.moduleName || '-'}</td><td class="py-2 px-3">${l.details || '-'}</td></tr>`).join('')
+                    : '<tr><td colspan="4" class="py-6 text-center text-slate-400 font-bold">لا توجد سجلات نشاط بعد</td></tr>';
+            }
+
+            const usersBody = document.getElementById('usersTableBody');
+            if (usersBody) {
+                usersBody.innerHTML = (appState.users || []).map(u => `<tr class="border-b border-slate-100"><td class="py-2.5 px-3 font-extrabold">${u.fullName || u.username}</td><td class="py-2.5 px-3 font-mono text-xs">${u.username}</td><td class="py-2.5 px-3"><span class="px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 text-xs font-extrabold">${u.role === 'admin' ? 'مدير النظام' : 'مستخدم'}</span></td></tr>`).join('');
+            }
+        }
+
+        function updateActualStock(itemId, wh, val) {
+            const item = (appState.items || []).find(i => i.id === itemId);
+            if (!item) return;
+            const num = Math.max(0, Number(val || 0));
+            if (wh === 'samir') item.stockSamir = num;
+            else item.stockTahlia = num;
+            logUserActivity('edit', 'الجرد الفعلي', `تحديث رصيد ${item.name} (${wh}) إلى ${num}`);
+            saveState();
+            refreshAllViews();
+            showToast('تم تحديث الرصيد الفعلي');
+        }
+
+        function syncStocktakeLines() {
+            renderSecondaryTabs();
+            showToast('تمت مزامنة قائمة الجرد الفعلي');
+        }
+
+        function submitInboundStock() {
+            const itemId = document.getElementById('inboundItemSelect')?.value;
+            const whId = document.getElementById('inboundWarehouseSelect')?.value || 'wh_samir';
+            const rolls = Number(document.getElementById('inboundRollsInput')?.value || 0);
+            const item = (appState.items || []).find(i => i.id === itemId);
+            if (!item || rolls <= 0) {
+                showToast('يرجى اختيار صنف وإدخال عدد رولات صحيح', true);
+                return;
+            }
+            if (whId === 'wh_tahlia') item.stockTahlia = Number(item.stockTahlia || 0) + rolls;
+            else item.stockSamir = Number(item.stockSamir || 0) + rolls;
+            appState.transactions.push({
+                id: 'IN-' + Date.now().toString().slice(-4),
+                type: 'inbound',
+                date: new Date().toISOString().slice(0, 16),
+                itemId: item.id,
+                itemName: item.name,
+                rolls
+            });
+            logUserActivity('create', 'توريد المخزون', `توريد ${rolls} رول من ${item.name}`);
+            saveState();
+            refreshAllViews();
+            document.getElementById('inboundRollsInput').value = '';
+            showToast('تم توريد الرولات بنجاح');
+        }
+
+        function submitWarehouseTransfer() {
+            const itemId = document.getElementById('transferItemSelect')?.value;
+            const dir = document.getElementById('transferDirectionSelect')?.value || 'samir_to_tahlia';
+            const rolls = Number(document.getElementById('transferRollsInput')?.value || 0);
+            const item = (appState.items || []).find(i => i.id === itemId);
+            if (!item || rolls <= 0) {
+                showToast('يرجى اختيار صنف وعدد رولات صحيح', true);
+                return;
+            }
+            if (dir === 'samir_to_tahlia') {
+                if (Number(item.stockSamir || 0) < rolls) { showToast('الرصيد في مخزن السامر غير كافٍ', true); return; }
+                item.stockSamir = Number(item.stockSamir || 0) - rolls;
+                item.stockTahlia = Number(item.stockTahlia || 0) + rolls;
+            } else {
+                if (Number(item.stockTahlia || 0) < rolls) { showToast('الرصيد في مخزن التحلية غير كافٍ', true); return; }
+                item.stockTahlia = Number(item.stockTahlia || 0) - rolls;
+                item.stockSamir = Number(item.stockSamir || 0) + rolls;
+            }
+            appState.transactions.push({
+                id: 'TR-' + Date.now().toString().slice(-4),
+                type: 'transfer',
+                date: new Date().toISOString().slice(0, 16),
+                itemId: item.id,
+                itemName: item.name,
+                rolls
+            });
+            logUserActivity('create', 'التحويل بين المستودعات', `تحويل ${rolls} رول من ${item.name}`);
+            saveState();
+            refreshAllViews();
+            document.getElementById('transferRollsInput').value = '';
+            showToast('تم تنفيذ التحويل بنجاح');
+        }
+
+        function quickCreateSaleDemo() {
+            switchTab('sales');
+            showToast('يمكنك استيراد أو تسجيل أذون الصرف من السجل والنسخة الاحتياطية');
+        }
+
+        function exportSummaryExcel() {
+            if (typeof XLSX === 'undefined') {
+                showToast('مكتبة التصدير غير محملة', true);
+                return;
+            }
+            const rows = (appState.items || []).map(it => ({
+                'الصنف': it.name,
+                'العرض (م)': it.width,
+                'الطول (م)': it.length || 50,
+                'مخزن السامر': Number(it.stockSamir || 0),
+                'مخزن التحلية': Number(it.stockTahlia || 0)
+            }));
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'الأصناف');
+            XLSX.writeFile(wb, 'جرد_الأصناف_الطريق_الأمثل.xlsx');
+            showToast('تم تصدير ملف Excel بنجاح');
         }
 
         function refreshAllViews() {
@@ -977,7 +1460,12 @@
                 });
             }
             applyBrandingToUI();
+            populateItemSelects();
             renderDashboard();
+            renderInventoryTable();
+            renderSalesAndLogsTables();
+            renderCustomersTable();
+            renderSecondaryTabs();
 
             const salesCount = (appState.transactions || []).filter(t => t.type === 'sale').length;
             const lowStockCount = (appState.items || []).filter(it => (Number(it.stockSamir || 0) + Number(it.stockTahlia || 0)) <= 10).length;
