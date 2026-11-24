@@ -517,6 +517,9 @@
 
             <!-- روابط الشاشات -->
             <nav id="sidebarNav" class="flex flex-col gap-1 p-3 flex-1 overflow-y-auto">
+                <button type="button" data-tab="dashboard" onclick="switchTab('dashboard')" class="nav-btn active-nav w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold bg-blue-600 text-white shadow-md">
+                    <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
+                    <span class="nav-label">لوحة القيادة والملخص</span>
                 </button>
                 <button type="button" data-tab="reports" onclick="switchTab('reports')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
                     <span class="nav-icon"><i class="fa-solid fa-chart-column text-indigo-600"></i></span>
@@ -568,6 +571,22 @@
                     <span id="navBadgeCustomers" class="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 text-[10px] font-black">0</span>
                 </button>
                 <button type="button" data-tab="opening" onclick="switchTab('opening')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                    <span class="nav-icon"><i class="fa-solid fa-scale-balanced text-cyan-600"></i></span>
+                    <span class="nav-label">الأرصدة الافتتاحية</span>
+                </button>
+                <button type="button" data-tab="logs" onclick="switchTab('logs')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                    <span class="nav-icon"><i class="fa-solid fa-clock-rotate-left text-slate-500"></i></span>
+                    <span class="nav-label">السجل العام للحركات</span>
+                </button>
+                <button type="button" data-tab="audit" onclick="switchTab('audit')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                    <span class="nav-icon"><i class="fa-solid fa-fingerprint text-violet-600"></i></span>
+                    <span class="nav-label">سجل نشاط المستخدمين</span>
+                </button>
+                <button type="button" data-tab="users" onclick="switchTab('users')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                    <span class="nav-icon"><i class="fa-solid fa-user-shield text-amber-600"></i></span>
+                    <span class="nav-label">المستخدمين والصلاحيات</span>
+                </button>
+
                 <!-- أزرار النسخ الاحتياطي وتثبيت التطبيق أسفل القائمة -->
                 <div class="pt-3 mt-2 border-t border-slate-200 space-y-2">
                     <div class="grid grid-cols-2 gap-2">
@@ -2786,6 +2805,7 @@
             logUserActivity('auth', 'تسجيل الدخول', `تسجيل دخول المستخدم (${matched.fullName})`);
             saveState();
             updateHeaderProfileDisplay();
+            switchTab('dashboard');
             refreshAllViews();
             showToast(`مرحباً بك، ${matched.fullName}`);
         }
