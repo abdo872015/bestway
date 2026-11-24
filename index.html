@@ -5212,12 +5212,19 @@ ${statusLine}
                 return;
             }
 
+            // نقل القائمة إلى body مباشرة لتجنب قصّها داخل حاوية الجدول (overflow-hidden / transform)
+            if (menu.parentElement !== document.body) {
+                document.body.appendChild(menu);
+            }
+
+            menu.style.position = 'fixed';
+            menu.style.zIndex = '9999';
             menu.classList.remove('hidden');
 
             if (triggerEl && typeof triggerEl.getBoundingClientRect === 'function') {
                 const rect = triggerEl.getBoundingClientRect();
                 const menuHeight = menu.offsetHeight || 165;
-                const menuWidth = menu.offsetWidth || 176;
+                const menuWidth = menu.offsetWidth || 180;
                 const spaceBelow = window.innerHeight - rect.bottom;
 
                 let topPos = rect.bottom + 6;
