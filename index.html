@@ -2410,13 +2410,824 @@
             users: 'إدارة المستخدمين والصلاحيات',
             opening: 'الأرصدة الافتتاحية للعملاء والأصناف'
         };
-// ... existing code ... -->
+
+        // ==========================================
+        // 2. دوال المساعدة، الحفظ، والثيم
+        // ==========================================
+        function showToast(msg, isError = false) {
+            const box = document.getElementById('toastBox');
+            const txt = document.getElementById('toastText');
+            const ico = document.getElementById('toastIcon');
+            if (!box || !txt) return;
+            txt.textContent = msg;
+            if (ico) {
+                ico.className = isError
+                    ? 'fa-solid fa-circle-exclamation text-rose-400 text-lg'
+                    : 'fa-solid fa-circle-check text-emerald-400 text-lg';
+            }
+            box.classList.remove('hidden');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => box.classList.add('hidden'), 3500);
+        }
+
+        function getNowLocalInputStr() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            return now.toISOString().slice(0, 16);
+        }
+
+        function formatDateTimeAr(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            return d.toLocaleDateString('ar-SA') + ' ' + d.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function setAppTheme(mode) {
+            const html = document.documentElement;
+            const meta = document.getElementById('metaColorScheme');
+            const lightBtn = document.getElementById('themeLightBtn');
+            const darkBtn = document.getElementById('themeDarkBtn');
+
+            if (mode === 'dark') {
+                html.classList.remove('light-theme');
+                html.classList.add('dark');
+                if (meta) meta.setAttribute('content', 'dark');
+                if (darkBtn) darkBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 bg-slate-900 text-amber-300 shadow-xs transition';
+                if (lightBtn) lightBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 text-slate-400 hover:text-white transition';
+            } else {
+                html.classList.remove('dark');
+                html.classList.add('light-theme');
+                if (meta) meta.setAttribute('content', 'only light');
+                if (lightBtn) lightBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 bg-white text-amber-600 shadow-xs transition';
+                if (darkBtn) darkBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 text-slate-600 hover:text-slate-900 transition';
+            }
+            try { localStorage.setItem(THEME_KEY, mode); } catch (e) {}
+        }
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && typeof parsed === 'object') {
+                        appState = {
+                            warehouses: parsed.warehouses || appState.warehouses,
+                            items: Array.isArray(parsed.items) ? parsed.items : [],
+                            customers: Array.isArray(parsed.customers) ? parsed.customers : [],
+                            transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
+                            stocktakeLines: Array.isArray(parsed.stocktakeLines) ? parsed.stocktakeLines : [],
+                            stocktakeHistory: Array.isArray(parsed.stocktakeHistory) ? parsed.stocktakeHistory : [],
+                            users: (Array.isArray(parsed.users) && parsed.users.length > 0) ? parsed.users : appState.users
+                        };
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading local state:', e);
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error('Error saving local state:', e);
+            }
+            if (typeof window.pushCloudState === 'function') {
+                window.pushCloudState(appState);
+            }
+        }
+
+        window.getAppState = function() {
+            return appState;
+        };
+
+        window.applyRemoteState = function(remoteState) {
+            if (!remoteState || typeof remoteState !== 'object') return;
+            appState = {
+                warehouses: remoteState.warehouses || appState.warehouses,
+                items: Array.isArray(remoteState.items) ? remoteState.items : appState.items,
+                customers: Array.isArray(remoteState.customers) ? remoteState.customers : appState.customers,
+                transactions: Array.isArray(remoteState.transactions) ? remoteState.transactions : appState.transactions,
+                stocktakeLines: Array.isArray(remoteState.stocktakeLines) ? remoteState.stocktakeLines : appState.stocktakeLines,
+                stocktakeHistory: Array.isArray(remoteState.stocktakeHistory) ? remoteState.stocktakeHistory : appState.stocktakeHistory,
+                users: (Array.isArray(remoteState.users) && remoteState.users.length > 0) ? remoteState.users : appState.users
+            };
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(appState)); } catch (e) {}
+            const activeId = currentUser?.id;
+            const syncedUser = appState.users.find(u => u.id === activeId);
+            if (syncedUser) currentUser = syncedUser;
+            updateHeaderProfileDisplay();
+            refreshAllViews();
+        };
+
+        function exportFullBackup() {
+            const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `نسخة_احتياطية_الطريق_الأمثل_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('تم تحميل ملف النسخة الاحتياطية بنجاح');
+        }
+
+        function triggerRestoreBackup() {
+            if (!canDeleteRecords()) {
+                showToast('استعادة النسخة الاحتياطية متاحة للمدير العام فقط', true);
+                return;
+            }
+            document.getElementById('restoreBackupFileInput')?.click();
+        }
+
+        function handleRestoreBackupFile(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (!parsed || !Array.isArray(parsed.items)) {
+                        showToast('ملف النسخة الاحتياطية غير صالح!', true);
+                        return;
+                    }
+                    appState = {
+                        warehouses: parsed.warehouses || appState.warehouses,
+                        items: parsed.items || [],
+                        customers: parsed.customers || [],
+                        transactions: parsed.transactions || [],
+                        stocktakeLines: parsed.stocktakeLines || [],
+                        stocktakeHistory: parsed.stocktakeHistory || [],
+                        users: (Array.isArray(parsed.users) && parsed.users.length > 0) ? parsed.users : appState.users
+                    };
+                    saveState();
+                    refreshAllViews();
+                    showToast('تمت استعادة النسخة الاحتياطية بنجاح!');
+                } catch (err) {
+                    showToast('تعذر قراءة ملف النسخة الاحتياطية', true);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // ==========================================
+        // 3. تسجيل الدخول، الصلاحيات، والتنقل بين الشاشات
+        // ==========================================
+        function canDeleteRecords() {
+            return !currentUser || currentUser.role === 'admin';
+        }
+
+        function canEditMasterData() {
+            return !currentUser || currentUser.role === 'admin' || currentUser.role === 'storekeeper';
+        }
+
+        function doDirectLogin() {
+            const uInp = (document.getElementById('loginUsername')?.value || '').trim();
+            const pInp = (document.getElementById('loginPassword')?.value || '').trim();
+            const errBox = document.getElementById('loginErrorMsg');
+
+            const matched = appState.users.find(u =>
+                String(u.username || '').trim().toLowerCase() === uInp.toLowerCase() &&
+                String(u.password || '').trim() === pInp
+            );
+
+            if (!matched) {
+                if (errBox) errBox.classList.remove('hidden');
+                return;
+            }
+
+            if (errBox) errBox.classList.add('hidden');
+            currentUser = matched;
+
+            try {
+                sessionStorage.setItem(SESSION_KEY, '1');
+                localStorage.setItem(SESSION_KEY, '1');
+                localStorage.setItem(CURRENT_USER_KEY, matched.id);
+            } catch (e) {}
+
+            document.getElementById('loginScreen')?.classList.add('hidden');
+            document.getElementById('mainApp')?.classList.remove('hidden');
+            updateHeaderProfileDisplay();
+            refreshAllViews();
+            showToast(`مرحباً بك، ${matched.fullName}`);
+        }
+
+        function restoreUserSession() {
+            let isLogged = false;
+            let savedUserId = null;
+            try {
+                isLogged = sessionStorage.getItem(SESSION_KEY) === '1' || localStorage.getItem(SESSION_KEY) === '1';
+                savedUserId = localStorage.getItem(CURRENT_USER_KEY);
+            } catch (e) {}
+
+            if (isLogged) {
+                const found = appState.users.find(u => u.id === savedUserId) || appState.users[0];
+                if (found) currentUser = found;
+                document.getElementById('loginScreen')?.classList.add('hidden');
+                document.getElementById('mainApp')?.classList.remove('hidden');
+                updateHeaderProfileDisplay();
+            }
+        }
+
+        function logoutUser() {
+            try {
+                sessionStorage.removeItem(SESSION_KEY);
+                localStorage.removeItem(SESSION_KEY);
+            } catch (e) {}
+            document.getElementById('userProfileDropdown')?.classList.add('hidden');
+            document.getElementById('mainApp')?.classList.add('hidden');
+            document.getElementById('loginScreen')?.classList.remove('hidden');
+        }
+
+        function updateHeaderProfileDisplay() {
+            if (!currentUser) return;
+            const letter = (currentUser.fullName || 'م').trim().charAt(0);
+            const avEl = document.getElementById('headerUserAvatarLetter');
+            const nameEl = document.getElementById('headerUserName');
+            const roleEl = document.getElementById('headerUserRole');
+            const dropName = document.getElementById('dropdownUserName');
+            const dropUser = document.getElementById('dropdownUserUsername');
+
+            if (avEl) avEl.textContent = letter;
+            if (nameEl) nameEl.textContent = currentUser.fullName;
+            if (roleEl) roleEl.textContent = ROLE_LABELS[currentUser.role] || 'مدير عام';
+            if (dropName) dropName.textContent = currentUser.fullName;
+            if (dropUser) dropUser.textContent = '@' + currentUser.username;
+
+            const isAdmin = currentUser.role === 'admin';
+            const navUsers = document.getElementById('navBtnUsers');
+            const dropUsers = document.getElementById('dropBtnManageUsers');
+            const btnRestore = document.getElementById('btnRestoreBackupSidebar');
+            if (navUsers) navUsers.classList.toggle('hidden', !isAdmin);
+            if (dropUsers) dropUsers.classList.toggle('hidden', !isAdmin);
+            if (btnRestore) btnRestore.classList.toggle('hidden', !isAdmin);
+        }
+
+        function toggleProfileDropdown() {
+            document.getElementById('userProfileDropdown')?.classList.toggle('hidden');
+        }
+
+        function openUserProfileModal() {
+            toggleProfileDropdown();
+            if (!currentUser) return;
+            document.getElementById('profFullNameInput').value = currentUser.fullName || '';
+            document.getElementById('profUsernameInput').value = currentUser.username || '';
+            document.getElementById('profPasswordInput').value = currentUser.password || '';
+            document.getElementById('userProfileModal')?.classList.remove('hidden');
+        }
+
+        function closeUserProfileModal() {
+            document.getElementById('userProfileModal')?.classList.add('hidden');
+        }
+
+        function saveUserProfile() {
+            if (!currentUser) return;
+            const fullName = (document.getElementById('profFullNameInput').value || '').trim();
+            const username = (document.getElementById('profUsernameInput').value || '').trim();
+            const password = (document.getElementById('profPasswordInput').value || '').trim();
+            if (!fullName || !username || !password) {
+                showToast('يرجى إدخال جميع حقول الملف الشخصي', true);
+                return;
+            }
+            const idx = appState.users.findIndex(u => u.id === currentUser.id);
+            if (idx !== -1) {
+                appState.users[idx] = { ...appState.users[idx], fullName, username, password };
+                currentUser = appState.users[idx];
+            }
+            saveState();
+            updateHeaderProfileDisplay();
+            closeUserProfileModal();
+            showToast('تم تحديث بيانات حسابك بنجاح');
+        }
+
+        function toggleMobileMenu() {
+            const nav = document.getElementById('sidebarNav');
+            if (nav) {
+                nav.classList.toggle('hidden');
+                nav.classList.toggle('flex');
+            }
+        }
+
+        function switchTab(tabKey) {
+            document.querySelectorAll('.tab-section').forEach(sec => {
+                sec.classList.add('hidden');
+                sec.classList.remove('tab-animate-in');
+            });
+            const target = document.getElementById('tab-' + tabKey);
+            if (target) {
+                target.classList.remove('hidden');
+                void target.offsetWidth;
+                target.classList.add('tab-animate-in');
+            }
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.dataset.tab === tabKey) {
+                    btn.className = 'nav-btn active-nav w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold bg-blue-600 text-white shadow-md';
+                } else {
+                    btn.className = 'nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700';
+                }
+            });
+
+            const headerTitle = document.querySelector('#headerActiveScreenTitle span');
+            if (headerTitle) headerTitle.textContent = TAB_TITLES[tabKey] || 'لوحة القيادة والملخص التنفيذي';
+
+            if (window.innerWidth < 1024) {
+                const nav = document.getElementById('sidebarNav');
+                if (nav && !nav.classList.contains('hidden')) {
+                    nav.classList.add('hidden');
+                    nav.classList.remove('flex');
+                }
+            }
+
             if (tabKey === 'reports') renderReportsTab();
             if (tabKey === 'overdue') renderOverdueInvoicesReport();
             if (tabKey === 'stagnant') renderStagnantItemsTab();
             if (tabKey === 'opening') renderOpeningBalancesTab();
             if (tabKey === 'inbound' && !document.getElementById('inDate').value) {
-// ... existing code ... -->
+                document.getElementById('inDate').value = getNowLocalInputStr();
+            }
+            if (tabKey === 'waste' && !document.getElementById('wasteDate').value) {
+                document.getElementById('wasteDate').value = getNowLocalInputStr();
+            }
+        }
+
+        function populateSelects() {
+            const whOptions = appState.warehouses.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
+            ['inWarehouse', 'saleWarehouse', 'trFromWarehouse', 'trToWarehouse', 'retWarehouse', 'wasteWarehouse', 'importItemsWarehouse'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const prev = el.value;
+                    el.innerHTML = whOptions;
+                    if (prev && appState.warehouses.some(w => w.id === prev)) el.value = prev;
+                    else if (id === 'trToWarehouse' && appState.warehouses[1]) el.value = appState.warehouses[1].id;
+                }
+            });
+
+            const itemOptions = appState.items.map(it =>
+                `<option value="${it.id}">${it.name} (السامر: ${Number(it.stockSamir || 0).toFixed(2)} | التحلية: ${Number(it.stockTahlia || 0).toFixed(2)})</option>`
+            ).join('');
+            ['inItemSelect', 'saleItemSelect', 'trItemSelect', 'retItemSelect', 'wasteItemSelect', 'stAddItemSelect', 'movItemSelect'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const prev = el.value;
+                    el.innerHTML = itemOptions;
+                    if (prev) el.value = prev;
+                }
+            });
+
+            const custOptions = appState.customers.map(c =>
+                `<option value="${c.id}">${c.name}${c.city ? ' - ' + c.city : ''}</option>`
+            ).join('');
+            ['saleCustomerSelect', 'retCustomerSelect'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const prev = el.value;
+                    el.innerHTML = custOptions;
+                    if (prev) el.value = prev;
+                }
+            });
+        }
+
+        function filterSearchableSelect(inputId, selectId) {
+            const inp = document.getElementById(inputId);
+            const sel = document.getElementById(selectId);
+            if (!inp || !sel) return;
+            const q = inp.value.trim().toLowerCase();
+            sel.classList.remove('hidden');
+            Array.from(sel.options).forEach(opt => {
+                opt.hidden = q ? !opt.text.toLowerCase().includes(q) : false;
+            });
+        }
+
+        function showSearchableDropdown(selectId) {
+            const sel = document.getElementById(selectId);
+            if (!sel) return;
+            Array.from(sel.options).forEach(opt => opt.hidden = false);
+            sel.classList.remove('hidden');
+        }
+
+        function syncSearchableInput(selectId, inputId) {
+            const sel = document.getElementById(selectId);
+            const inp = document.getElementById(inputId);
+            if (!sel || !inp || sel.selectedIndex < 0) return;
+            inp.value = sel.options[sel.selectedIndex].text;
+            sel.classList.add('hidden');
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.searchable-select-wrapper')) {
+                document.querySelectorAll('.searchable-select-wrapper select').forEach(s => s.classList.add('hidden'));
+            }
+            if (!e.target.closest('.action-dropdown') && !e.target.closest('button[onclick*="toggleActionMenu"]')) {
+                document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden'));
+            }
+            if (!e.target.closest('.profile-menu-wrapper')) {
+                document.getElementById('userProfileDropdown')?.classList.add('hidden');
+            }
+        });
+
+        function renderDashboard() {
+            let samirRolls = 0, tahliaRolls = 0, samirSqm = 0, tahliaSqm = 0;
+            const lowItems = [];
+
+            appState.items.forEach(it => {
+                const rS = Number(it.stockSamir || 0);
+                const rT = Number(it.stockTahlia || 0);
+                const area = (Number(it.length) || 50) * (Number(it.width) || 1);
+                samirRolls += rS;
+                tahliaRolls += rT;
+                samirSqm += rS * area;
+                tahliaSqm += rT * area;
+                if (rS + rT <= 10) lowItems.push({ ...it, totalR: rS + rT });
+            });
+
+            const totSqm = samirSqm + tahliaSqm;
+            const totRolls = samirRolls + tahliaRolls;
+
+            let totalSales = 0, totalCollected = 0;
+            const itemSqmSold = {};
+
+            appState.transactions.forEach(t => {
+                if (t.type === 'sale') {
+                    totalSales += Number(t.totalAmount || 0);
+                    (t.lines || []).forEach(ln => {
+                        itemSqmSold[ln.itemName] = (itemSqmSold[ln.itemName] || 0) + Number(ln.sqm || 0);
+                    });
+                } else if (t.type === 'payment') {
+                    totalCollected += Number(t.amount || 0);
+                }
+            });
+
+            let totalDebt = 0;
+            let topBuyer = null, topPayer = null, topDebtor = null, leastBuyer = null;
+
+            appState.customers.forEach(c => {
+                const st = getCustomerStats(c.id);
+                if (st.balance > 0) totalDebt += st.balance;
+                if (st.salesTotal > 0 && (!topBuyer || st.salesTotal > topBuyer.val)) {
+                    topBuyer = { id: c.id, name: c.name, val: st.salesTotal, sqm: st.salesSqm };
+                }
+                if (st.paymentsTotal > 0 && (!topPayer || st.paymentsTotal > topPayer.val)) {
+                    topPayer = { id: c.id, name: c.name, val: st.paymentsTotal };
+                }
+                if (st.balance > 0 && (!topDebtor || st.balance > topDebtor.val)) {
+                    topDebtor = { id: c.id, name: c.name, val: st.balance };
+                }
+                if (st.salesTotal > 0 && (!leastBuyer || st.salesTotal < leastBuyer.val)) {
+                    leastBuyer = { id: c.id, name: c.name, val: st.salesTotal };
+                }
+            });
+
+            dashboardCustomerRefs = {
+                topBuyer: topBuyer?.id || null,
+                topPayer: topPayer?.id || null,
+                topDebtor: topDebtor?.id || null,
+                leastBuyer: leastBuyer?.id || null
+            };
+
+            document.getElementById('dashTotalSqm').textContent = totSqm.toFixed(2) + ' م²';
+            document.getElementById('dashWarehouseSplit').textContent = `السامر: ${samirSqm.toFixed(0)} م² | التحلية: ${tahliaSqm.toFixed(0)} م²`;
+            document.getElementById('dashTotalRolls').textContent = totRolls.toFixed(2) + ' رول';
+            document.getElementById('dashItemsCount').textContent = `عدد الأصناف: ${appState.items.length} صنف`;
+            document.getElementById('dashTotalSales').textContent = totalSales.toFixed(2) + ' ر.س';
+            document.getElementById('dashTotalCollected').textContent = `المحصل: ${totalCollected.toFixed(2)} ر.س`;
+            document.getElementById('dashTotalDebt').textContent = totalDebt.toFixed(2) + ' ر.س';
+            document.getElementById('dashAlertsCount').textContent = `تنبيهات المخزون: ${lowItems.length}`;
+
+            document.getElementById('cardTopBuyerName').textContent = topBuyer ? topBuyer.name : 'لا يوجد بيانات';
+            document.getElementById('cardTopBuyerVal').textContent = topBuyer ? `${topBuyer.val.toFixed(2)} ر.س (${topBuyer.sqm.toFixed(1)} م²)` : '0.00 ر.س (0 م²)';
+
+            document.getElementById('cardTopPayerName').textContent = topPayer ? topPayer.name : 'لا يوجد بيانات';
+            document.getElementById('cardTopPayerVal').textContent = topPayer ? `${topPayer.val.toFixed(2)} ر.س` : '0.00 ر.س';
+
+            document.getElementById('cardTopDebtorName').textContent = topDebtor ? topDebtor.name : 'لا يوجد بيانات';
+            document.getElementById('cardTopDebtorVal').textContent = topDebtor ? `${topDebtor.val.toFixed(2)} ر.س` : '0.00 ر.س';
+
+            document.getElementById('cardLeastBuyerName').textContent = leastBuyer ? leastBuyer.name : 'لا يوجد بيانات';
+            document.getElementById('cardLeastBuyerVal').textContent = leastBuyer ? `${leastBuyer.val.toFixed(2)} ر.س` : '0.00 ر.س';
+
+            let topItemName = 'لا يوجد بيانات', topItemSqm = 0;
+            Object.entries(itemSqmSold).forEach(([k, v]) => {
+                if (v > topItemSqm) { topItemSqm = v; topItemName = k; }
+            });
+            document.getElementById('cardTopItemName').textContent = topItemName;
+            document.getElementById('cardTopItemVal').textContent = `${topItemSqm.toFixed(2)} م²`;
+
+            const lowListEl = document.getElementById('dashLowStockList');
+            if (lowListEl) {
+                if (lowItems.length === 0) {
+                    lowListEl.innerHTML = '<p class="text-sm text-slate-400 font-semibold">لا توجد أصناف منخفضة حالياً.</p>';
+                } else {
+                    lowListEl.innerHTML = lowItems.slice(0, 6).map(it => `
+                        <div class="p-3 rounded-xl border ${it.totalR <= 5 ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-amber-50 border-amber-200 text-amber-900'} flex items-center justify-between text-xs font-extrabold">
+                            <span class="truncate pl-2">${it.name}</span>
+                            <span class="px-2 py-0.5 rounded-lg ${it.totalR <= 5 ? 'bg-rose-600' : 'bg-amber-500'} text-white shrink-0">${it.totalR.toFixed(2)} رول</span>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            const lateInvoices = getOverdueInvoicesList().filter(x => x.status === 'overdue');
+            const lateTotal = lateInvoices.reduce((s, x) => s + x.remaining, 0);
+            const ovdSumEl = document.getElementById('dashOverdueSummary');
+            if (ovdSumEl) ovdSumEl.textContent = `${lateInvoices.length} فاتورة متأخرة (${lateTotal.toFixed(2)} ر.س)`;
+
+            const stagList = getStagnantItemsList(60);
+            const stagSumEl = document.getElementById('dashStagnantSummary');
+            if (stagSumEl) stagSumEl.textContent = `${stagList.length} صنف راكد بالمستودعات`;
+        }
+
+        function renderLogsTable() {
+            const tbody = document.getElementById('logsTableBody');
+            if (!tbody) return;
+            const sorted = [...appState.transactions].sort((a, b) => (b.seq || 0) - (a.seq || 0));
+            if (sorted.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400">لا توجد حركات مسجلة في السجل العام بعد.</td></tr>';
+                return;
+            }
+            const typeMap = {
+                sale: { label: 'إذن صرف', cls: 'bg-blue-100 text-blue-800' },
+                inbound: { label: 'توريد مخزن', cls: 'bg-emerald-100 text-emerald-800' },
+                payment: { label: 'سند قبض', cls: 'bg-teal-100 text-teal-800' },
+                transfer: { label: 'تحويل مخزني', cls: 'bg-indigo-100 text-indigo-800' },
+                return: { label: 'مرتجع عميل', cls: 'bg-amber-100 text-amber-800' },
+                waste: { label: 'هالك / تالف', cls: 'bg-rose-100 text-rose-800' }
+            };
+            tbody.innerHTML = sorted.map(t => {
+                const info = typeMap[t.type] || { label: t.type, cls: 'bg-slate-100 text-slate-800' };
+                let desc = t.customerName || t.itemName || '';
+                if (t.type === 'sale') desc = `صرف للعميل: ${t.customerName} (${Number(t.totalSqm || 0).toFixed(2)} م²)`;
+                else if (t.type === 'inbound') desc = `توريد: ${t.itemName} (${Number(t.rolls || 0).toFixed(2)} رول)`;
+                else if (t.type === 'payment') desc = `تحصيل من: ${t.customerName} (${t.method || 'كاش'})`;
+                else if (t.type === 'waste') desc = `تالف: ${t.itemName} (${Number(t.sqm || 0).toFixed(2)} م²) - ${t.reason || ''}`;
+                const val = t.totalAmount || t.amount || 0;
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3.5 text-slate-600 whitespace-nowrap">${formatDateTimeAr(t.date)}</td>
+                        <td class="p-3.5"><span class="px-2.5 py-1 rounded-lg text-xs font-black ${info.cls}">${info.label}</span></td>
+                        <td class="p-3.5 font-black text-blue-700">${t.id}</td>
+                        <td class="p-3.5 text-slate-900">${desc}</td>
+                        <td class="p-3.5 text-center font-black">${val > 0 ? Number(val).toFixed(2) + ' ر.س' : '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderSystemUsersTable() {
+            const tbody = document.getElementById('systemUsersTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = appState.users.map(u => {
+                const isAdmin = u.role === 'admin';
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3.5 px-4 font-extrabold text-slate-900">${u.fullName}</td>
+                        <td class="py-3.5 px-4 text-slate-600" dir="ltr">${u.username}</td>
+                        <td class="py-3.5 px-4"><span class="px-2.5 py-1 rounded-lg text-xs font-black ${isAdmin ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'}">${ROLE_LABELS[u.role] || u.role}</span></td>
+                        <td class="py-3.5 px-4 text-center">${isAdmin ? '<i class="fa-solid fa-check text-emerald-600"></i>' : '<i class="fa-solid fa-xmark text-rose-500"></i>'}</td>
+                        <td class="py-3.5 px-4 text-center">${isAdmin ? '<i class="fa-solid fa-check text-emerald-600"></i>' : '<i class="fa-solid fa-xmark text-rose-500"></i>'}</td>
+                        <td class="py-3.5 px-4 text-center">
+                            <button type="button" onclick="openEditSystemUserModal('${u.id}')" class="px-2.5 py-1 bg-amber-50 text-amber-700 rounded-lg text-xs font-extrabold ml-1">تعديل</button>
+                            ${u.id !== 'user_admin' ? `<button type="button" onclick="deleteSystemUser('${u.id}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 rounded-lg text-xs font-extrabold">حذف</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openAddSystemUserModal() {
+            document.getElementById('sysUserModalTitle').textContent = 'إضافة مستخدم جديد';
+            document.getElementById('editSysUserId').value = '';
+            document.getElementById('sysUserFullName').value = '';
+            document.getElementById('sysUserRoleSelect').value = 'storekeeper';
+            document.getElementById('sysUserUsername').value = '';
+            document.getElementById('sysUserPassword').value = '';
+            document.getElementById('systemUserModal')?.classList.remove('hidden');
+        }
+
+        function openEditSystemUserModal(id) {
+            const u = appState.users.find(x => x.id === id);
+            if (!u) return;
+            document.getElementById('sysUserModalTitle').textContent = 'تعديل بيانات المستخدم';
+            document.getElementById('editSysUserId').value = u.id;
+            document.getElementById('sysUserFullName').value = u.fullName;
+            document.getElementById('sysUserRoleSelect').value = u.role;
+            document.getElementById('sysUserUsername').value = u.username;
+            document.getElementById('sysUserPassword').value = u.password;
+            document.getElementById('systemUserModal')?.classList.remove('hidden');
+        }
+
+        function closeSystemUserModal() {
+            document.getElementById('systemUserModal')?.classList.add('hidden');
+        }
+
+        function saveSystemUser() {
+            const id = document.getElementById('editSysUserId').value;
+            const fullName = (document.getElementById('sysUserFullName').value || '').trim();
+            const role = document.getElementById('sysUserRoleSelect').value;
+            const username = (document.getElementById('sysUserUsername').value || '').trim();
+            const password = (document.getElementById('sysUserPassword').value || '').trim();
+            if (!fullName || !username || !password) {
+                showToast('يرجى إدخال جميع بيانات المستخدم', true);
+                return;
+            }
+            if (id) {
+                const idx = appState.users.findIndex(u => u.id === id);
+                if (idx !== -1) appState.users[idx] = { ...appState.users[idx], fullName, role, username, password };
+            } else {
+                appState.users.push({ id: 'user_' + Date.now(), fullName, role, username, password });
+            }
+            saveState();
+            closeSystemUserModal();
+            renderSystemUsersTable();
+            showToast('تم حفظ بيانات المستخدم بنجاح');
+        }
+
+        function deleteSystemUser(id) {
+            if (id === 'user_admin') return;
+            appState.users = appState.users.filter(u => u.id !== id);
+            saveState();
+            renderSystemUsersTable();
+            showToast('تم حذف المستخدم');
+        }
+
+        // ==========================================
+        // 3.5 إدارة الجرد الفعلي والمطابقة
+        // ==========================================
+        function openStocktakeAddItemModal() {
+            populateSelects();
+            document.getElementById('stAddItemSearch').value = '';
+            document.getElementById('stocktakeAddItemModal')?.classList.remove('hidden');
+        }
+
+        function closeStocktakeAddItemModal() {
+            document.getElementById('stocktakeAddItemModal')?.classList.add('hidden');
+        }
+
+        function confirmAddStocktakeItem() {
+            const itemId = document.getElementById('stAddItemSelect')?.value;
+            const item = appState.items.find(x => x.id === itemId);
+            if (!item) {
+                showToast('يرجى اختيار منتج من القائمة', true);
+                return;
+            }
+            if (!appState.stocktakeLines.some(l => l.itemId === item.id)) {
+                appState.stocktakeLines.push({
+                    itemId: item.id,
+                    itemName: item.name,
+                    actualTahlia: item.stockTahlia || 0,
+                    actualSamir: item.stockSamir || 0,
+                    progTahlia: item.stockTahlia || 0,
+                    progSamir: item.stockSamir || 0,
+                    note: ''
+                });
+                saveState();
+                renderStocktakeTable();
+            }
+            closeStocktakeAddItemModal();
+        }
+
+        function loadAllWarehouseItemsToStocktake() {
+            appState.items.forEach(item => {
+                if (!appState.stocktakeLines.some(l => l.itemId === item.id)) {
+                    appState.stocktakeLines.push({
+                        itemId: item.id,
+                        itemName: item.name,
+                        actualTahlia: item.stockTahlia || 0,
+                        actualSamir: item.stockSamir || 0,
+                        progTahlia: item.stockTahlia || 0,
+                        progSamir: item.stockSamir || 0,
+                        note: ''
+                    });
+                }
+            });
+            saveState();
+            renderStocktakeTable();
+            const banner = document.getElementById('stocktakeBannerMsg');
+            if (banner) banner.classList.remove('hidden');
+        }
+
+        function syncStocktakeProgramCounts() {
+            appState.stocktakeLines.forEach(line => {
+                const it = appState.items.find(x => x.id === line.itemId);
+                if (it) {
+                    line.progTahlia = Number(it.stockTahlia || 0);
+                    line.progSamir = Number(it.stockSamir || 0);
+                }
+            });
+            saveState();
+            renderStocktakeTable();
+            showToast('تم تحديث أرصدة البرنامج في جدول الجرد');
+        }
+
+        function clearStocktakeList() {
+            appState.stocktakeLines = [];
+            saveState();
+            renderStocktakeTable();
+        }
+
+        function updateStocktakeField(idx, field, val) {
+            if (!appState.stocktakeLines[idx]) return;
+            if (field === 'note') appState.stocktakeLines[idx].note = val;
+            else appState.stocktakeLines[idx][field] = parseFloat(val) || 0;
+            saveState();
+            renderStocktakeTable();
+        }
+
+        function renderStocktakeTable() {
+            const tbody = document.getElementById('stocktakeTableBody');
+            if (!tbody) return;
+            const docNum = String(appState.stocktakeHistory.length + 1).padStart(6, '0');
+            const docEl = document.getElementById('stocktakeDocNumber');
+            if (docEl) docEl.textContent = `جرد المخزون #${docNum}`;
+
+            const badge = document.getElementById('stocktakeRecordedBadge');
+            if (badge) badge.textContent = `${appState.stocktakeLines.length} / ${appState.items.length} المنتجات المسجلة`;
+
+            const rangeEl = document.getElementById('stocktakeRangeLabel');
+            if (rangeEl) rangeEl.textContent = appState.stocktakeLines.length > 0 ? `1 - ${appState.stocktakeLines.length} من ${appState.stocktakeLines.length}` : '0 - 0 من 0';
+
+            const term = (document.getElementById('stocktakeSearchInput')?.value || '').trim().toLowerCase();
+            const filtered = appState.stocktakeLines
+                .map((l, idx) => ({ ...l, _idx: idx }))
+                .filter(l => !term || (l.itemName || '').toLowerCase().includes(term));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="py-8 text-center text-slate-400">قائمة الجرد فارغة حالياً. اضغط على "إضافة جميع المنتجات من المستودع".</td></tr>';
+            } else {
+                tbody.innerHTML = filtered.map(l => {
+                    const totAct = Number(l.actualTahlia || 0) + Number(l.actualSamir || 0);
+                    const totProg = Number(l.progTahlia || 0) + Number(l.progSamir || 0);
+                    const diff = Number((totAct - totProg).toFixed(2));
+                    const diffBadge = diff === 0
+                        ? '<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600">0 (مطابق)</span>'
+                        : (diff > 0
+                            ? `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">+${diff} (زيادة)</span>`
+                            : `<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800">${diff} (نقص)</span>`);
+
+                    return `
+                        <tr class="hover:bg-slate-50">
+                            <td class="py-3 px-4 font-extrabold text-slate-900">${l.itemName}</td>
+                            <td class="py-3 px-3 text-center"><input type="number" step="any" value="${l.actualTahlia}" onchange="updateStocktakeField(${l._idx}, 'actualTahlia', this.value)" class="w-20 p-1.5 text-center border rounded-lg"></td>
+                            <td class="py-3 px-3 text-center"><input type="number" step="any" value="${l.actualSamir}" onchange="updateStocktakeField(${l._idx}, 'actualSamir', this.value)" class="w-20 p-1.5 text-center border rounded-lg"></td>
+                            <td class="py-3 px-3 text-center font-black text-emerald-700">${totAct.toFixed(2)}</td>
+                            <td class="py-3 px-3 text-center text-slate-600">${Number(l.progTahlia || 0).toFixed(2)}</td>
+                            <td class="py-3 px-3 text-center text-slate-600">${Number(l.progSamir || 0).toFixed(2)}</td>
+                            <td class="py-3 px-3 text-center font-black">${diffBadge}</td>
+                            <td class="py-3 px-3"><input type="text" value="${(l.note || '').replace(/"/g, '&quot;')}" onchange="updateStocktakeField(${l._idx}, 'note', this.value)" placeholder="ملاحظة..." class="w-full p-1.5 text-xs border rounded-lg"></td>
+                            <td class="py-3 px-3 text-center"><button type="button" onclick="appState.stocktakeLines.splice(${l._idx}, 1); saveState(); renderStocktakeTable();" class="text-rose-600 hover:text-rose-800"><i class="fa-solid fa-trash"></i></button></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            const histEl = document.getElementById('stocktakeHistoryList');
+            if (histEl) {
+                if (appState.stocktakeHistory.length === 0) {
+                    histEl.textContent = 'لا توجد عمليات جرد معتمدة سابقة.';
+                } else {
+                    histEl.innerHTML = appState.stocktakeHistory.slice().reverse().map(h =>
+                        `<div class="py-1.5 border-b border-slate-100 flex justify-between"><span>جرد #${h.docNum} (${h.count} صنف)</span><span>${formatDateTimeAr(h.date)}</span></div>`
+                    ).join('');
+                }
+            }
+        }
+
+        function completeStocktake() {
+            if (appState.stocktakeLines.length === 0) {
+                showToast('قائمة الجرد فارغة!', true);
+                return;
+            }
+            appState.stocktakeLines.forEach(line => {
+                const it = appState.items.find(x => x.id === line.itemId);
+                if (it) {
+                    it.stockTahlia = Number(line.actualTahlia || 0);
+                    it.stockSamir = Number(line.actualSamir || 0);
+                }
+            });
+            const docNum = String(appState.stocktakeHistory.length + 1).padStart(6, '0');
+            appState.stocktakeHistory.push({
+                docNum,
+                date: new Date().toISOString(),
+                count: appState.stocktakeLines.length
+            });
+            appState.stocktakeLines = [];
+            saveState();
+            refreshAllViews();
+            showToast(`تم اعتماد الجرد #${docNum} وتحديث أرصدة المخازن بنجاح!`);
+        }
+
+        function exportStocktakeExcel() {
+            const data = [['اسم المنتج', 'الفعلي التحلية', 'الفعلي السامر', 'الإجمالي الفعلي', 'بالبرنامج التحلية', 'بالبرنامج السامر', 'ملاحظات']];
+            appState.stocktakeLines.forEach(l => {
+                data.push([l.itemName, l.actualTahlia, l.actualSamir, Number(l.actualTahlia) + Number(l.actualSamir), l.progTahlia, l.progSamir, l.note || '']);
+            });
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            XLSX.utils.book_append_sheet(wb, ws, 'الجرد_الفعلي');
+            XLSX.writeFile(wb, `جرد_المخزون_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
         function getCustomerStats(customerId) {
             const cust = appState.customers.find(c => c.id === customerId);
             const openingBal = Number(cust?.openingBalance || 0);
