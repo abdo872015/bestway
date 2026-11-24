@@ -1831,7 +1831,7 @@
                     <span id="saleStockReqText"></span>
                 </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 items-end">
+                <div class="grid grid-cols-2 sm:grid-cols-6 gap-2.5 items-end">
                     <div>
                         <label class="block text-[11px] font-extrabold text-slate-600 mb-1">العرض (م)</label>
                         <input type="number" step="any" id="saleWidth" oninput="calcSaleLineSqm()" class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-center">
@@ -1846,7 +1846,15 @@
                     </div>
                     <div>
                         <label class="block text-[11px] font-extrabold text-slate-600 mb-1">سعر المتر (ر.س)</label>
-                        <input type="number" step="any" id="salePrice" placeholder="0.00" class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-center">
+                        <input type="number" step="any" id="salePrice" placeholder="0.00" oninput="renderSaleCart()" class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-center">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-extrabold text-slate-600 mb-1">حالة الضريبة</label>
+                        <select id="saleTaxMode" onchange="renderSaleCart()" class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold">
+                            <option value="none" selected>بدون</option>
+                            <option value="inclusive">شامل الضريبة</option>
+                            <option value="exclusive">خال من الضريبة</option>
+                        </select>
                     </div>
                     <button type="button" onclick="addSaleCartLine()" class="py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black">
                         + إضافة البند
@@ -1903,6 +1911,7 @@
             <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900 text-white p-4 rounded-2xl">
                 <div class="text-xs font-black space-x-4 space-x-reverse">
                     <span>إجمالي الأمتار: <strong id="saleCartTotalSqm" class="text-blue-400">0.00 م²</strong></span>
+                    <span id="saleCartVatWrap" class="hidden">الضريبة (15%): <strong id="saleCartVatAmount" class="text-amber-300">0.00 ر.س</strong></span>
                     <span>الإجمالي المستحق: <strong id="saleCartTotalAmount" class="text-emerald-400 text-base">0.00 ر.س</strong></span>
                 </div>
                 <button type="button" onclick="submitSaleOrder()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-lg">
@@ -3452,9 +3461,15 @@
             if (!inp || !sel) return;
             const q = inp.value.trim().toLowerCase();
             sel.classList.remove('hidden');
-            Array.from(sel.options).forEach(opt => {
-                opt.hidden = q ? !opt.text.toLowerCase().includes(q) : false;
+            let firstVisibleIdx = -1;
+            Array.from(sel.options).forEach((opt, idx) => {
+                const match = q ? opt.text.toLowerCase().includes(q) : true;
+                opt.hidden = !match;
+                if (match && firstVisibleIdx === -1) firstVisibleIdx = idx;
             });
+            if (firstVisibleIdx !== -1) {
+                sel.selectedIndex = firstVisibleIdx;
+            }
         }
 
         function showSearchableDropdown(selectId) {
@@ -3462,6 +3477,9 @@
             if (!sel) return;
             Array.from(sel.options).forEach(opt => opt.hidden = false);
             sel.classList.remove('hidden');
+            if (sel.selectedIndex < 0 && sel.options.length > 0) {
+                sel.selectedIndex = 0;
+            }
         }
 
         function syncSearchableInput(selectId, inputId) {
@@ -3472,15 +3490,46 @@
             sel.classList.add('hidden');
         }
 
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.searchable-select-wrapper')) {
-                document.querySelectorAll('.searchable-select-wrapper select').forEach(s => s.classList.add('hidden'));
+        function handleSaleItemKeydown(event) {
+            const sel = document.getElementById('saleItemSelect');
+            const inp = document.getElementById('saleItemSearch');
+            if (!sel || !inp) return;
+
+            const visibleOptions = Array.from(sel.options).filter(opt => !opt.hidden);
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault();
+                sel.classList.remove('hidden');
+                if (visibleOptions.length === 0) return;
+
+                const currentOpt = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
+                let pos = currentOpt ? visibleOptions.indexOf(currentOpt) : -1;
+                if (event.key === 'ArrowDown') {
+                    pos = pos < visibleOptions.length - 1 ? pos + 1 : 0;
+                } else {
+                    pos = pos > 0 ? pos - 1 : visibleOptions.length - 1;
+                }
+                const targetOpt = visibleOptions[pos];
+                if (targetOpt) {
+                    sel.value = targetOpt.value;
+                    inp.value = targetOpt.text;
+                    targetOpt.scrollIntoView({ block: 'nearest' });
+                    onSaleItemPicked();
+                }
+            } else if (event.key === 'Enter') {
+                if (!sel.classList.contains('hidden') && sel.selectedIndex >= 0 && !sel.options[sel.selectedIndex].hidden) {
+                    event.preventDefault();
+                    syncSearchableInput('saleItemSelect', 'saleItemSearch');
+                    onSaleItemPicked();
+                }
+            } else if (event.key === 'Escape') {
+                sel.classList.add('hidden');
             }
-            if (!e.target.closest('.action-dropdown') && !e.target.closest('button[onclick*="toggleActionMenu"]')) {
-                document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden'));
-            }
-            if (!e.target.closest('.profile-menu-wrapper')) {
-                document.getElementById('userProfileDropdown')?.classList.add('hidden');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const saleItemSearchEl = document.getElementById('saleItemSearch');
+            if (saleItemSearchEl) {
+                saleItemSearchEl.addEventListener('keydown', handleSaleItemKeydown);
             }
         });
 
@@ -5428,6 +5477,7 @@ ${linesTxt}
                     <div><span class="text-slate-500">التاريخ:</span> <strong class="text-slate-900">${formatDateTimeAr(tx.date)}</strong></div>
                     <div><span class="text-slate-500">رقم بيان الأسعار:</span> <strong class="text-slate-900">${tx.quoteRef || 'غير مسجل'}</strong></div>
                     <div><span class="text-slate-500">المخزن:</span> <strong class="text-slate-900">${whName}</strong></div>
+                    <div><span class="text-slate-500">معاملة الضريبة:</span> <strong class="text-slate-900">${getTaxModeLabel(tx.taxMode || 'none')}</strong></div>
                     ${tx.driverName ? `<div><span class="text-slate-500">السائق / الناقل:</span> <strong class="text-slate-900">${tx.driverName}</strong></div>` : ''}
                     ${tx.vehiclePlate ? `<div><span class="text-slate-500">السيارة / البوليصة:</span> <strong class="text-slate-900">${tx.vehiclePlate}</strong></div>` : ''}
                     ${tx.attachmentRef ? `<div class="col-span-2"><span class="text-slate-500">مرجع الاستلام / التحويل:</span> <strong class="text-blue-700">${tx.attachmentRef}</strong></div>` : ''}
@@ -5446,8 +5496,9 @@ ${linesTxt}
                         <tbody class="font-bold">${linesHtml}</tbody>
                     </table>
                 </div>
-                <div class="flex justify-between items-center bg-slate-900 text-white p-4 rounded-2xl font-black">
+                <div class="flex flex-wrap justify-between items-center gap-2 bg-slate-900 text-white p-4 rounded-2xl font-black">
                     <span>إجمالي المساحة: ${Number(tx.totalSqm || 0).toFixed(2)} م²</span>
+                    ${(tx.taxMode && tx.taxMode !== 'none') ? `<span class="text-amber-300 text-xs">الضريبة (15%): ${Number(tx.vatAmount || 0).toFixed(2)} ر.س</span>` : ''}
                     <span class="text-emerald-400 text-base">الإجمالي: ${Number(tx.totalAmount || 0).toFixed(2)} ر.س</span>
                 </div>
             `;
@@ -5565,26 +5616,12 @@ ${linesTxt}
                         </table>
 
                         <div class="flex justify-between items-center bg-slate-100 border border-slate-400 p-4 rounded-xl">
-                            <div class="text-sm font-black text-slate-800">
-                                إجمالي الأمتار المنصرفة: <span class="text-blue-700">${Number(tx.totalSqm || 0).toFixed(2)} م²</span>
+                            <div class="text-sm font-black text-slate-800 space-x-4 space-x-reverse">
+                                <span>إجمالي الأمتار المنصرفة: <span class="text-blue-700">${Number(tx.totalSqm || 0).toFixed(2)} م²</span></span>
+                                ${(tx.taxMode && tx.taxMode !== 'none') ? `<span>الضريبة (15%): <span class="text-amber-700">${Number(tx.vatAmount || 0).toFixed(2)} ر.س</span></span>` : ''}
                             </div>
                             <div class="text-base font-black text-slate-900">
                                 الإجمالي المستحق: <span class="text-emerald-700 text-lg">${Number(tx.totalAmount || 0).toFixed(2)} ر.س</span>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-3 gap-6 pt-8 text-center text-xs font-black text-slate-700">
-                            <div class="space-y-8">
-                                <p>أمين المستودع</p>
-                                <div class="border-b border-dashed border-slate-400 w-4/5 mx-auto"></div>
-                            </div>
-                            <div class="space-y-8">
-                                <p>المبيعات / المحاسبة</p>
-                                <div class="border-b border-dashed border-slate-400 w-4/5 mx-auto"></div>
-                            </div>
-                            <div class="space-y-8">
-                                <p>توقيع المستلم (العميل / السائق)</p>
-                                <div class="border-b border-dashed border-slate-400 w-4/5 mx-auto"></div>
                             </div>
                         </div>
                     </div>
@@ -5593,6 +5630,27 @@ ${linesTxt}
                 </html>
             `);
             win.document.close();
+        }
+
+        function getTaxModeLabel(mode) {
+            if (mode === 'inclusive') return 'شامل الضريبة (15%)';
+            if (mode === 'exclusive') return 'خال من الضريبة (+15%)';
+            return 'بدون';
+        }
+
+        function computeLineTaxBreakdown(rawLineTotal, taxMode) {
+            const base = Number(rawLineTotal || 0);
+            if (taxMode === 'inclusive') {
+                const net = base / 1.15;
+                const vat = base - net;
+                return { net, vat, gross: base };
+            }
+            if (taxMode === 'exclusive') {
+                const net = base;
+                const vat = base * 0.15;
+                return { net, vat, gross: net + vat };
+            }
+            return { net: base, vat: 0, gross: base };
         }
 
         function addSaleCartLine() {
@@ -5636,31 +5694,59 @@ ${linesTxt}
                 total
             });
 
+            // تفريغ خانة اختيار الصنف وحقول البند لكتابة صنف جديد بسهولة
+            const itemSearchInp = document.getElementById('saleItemSearch');
+            const itemSel = document.getElementById('saleItemSelect');
+            if (itemSearchInp) itemSearchInp.value = '';
+            if (itemSel) {
+                itemSel.selectedIndex = -1;
+                itemSel.classList.add('hidden');
+            }
+            document.getElementById('saleWidth').value = '';
+            document.getElementById('saleLength').value = '';
+            document.getElementById('saleQty').value = '1';
+            document.getElementById('salePrice').value = '';
+            setTextSafe('saleLinePreviewSqm', '0.00');
+            setTextSafe('saleLinePreviewRolls', '0.00');
+            document.getElementById('saleStockAvailBanner')?.classList.add('hidden');
+
             renderSaleCart();
-            updateSaleAvailableStockBanner();
+            if (itemSearchInp) itemSearchInp.focus();
         }
 
         function renderSaleCart() {
             const tbody = document.getElementById('saleCartBody');
+            const taxMode = document.getElementById('saleTaxMode')?.value || 'none';
+            const vatWrap = document.getElementById('saleCartVatWrap');
+            const vatEl = document.getElementById('saleCartVatAmount');
+
             if (saleCart.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">لم يتم إضافة بنود بعد</td></tr>';
                 document.getElementById('saleCartTotalSqm').textContent = '0.00 م²';
+                if (vatWrap) vatWrap.classList.toggle('hidden', taxMode === 'none');
+                if (vatEl) vatEl.textContent = '0.00 ر.س';
                 document.getElementById('saleCartTotalAmount').textContent = '0.00 ر.س';
                 return;
             }
 
             let totSqm = 0;
-            let totAmt = 0;
+            let totNet = 0;
+            let totVat = 0;
+            let totGross = 0;
+
             tbody.innerHTML = saleCart.map((ln, idx) => {
+                const bd = computeLineTaxBreakdown(ln.total, taxMode);
                 totSqm += ln.sqm;
-                totAmt += ln.total;
+                totNet += bd.net;
+                totVat += bd.vat;
+                totGross += bd.gross;
                 return `
                     <tr>
                         <td class="p-3">${ln.itemName}</td>
                         <td class="p-3 text-center">${ln.width}م × ${ln.length}م × ${ln.qty}</td>
                         <td class="p-3 text-center text-blue-700">${ln.sqm.toFixed(2)} م²</td>
                         <td class="p-3 text-center">${ln.price.toFixed(2)} ر.س</td>
-                        <td class="p-3 text-center text-emerald-700">${ln.total.toFixed(2)} ر.س</td>
+                        <td class="p-3 text-center text-emerald-700">${bd.gross.toFixed(2)} ر.س</td>
                         <td class="p-3 text-center">
                             <button type="button" onclick="saleCart.splice(${idx}, 1); renderSaleCart(); updateSaleAvailableStockBanner();" class="text-rose-600 hover:text-rose-800"><i class="fa-solid fa-trash"></i></button>
                         </td>
@@ -5669,7 +5755,9 @@ ${linesTxt}
             }).join('');
 
             document.getElementById('saleCartTotalSqm').textContent = totSqm.toFixed(2) + ' م²';
-            document.getElementById('saleCartTotalAmount').textContent = totAmt.toFixed(2) + ' ر.س';
+            if (vatWrap) vatWrap.classList.toggle('hidden', taxMode === 'none');
+            if (vatEl) vatEl.textContent = totVat.toFixed(2) + ' ر.س';
+            document.getElementById('saleCartTotalAmount').textContent = totGross.toFixed(2) + ' ر.س';
         }
 
         function submitSaleOrder() {
@@ -5691,6 +5779,7 @@ ${linesTxt}
                 const driverName = (document.getElementById('saleDriverName')?.value || '').trim();
                 const vehiclePlate = (document.getElementById('saleVehiclePlate')?.value || '').trim();
                 const attachmentRef = (document.getElementById('saleAttachmentRef')?.value || '').trim();
+                const taxMode = document.getElementById('saleTaxMode')?.value || 'none';
 
                 if (!customerId) {
                     showToast('يرجى اختيار العميل من القائمة أولاً', true);
@@ -5725,16 +5814,29 @@ ${linesTxt}
                 }
 
                 let totalSqm = 0;
+                let subtotalAmount = 0;
+                let vatAmount = 0;
                 let totalAmount = 0;
-                saleCart.forEach(ln => {
+
+                const processedLines = saleCart.map(ln => {
+                    const bd = computeLineTaxBreakdown(ln.total, taxMode);
                     totalSqm += Number(ln.sqm || 0);
-                    totalAmount += Number(ln.total || 0);
+                    subtotalAmount += bd.net;
+                    vatAmount += bd.vat;
+                    totalAmount += bd.gross;
+
                     const item = appState.items.find(x => x.id === ln.itemId);
                     if (item && Number(ln.rollArea) > 0) {
                         const deductedRolls = Number(ln.sqm) / Number(ln.rollArea);
                         if (wh === 'wh_samir') item.stockSamir = Math.max(0, Number(item.stockSamir || 0) - deductedRolls);
                         else item.stockTahlia = Math.max(0, Number(item.stockTahlia || 0) - deductedRolls);
                     }
+                    return {
+                        ...ln,
+                        subtotal: bd.net,
+                        vat: bd.vat,
+                        total: bd.gross
+                    };
                 });
 
                 const cust = appState.customers.find(c => c.id === customerId);
@@ -5746,17 +5848,21 @@ ${linesTxt}
                     customerId,
                     customerName: cust ? cust.name : searchCustText,
                     warehouseId: wh,
+                    taxMode,
+                    subtotalAmount,
+                    vatAmount,
                     quoteRef,
                     driverName,
                     vehiclePlate,
                     attachmentRef,
-                    lines: saleCart.map(x => ({ ...x })),
+                    lines: processedLines,
                     totalSqm,
                     totalAmount
                 });
 
                 logUserActivity('create', 'إذون الصرف', `اعتماد إذن صرف ${txId} للعميل (${cust ? cust.name : searchCustText}) بقيمة ${totalAmount.toFixed(2)} ر.س`);
                 saleCart = [];
+                if (document.getElementById('saleTaxMode')) document.getElementById('saleTaxMode').value = 'none';
                 renderSaleCart();
                 document.getElementById('saleQuoteRef').value = '';
                 document.getElementById('saleDate').value = getNowLocalInputStr();
