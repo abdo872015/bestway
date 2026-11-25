@@ -8014,9 +8014,14 @@ ${statusLine}
             }
 
             calcSaleLineSqm();
-            if (focusPrice && priceEl) {
-                priceEl.focus();
-                priceEl.select();
+            if (focusPrice) {
+                if (qtyEl) {
+                    qtyEl.focus();
+                    qtyEl.select();
+                } else if (priceEl) {
+                    priceEl.focus();
+                    priceEl.select();
+                }
             }
         }
 
