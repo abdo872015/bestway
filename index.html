@@ -4757,6 +4757,13 @@
                     event.preventDefault();
                     const picked = saleItemFilteredList[Math.max(0, saleItemHighlightIdx)];
                     if (picked) selectSaleItemById(picked.id, true);
+                } else if (document.getElementById('saleItemSelect')?.value) {
+                    event.preventDefault();
+                    const qtyInp = document.getElementById('saleQty');
+                    if (qtyInp) {
+                        qtyInp.focus();
+                        qtyInp.select();
+                    }
                 }
             } else if (event.key === 'Escape' || event.key === 'Tab') {
                 menu.classList.add('hidden');
@@ -8015,13 +8022,15 @@ ${statusLine}
 
             calcSaleLineSqm();
             if (focusPrice) {
-                if (qtyEl) {
-                    qtyEl.focus();
-                    qtyEl.select();
-                } else if (priceEl) {
-                    priceEl.focus();
-                    priceEl.select();
-                }
+                setTimeout(() => {
+                    if (qtyEl) {
+                        qtyEl.focus();
+                        qtyEl.select();
+                    } else if (priceEl) {
+                        priceEl.focus();
+                        priceEl.select();
+                    }
+                }, 10);
             }
         }
 
