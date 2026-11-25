@@ -1889,6 +1889,26 @@
             </div>
             <input type="hidden" id="editingSaleOrderId" value="">
 
+            <!-- شريط استخراج البيانات من صورة بيان الأسعار بالذكاء الاصطناعي -->
+            <div class="bg-gradient-to-l from-indigo-50 via-blue-50 to-sky-50 border border-indigo-200 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h4 class="text-xs font-black text-indigo-950">استخراج بيانات إذن الصرف من صورة بيان الأسعار (AI)</h4>
+                        <p id="aiQuoteScanStatusText" class="text-[11px] font-bold text-indigo-700 truncate">ارفع صورة بيان الأسعار الورقي أو لقطة شاشة لتعبئة العميل والرقم والأصناف والأسعار تلقائياً</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <label id="aiQuoteUploadLabel" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black cursor-pointer flex items-center gap-1.5 shadow-xs transition">
+                        <i id="aiQuoteScanIcon" class="fa-solid fa-camera"></i>
+                        <span id="aiQuoteScanBtnLabel">رفع صورة بيان الأسعار</span>
+                        <input type="file" id="aiQuoteImageInput" accept="image/*" onchange="handleAiQuoteImageUpload(event)" class="hidden">
+                    </label>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div class="searchable-select-wrapper relative sm:col-span-2" id="saleCustomerComboWrap">
                     <label class="block text-xs font-extrabold text-slate-700 mb-1">اسم العميل</label>
@@ -6629,6 +6649,267 @@ ${linesTxt}
             if (vatWrap) vatWrap.classList.toggle('hidden', taxMode === 'none');
             if (vatEl) vatEl.textContent = totVat.toFixed(2) + ' ر.س';
             document.getElementById('saleCartTotalAmount').textContent = totGross.toFixed(2) + ' ر.س';
+        }
+
+        // ==========================================
+        // استخراج بيانات بيان الأسعار الورقي بالذكاء الاصطناعي (Gemini Vision)
+        // ==========================================
+        async function callGeminiVisionWithBackoff(payload) {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+            const delays = [1000, 2000, 4000];
+
+            for (let attempt = 0; attempt <= delays.length; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return await response.json();
+                } catch (err) {
+                    if (attempt === delays.length) throw err;
+                    await new Promise(res => setTimeout(res, delays[attempt]));
+                }
+            }
+        }
+
+        function resizeImageFileToBase64(file, maxDim = 1600) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        let w = img.width || maxDim;
+                        let h = img.height || maxDim;
+                        if (w > maxDim || h > maxDim) {
+                            const ratio = Math.min(maxDim / w, maxDim / h);
+                            w = Math.max(1, Math.round(w * ratio));
+                            h = Math.max(1, Math.round(h * ratio));
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) {
+                            const raw = String(e.target?.result || '');
+                            const base64 = raw.split(',')[1] || '';
+                            resolve({ base64, mimeType: file.type || 'image/jpeg' });
+                            return;
+                        }
+                        ctx.drawImage(img, 0, 0, w, h);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+                        resolve({
+                            base64: dataUrl.split(',')[1] || '',
+                            mimeType: 'image/jpeg'
+                        });
+                    };
+                    img.onerror = reject;
+                    img.src = e.target?.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function handleAiQuoteImageUpload(event) {
+            const file = event.target?.files?.[0];
+            if (!file) return;
+
+            const statusEl = document.getElementById('aiQuoteScanStatusText');
+            const btnLabelEl = document.getElementById('aiQuoteScanBtnLabel');
+            const iconEl = document.getElementById('aiQuoteScanIcon');
+            const uploadLabel = document.getElementById('aiQuoteUploadLabel');
+
+            try {
+                if (uploadLabel) uploadLabel.classList.add('opacity-70', 'pointer-events-none');
+                if (iconEl) iconEl.className = 'fa-solid fa-spinner fa-spin';
+                if (btnLabelEl) btnLabelEl.textContent = 'جاري تحليل الصورة...';
+                if (statusEl) statusEl.textContent = 'يقوم الذكاء الاصطناعي الآن بقراءة العميل ورقم بيان الأسعار والأصناف والأسعار...';
+
+                const { base64, mimeType } = await resizeImageFileToBase64(file);
+
+                const customersCatalog = appState.customers.map(c => ({ id: c.id, name: c.name }));
+                const itemsCatalog = appState.items.map(it => ({
+                    id: it.id,
+                    name: it.name,
+                    width: Number(it.width || 1),
+                    length: Number(it.length || 50)
+                }));
+
+                const promptText = `أنت مساعد محاسبي ومخزني خبير لمؤسسة دعاية وإعلان (مؤسسة الطريق الأمثل - Best Way).
+قم بتحليل صورة "بيان الأسعار" المرفقة واستخراج البيانات التالية بدقة متناهية بصيغة JSON:
+1. اسم العميل (customerName) وطابقه مع أقرب عميل من قائمة العملاء المسجلين إن وجد (matchedCustomerId).
+2. رقم بيان الأسعار / المرجع (quoteRef).
+3. نوع الضريبة (taxMode): "none" إذا لم تذكر ضريبة، "inclusive" إذا كانت الأسعار شاملة الضريبة، "exclusive" إذا كانت الضريبة 15% مضافة فوق المجموع.
+4. قائمة البنود (items): لكل سطر في بيان الأسعار:
+   - extractedName: اسم الصنف كما هو مكتوب في الورقة.
+   - matchedItemId: معرف الصنف الأقرب من قائمة أصناف المخزن المرفقة (أو نص فارغ إذا لم يتطابق).
+   - width: العرض بالمتر (رقم).
+   - length: الطول بالمتر (رقم، مثلاً 50 للرول الكامل أو الطول المذكور).
+   - qty: العدد / الكمية (رقم، الافتراضي 1).
+   - unitPricePerSqm: سعر المتر المربع بالريال (إذا كان السعر المذكور في الورقة هو سعر الرول أو القطعة الواحدة، اقسمه على مساحة القطعة width * length لاستخراج سعر المتر المربع).
+
+قائمة العملاء المسجلين بالنظام:
+${JSON.stringify(customersCatalog)}
+
+قائمة أصناف المخزن المسجلين بالنظام:
+${JSON.stringify(itemsCatalog)}`;
+
+                const payload = {
+                    contents: [{
+                        role: "user",
+                        parts: [
+                            { text: promptText },
+                            { inlineData: { mimeType, data: base64 } }
+                        ]
+                    }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                customerName: { type: "STRING" },
+                                matchedCustomerId: { type: "STRING" },
+                                quoteRef: { type: "STRING" },
+                                taxMode: { type: "STRING" },
+                                items: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            extractedName: { type: "STRING" },
+                                            matchedItemId: { type: "STRING" },
+                                            width: { type: "NUMBER" },
+                                            length: { type: "NUMBER" },
+                                            qty: { type: "NUMBER" },
+                                            unitPricePerSqm: { type: "NUMBER" }
+                                        },
+                                        required: ["extractedName", "width", "length", "qty", "unitPricePerSqm"]
+                                    }
+                                }
+                            },
+                            required: ["customerName", "quoteRef", "items"]
+                        }
+                    }
+                };
+
+                const result = await callGeminiVisionWithBackoff(payload);
+                const rawJson = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!rawJson) {
+                    throw new Error('لم يتم استلام بيانات من الذكاء الاصطناعي');
+                }
+
+                const parsed = JSON.parse(rawJson);
+
+                // 1. مطابقة وتعبئة العميل
+                let matchedCust = null;
+                if (parsed.matchedCustomerId) {
+                    matchedCust = appState.customers.find(c => c.id === parsed.matchedCustomerId) || null;
+                }
+                if (!matchedCust && parsed.customerName) {
+                    const qName = parsed.customerName.trim().toLowerCase();
+                    matchedCust = appState.customers.find(c =>
+                        c.name.trim().toLowerCase() === qName ||
+                        c.name.toLowerCase().includes(qName) ||
+                        qName.includes(c.name.toLowerCase())
+                    ) || null;
+                }
+
+                if (matchedCust) {
+                    selectSaleCustomerById(matchedCust.id, false);
+                } else if (parsed.customerName) {
+                    const custSearchInp = document.getElementById('saleCustomerSearch');
+                    const custHiddenInp = document.getElementById('saleCustomerSelect');
+                    if (custHiddenInp) custHiddenInp.value = '';
+                    if (custSearchInp) custSearchInp.value = parsed.customerName.trim();
+                    document.getElementById('saleCustomerClearBtn')?.classList.remove('hidden');
+                }
+
+                // 2. تعبئة رقم بيان الأسعار ونوع الضريبة
+                if (parsed.quoteRef) {
+                    const qRefEl = document.getElementById('saleQuoteRef');
+                    if (qRefEl) qRefEl.value = String(parsed.quoteRef).trim();
+                }
+                if (parsed.taxMode && ['none', 'inclusive', 'exclusive'].includes(parsed.taxMode)) {
+                    const taxEl = document.getElementById('saleTaxMode');
+                    if (taxEl) taxEl.value = parsed.taxMode;
+                }
+
+                // 3. مطابقة وإضافة البنود تلقائياً إلى السلة
+                let addedCount = 0;
+                const unmatchedNames = [];
+
+                (parsed.items || []).forEach(aiLine => {
+                    let matchedItem = null;
+                    if (aiLine.matchedItemId) {
+                        matchedItem = appState.items.find(it => it.id === aiLine.matchedItemId) || null;
+                    }
+                    if (!matchedItem && aiLine.extractedName) {
+                        const qItem = aiLine.extractedName.trim().toLowerCase();
+                        matchedItem = appState.items.find(it =>
+                            it.name.trim().toLowerCase() === qItem ||
+                            it.name.toLowerCase().includes(qItem) ||
+                            qItem.includes(it.name.toLowerCase())
+                        ) || null;
+                    }
+
+                    if (!matchedItem) {
+                        unmatchedNames.push(aiLine.extractedName || 'صنف غير معروف');
+                        return;
+                    }
+
+                    const width = Number(aiLine.width) > 0 ? Number(aiLine.width) : Number(matchedItem.width || 1);
+                    const length = Number(aiLine.length) > 0 ? Number(aiLine.length) : Number(matchedItem.length || 50);
+                    const qty = Number(aiLine.qty) > 0 ? Number(aiLine.qty) : 1;
+                    const price = Number(aiLine.unitPricePerSqm) > 0 ? Number(aiLine.unitPricePerSqm) : 0;
+                    const sqm = width * length * qty;
+                    const rollArea = Number(matchedItem.length || 50) * Number(matchedItem.width || 1);
+                    const extractedClean = (aiLine.extractedName || '').trim();
+                    const billingAlias = (extractedClean && extractedClean !== matchedItem.name) ? extractedClean : '';
+
+                    saleCart.push({
+                        itemId: matchedItem.id,
+                        itemName: matchedItem.name,
+                        billingName: billingAlias,
+                        rollArea,
+                        width,
+                        length,
+                        qty,
+                        sqm,
+                        price,
+                        total: sqm * price
+                    });
+                    addedCount++;
+                });
+
+                renderSaleCart();
+                updateSaleAvailableStockBanner();
+
+                const summaryParts = [];
+                if (matchedCust) summaryParts.push(`العميل: ${matchedCust.name}`);
+                else if (parsed.customerName) summaryParts.push(`اسم العميل المستخرج: ${parsed.customerName} (يرجى اختياره من القائمة)`);
+                if (parsed.quoteRef) summaryParts.push(`بيان سعر: ${parsed.quoteRef}`);
+                summaryParts.push(`تمت إضافة ${addedCount} صنف`);
+                if (unmatchedNames.length > 0) {
+                    summaryParts.push(`أصناف لم تتطابق بالمخزن: ${unmatchedNames.join('، ')}`);
+                }
+
+                if (statusEl) statusEl.textContent = summaryParts.join(' • ');
+                showToast(`تم تحليل بيان الأسعار وإضافة ${addedCount} صنف بنجاح! يرجى مراجعة الأسعار والكميات قبل الاعتماد.`);
+            } catch (err) {
+                console.error('AI Quote Scan Error:', err);
+                if (statusEl) statusEl.textContent = 'تعذر قراءة الصورة تلقائياً، يرجى التأكد من وضوح الصورة أو المحاولة مرة أخرى.';
+                showToast('تعذر تحليل صورة بيان الأسعار: ' + (err.message || 'خطأ غير متوقع'), true);
+            } finally {
+                if (uploadLabel) uploadLabel.classList.remove('opacity-70', 'pointer-events-none');
+                if (iconEl) iconEl.className = 'fa-solid fa-camera';
+                if (btnLabelEl) btnLabelEl.textContent = 'رفع صورة بيان الأسعار';
+                event.target.value = '';
+            }
         }
 
         function submitSaleOrder() {
