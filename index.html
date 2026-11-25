@@ -2312,7 +2312,7 @@
                         </div>
 
                         <div class="bg-white border border-slate-200 rounded-2xl p-5 space-y-3.5">
-                            <h4 class="text-sm font-black text-slate-900 border-b border-slate-200 pb-2.5">إعدادات المبيعات والطباعة والواتساب</h4>
+                            <h4 class="text-sm font-black text-slate-900 border-b border-slate-200 pb-2.5">إعدادات المبيعات والطباعة والواتساب والذكاء الاصطناعي</h4>
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
                                     <label class="block text-xs font-extrabold text-slate-700 mb-1">المستودع الافتراضي</label>
@@ -2338,9 +2338,15 @@
                                 <label class="block text-xs font-extrabold text-slate-700 mb-1">تذييل المطبوعات (رقم الآيبان / الشروط أسفل بيان الأسعار)</label>
                                 <input type="text" id="cfgPrintFooterNote" placeholder="مثال: البضاعة المباعة لا ترد بعد القص • آيبان: SA..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
                             </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">خاتمة رسائل الواتساب للعملاء</label>
-                                <input type="text" id="cfgWhatsappFooter" placeholder="شكراً لتعاملكم معنا..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">خاتمة رسائل الواتساب للعملاء</label>
+                                    <input type="text" id="cfgWhatsappFooter" placeholder="شكراً لتعاملكم معنا..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">مفتاح Gemini API لقراءة الصور (محلي بالجهاز فقط)</label>
+                                    <input type="password" id="cfgLocalGeminiApiKey" dir="ltr" placeholder="AIzaSy... (يُحفظ محلياً ولا يُرفع للسحابة)" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2973,53 +2979,125 @@
                 const user = auth.currentUser;
                 if (!user) return;
 
-                const sharedDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'wms_live_state', 'master_record');
+                // تقسيم البيانات إلى مستندات مستقلة لتجنب حد 1MB ومنع تضارب التعديلات بين الأقسام
+                const shardRefs = {
+                    meta: doc(db, 'artifacts', appId, 'public', 'data', 'wms_shards', 'meta_settings'),
+                    items: doc(db, 'artifacts', appId, 'public', 'data', 'wms_shards', 'items_catalog'),
+                    customers: doc(db, 'artifacts', appId, 'public', 'data', 'wms_shards', 'customers_list'),
+                    transactions: doc(db, 'artifacts', appId, 'public', 'data', 'wms_shards', 'transactions_log'),
+                    stocktake: doc(db, 'artifacts', appId, 'public', 'data', 'wms_shards', 'stocktake_audit')
+                };
+
                 let isApplyingRemote = false;
+                let initialHydrationDone = false;
+                const lastHashes = {};
 
                 window.pushCloudState = async function(stateObj) {
-                    if (isApplyingRemote || !auth.currentUser) return;
+                    if (isApplyingRemote || !auth.currentUser || !initialHydrationDone) return;
                     try {
-                        if (txt) txt.textContent = 'جاري حفظ التحديث سحابياً...';
-                        await setDoc(sharedDocRef, {
-                            payload: JSON.stringify(stateObj),
-                            updatedAt: Date.now()
-                        });
+                        const sanitizedSettings = { ...(stateObj.companySettings || {}) };
+                        delete sanitizedSettings.localGeminiApiKey;
+
+                        const payloads = {
+                            meta: JSON.stringify({
+                                warehouses: stateObj.warehouses || [],
+                                companySettings: sanitizedSettings,
+                                users: stateObj.users || []
+                            }),
+                            items: JSON.stringify(stateObj.items || []),
+                            customers: JSON.stringify(stateObj.customers || []),
+                            transactions: JSON.stringify(stateObj.transactions || []),
+                            stocktake: JSON.stringify({
+                                stocktakeLines: stateObj.stocktakeLines || [],
+                                stocktakeHistory: stateObj.stocktakeHistory || [],
+                                auditLogs: (stateObj.auditLogs || []).slice(0, 250)
+                            })
+                        };
+
+                        const writes = [];
+                        for (const key of Object.keys(shardRefs)) {
+                            if (payloads[key] !== lastHashes[key]) {
+                                lastHashes[key] = payloads[key];
+                                writes.push(setDoc(shardRefs[key], {
+                                    payload: payloads[key],
+                                    updatedAt: Date.now()
+                                }));
+                            }
+                        }
+
+                        if (writes.length > 0) {
+                            if (txt) txt.textContent = 'جاري حفظ التحديث سحابياً...';
+                            await Promise.all(writes);
+                        }
                         if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
-                        if (txt) txt.textContent = 'متصل • مزامنة حية نشطة';
+                        if (txt) txt.textContent = 'متصل • مزامنة سحابية مقسّمة نشطة';
                     } catch (err) {
                         console.error('Cloud save error:', err);
                         if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
-                        if (txt) txt.textContent = 'تعذر الحفظ السحابي';
+                        if (txt) txt.textContent = 'تعذر الحفظ السحابي (تجاوز الحد أو انقطاع)';
                     }
                 };
 
-                onSnapshot(sharedDocRef, (snap) => {
-                    if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
-                    if (txt) txt.textContent = 'متصل • مزامنة حية نشطة';
+                let hydratedCount = 0;
+                const totalShards = Object.keys(shardRefs).length;
 
-                    if (snap.exists()) {
-                        const data = snap.data();
-                        if (data && data.payload) {
-                            const remoteState = JSON.parse(data.payload);
-                            if (typeof window.applyRemoteState === 'function') {
+                Object.entries(shardRefs).forEach(([shardKey, ref]) => {
+                    onSnapshot(ref, (snap) => {
+                        hydratedCount++;
+                        if (hydratedCount >= totalShards) {
+                            initialHydrationDone = true;
+                        }
+                        if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
+                        if (txt) txt.textContent = 'متصل • مزامنة سحابية مقسّمة نشطة';
+
+                        if (snap.exists() && typeof window.getAppState === 'function' && typeof window.applyRemoteState === 'function') {
+                            const raw = snap.data()?.payload;
+                            if (raw && raw !== lastHashes[shardKey]) {
+                                lastHashes[shardKey] = raw;
+                                const parsedShard = JSON.parse(raw);
+                                const merged = { ...window.getAppState() };
+                                if (shardKey === 'meta') {
+                                    if (parsedShard.warehouses) merged.warehouses = parsedShard.warehouses;
+                                    if (parsedShard.companySettings) {
+                                        merged.companySettings = {
+                                            ...parsedShard.companySettings,
+                                            localGeminiApiKey: merged.companySettings?.localGeminiApiKey || ''
+                                        };
+                                    }
+                                    if (Array.isArray(parsedShard.users) && parsedShard.users.length > 0) merged.users = parsedShard.users;
+                                } else if (shardKey === 'items') {
+                                    merged.items = parsedShard;
+                                } else if (shardKey === 'customers') {
+                                    merged.customers = parsedShard;
+                                } else if (shardKey === 'transactions') {
+                                    merged.transactions = parsedShard;
+                                } else if (shardKey === 'stocktake') {
+                                    merged.stocktakeLines = parsedShard.stocktakeLines || [];
+                                    merged.stocktakeHistory = parsedShard.stocktakeHistory || [];
+                                    merged.auditLogs = parsedShard.auditLogs || [];
+                                }
                                 isApplyingRemote = true;
-                                window.applyRemoteState(remoteState);
+                                window.applyRemoteState(merged);
                                 isApplyingRemote = false;
                             }
+                        } else if (!snap.exists() && initialHydrationDone && typeof window.getAppState === 'function') {
+                            const st = window.getAppState();
+                            const hasLocalData = (st.items?.length > 0) || (st.customers?.length > 0) || (st.transactions?.length > 0);
+                            if (hasLocalData && typeof window.pushCloudState === 'function') {
+                                window.pushCloudState(st);
+                            }
                         }
-                    } else if (typeof window.getAppState === 'function' && typeof window.pushCloudState === 'function') {
-                        window.pushCloudState(window.getAppState());
-                    }
-                }, (error) => {
-                    console.error('Cloud listener error:', error);
-                    if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400';
-                    if (txt) txt.textContent = 'تأكد من تفعيل Firestore و Anonymous';
+                    }, (error) => {
+                        console.error('Cloud listener error:', error);
+                        if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400';
+                        if (txt) txt.textContent = 'وضع التشغيل المحلي (تعذر الاتصال بالسحابة)';
+                    });
                 });
 
             } catch (e) {
                 console.error('Cloud init failed:', e);
                 if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
-                if (txt) txt.textContent = 'خطأ: ' + (e.code || e.message || 'وضع التشغيل المحلي');
+                if (txt) txt.textContent = 'وضع التشغيل المحلي';
             }
         }
 
@@ -3034,6 +3112,44 @@
         const SESSION_KEY = 'al_tariq_logged_in';
         const CURRENT_USER_KEY = 'al_tariq_active_user_id';
         const THEME_KEY = 'al_tariq_theme_mode';
+        const LOCAL_GEMINI_KEY_STORAGE = 'al_tariq_local_gemini_key';
+
+        async function hashPasswordSha256(plainText) {
+            const raw = String(plainText || '');
+            if (!raw || raw.startsWith('sha256:')) return raw;
+            try {
+                if (window.crypto && window.crypto.subtle) {
+                    const buf = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+                    const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+                    return 'sha256:' + hex;
+                }
+            } catch (e) {}
+            return raw;
+        }
+
+        async function verifyUserPassword(userObj, inputPassword) {
+            if (!userObj) return false;
+            const stored = String(userObj.password || '');
+            const candidate = String(inputPassword || '');
+            if (!stored.startsWith('sha256:')) {
+                return stored === candidate;
+            }
+            const hashedInput = await hashPasswordSha256(candidate);
+            return stored === hashedInput;
+        }
+
+        function getNextSequentialDocNumber(prefix, typeFilter = null) {
+            let maxNum = 1000;
+            (appState.transactions || []).forEach(t => {
+                if (typeFilter && t.type !== typeFilter) return;
+                const idStr = String(t.id || '');
+                if (idStr.startsWith(prefix)) {
+                    const num = parseInt(idStr.slice(prefix.length), 10);
+                    if (!isNaN(num) && num > maxNum) maxNum = num;
+                }
+            });
+            return `${prefix}${maxNum + 1}`;
+        }
 
         const PRINT_HD_LOGO_SVG = `
             <svg viewBox="0 0 260 245" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%;">
@@ -3273,6 +3389,9 @@
             const whT = appState.warehouses.find(w => w.id === 'wh_tahlia');
             setVal('cfgWhSamirName', whS ? whS.name : 'مخزن السامر');
             setVal('cfgWhTahliaName', whT ? whT.name : 'مخزن التحلية');
+            try {
+                setVal('cfgLocalGeminiApiKey', localStorage.getItem(LOCAL_GEMINI_KEY_STORAGE) || '');
+            } catch (e) {}
 
             applyCompanyBrandingToUI();
         }
@@ -3398,6 +3517,11 @@
                 printFooterNote: (document.getElementById('cfgPrintFooterNote')?.value || '').trim(),
                 whatsappFooter: (document.getElementById('cfgWhatsappFooter')?.value || '').trim()
             };
+            try {
+                const localKey = (document.getElementById('cfgLocalGeminiApiKey')?.value || '').trim();
+                if (localKey) localStorage.setItem(LOCAL_GEMINI_KEY_STORAGE, localKey);
+                else localStorage.removeItem(LOCAL_GEMINI_KEY_STORAGE);
+            } catch (e) {}
             logUserActivity('edit', 'الإعدادات', `تحديث إعدادات النظام وهوية الشركة (${companyName})`);
             saveState();
             applyCompanyBrandingToUI();
@@ -3414,11 +3538,11 @@
             document.getElementById('resetDemoAdminPass').value = '';
             document.getElementById('resetDemoTxModal')?.classList.remove('hidden');
         }
-
-        function confirmResetDemoTransactions() {
+        async function confirmResetDemoTransactions() {
             const pass = (document.getElementById('resetDemoAdminPass')?.value || '').trim();
             const adminUser = appState.users.find(u => u.id === 'user_admin') || currentUser;
-            if (!adminUser || pass !== String(adminUser.password)) {
+            const validPass = await verifyUserPassword(adminUser, pass);
+            if (!adminUser || !validPass) {
                 showToast('كلمة مرور المدير العام غير صحيحة!', true);
                 return;
             }
@@ -3980,16 +4104,17 @@
             }
         }
 
-        function doDirectLogin() {
+        async function doDirectLogin() {
             const uInp = (document.getElementById('loginUsername')?.value || '').trim();
             const pInp = (document.getElementById('loginPassword')?.value || '').trim();
             const errBox = document.getElementById('loginErrorMsg');
             const cardBox = document.getElementById('loginCardBox');
 
-            const matched = appState.users.find(u =>
-                String(u.username || '').trim().toLowerCase() === uInp.toLowerCase() &&
-                String(u.password || '').trim() === pInp
+            const userByName = appState.users.find(u =>
+                String(u.username || '').trim().toLowerCase() === uInp.toLowerCase()
             );
+            const isValid = userByName ? await verifyUserPassword(userByName, pInp) : false;
+            const matched = isValid ? userByName : null;
 
             if (!matched) {
                 if (errBox) errBox.classList.remove('hidden');
@@ -3999,6 +4124,10 @@
                     cardBox.classList.add('login-shake');
                 }
                 return;
+            }
+
+            if (matched.password && !String(matched.password).startsWith('sha256:')) {
+                matched.password = await hashPasswordSha256(pInp);
             }
 
             if (errBox) errBox.classList.add('hidden');
@@ -4084,7 +4213,8 @@
             if (!currentUser) return;
             document.getElementById('profFullNameInput').value = currentUser.fullName || '';
             document.getElementById('profUsernameInput').value = currentUser.username || '';
-            document.getElementById('profPasswordInput').value = currentUser.password || '';
+            document.getElementById('profPasswordInput').value = '';
+            document.getElementById('profPasswordInput').placeholder = 'اتركه فارغاً للإبقاء على كلمة المرور الحالية';
             document.getElementById('userProfileModal')?.classList.remove('hidden');
         }
 
@@ -4092,18 +4222,24 @@
             document.getElementById('userProfileModal')?.classList.add('hidden');
         }
 
-        function saveUserProfile() {
+        async function saveUserProfile() {
             if (!currentUser) return;
             const fullName = (document.getElementById('profFullNameInput').value || '').trim();
             const username = (document.getElementById('profUsernameInput').value || '').trim();
-            const password = (document.getElementById('profPasswordInput').value || '').trim();
-            if (!fullName || !username || !password) {
-                showToast('يرجى إدخال جميع حقول الملف الشخصي', true);
+            const rawPass = (document.getElementById('profPasswordInput').value || '').trim();
+            if (!fullName || !username) {
+                showToast('يرجى إدخال الاسم الكامل واسم المستخدم', true);
+                return;
+            }
+            const dupUser = appState.users.find(u => u.id !== currentUser.id && String(u.username || '').trim().toLowerCase() === username.toLowerCase());
+            if (dupUser) {
+                showToast('اسم المستخدم مستخدم مسبقاً لحساب آخر، اختر اسماً مختلفاً', true);
                 return;
             }
             const idx = appState.users.findIndex(u => u.id === currentUser.id);
             if (idx !== -1) {
-                appState.users[idx] = { ...appState.users[idx], fullName, username, password };
+                const updatedPass = rawPass ? await hashPasswordSha256(rawPass) : appState.users[idx].password;
+                appState.users[idx] = { ...appState.users[idx], fullName, username, password: updatedPass };
                 currentUser = appState.users[idx];
             }
             saveState();
@@ -5283,7 +5419,8 @@
             document.getElementById('sysUserFullName').value = u.fullName;
             document.getElementById('sysUserRoleSelect').value = u.role || 'custom';
             document.getElementById('sysUserUsername').value = u.username;
-            document.getElementById('sysUserPassword').value = u.password;
+            document.getElementById('sysUserPassword').value = '';
+            document.getElementById('sysUserPassword').placeholder = 'اتركه فارغاً للإبقاء على كلمة المرور الحالية';
             renderUserPermissionsMatrix(u.permissions || buildDefaultPermissionsForRole(u.role || 'admin'));
             document.getElementById('systemUserModal')?.classList.remove('hidden');
         }
@@ -5292,14 +5429,19 @@
             document.getElementById('systemUserModal')?.classList.add('hidden');
         }
 
-        function saveSystemUser() {
+        async function saveSystemUser() {
             const id = document.getElementById('editSysUserId').value;
             const fullName = (document.getElementById('sysUserFullName').value || '').trim();
             const role = document.getElementById('sysUserRoleSelect').value;
             const username = (document.getElementById('sysUserUsername').value || '').trim();
-            const password = (document.getElementById('sysUserPassword').value || '').trim();
-            if (!fullName || !username || !password) {
-                showToast('يرجى إدخال جميع بيانات المستخدم', true);
+            const rawPassword = (document.getElementById('sysUserPassword').value || '').trim();
+            if (!fullName || !username || (!id && !rawPassword)) {
+                showToast('يرجى إدخال جميع بيانات المستخدم وكلمة المرور', true);
+                return;
+            }
+            const dupUser = appState.users.find(u => u.id !== id && String(u.username || '').trim().toLowerCase() === username.toLowerCase());
+            if (dupUser) {
+                showToast('اسم المستخدم موجود مسبقاً لموظف آخر، يرجى اختيار اسم مختلف', true);
                 return;
             }
 
@@ -5314,13 +5456,15 @@
             if (id) {
                 const idx = appState.users.findIndex(u => u.id === id);
                 if (idx !== -1) {
-                    appState.users[idx] = { ...appState.users[idx], fullName, role, username, password, permissions };
+                    const hashedPass = rawPassword ? await hashPasswordSha256(rawPassword) : appState.users[idx].password;
+                    appState.users[idx] = { ...appState.users[idx], fullName, role, username, password: hashedPass, permissions };
                     if (currentUser && currentUser.id === id) {
                         currentUser = appState.users[idx];
                     }
                 }
             } else {
-                appState.users.push({ id: 'user_' + Date.now(), fullName, role, username, password, permissions });
+                const hashedPass = await hashPasswordSha256(rawPassword);
+                appState.users.push({ id: 'user_' + Date.now(), fullName, role, username, password: hashedPass, permissions });
             }
             saveState();
             updateHeaderProfileDisplay();
@@ -6506,8 +6650,19 @@ ${statusLine}
                 return;
             }
             const target = appState.items.find(x => x.id === id);
+            if (!target) return;
+            const hasTx = appState.transactions.some(t =>
+                t.itemId === id ||
+                t.itemName === target.name ||
+                (Array.isArray(t.lines) && t.lines.some(ln => ln.itemId === id || ln.itemName === target.name))
+            );
+            const hasStock = (Number(target.stockSamir || 0) + Number(target.stockTahlia || 0)) > 0;
+            if (hasTx || hasStock) {
+                showToast('لا يمكن حذف الصنف لوجود أرصدة أو حركات مخزنية مرتبطة به!', true);
+                return;
+            }
             appState.items = appState.items.filter(x => x.id !== id);
-            logUserActivity('delete', 'الأصناف', `حذف الصنف: ${target ? target.name : id}`);
+            logUserActivity('delete', 'الأصناف', `حذف الصنف: ${target.name}`);
             saveState();
             refreshAllViews();
             showToast('تم حذف الصنف');
@@ -6569,9 +6724,9 @@ ${statusLine}
             if (summaryCard) summaryCard.classList.remove('hidden');
             setTextSafe('movSelectedItemTitle', item.name);
             setTextSafe('movSelectedItemDims', `المقاس القياسي: الطول ${item.length}م × العرض ${item.width}م (مساحة الرول: ${area.toFixed(2)} م²)`);
-            setTextSafe('movWarehouseBadge', whFilter === 'wh_samir' ? 'مخزن السامر' : (whFilter === 'wh_tahlia' ? 'مخزن التحلية' : 'جميع المخازن'));
+            setTextSafe('movWarehouseBadge', whFilter === 'wh_samir' ? getWarehouseName('wh_samir') : (whFilter === 'wh_tahlia' ? getWarehouseName('wh_tahlia') : 'جميع المخازن'));
             setTextSafe('movCurrentBalanceRolls', `${curRolls.toFixed(2)} رول`);
-            setTextSafe('movCurrentBalanceSplit', `السامر: ${rS.toFixed(2)} | التحلية: ${rT.toFixed(2)}`);
+            setTextSafe('movCurrentBalanceSplit', `${getWarehouseName('wh_samir')}: ${rS.toFixed(2)} | ${getWarehouseName('wh_tahlia')}: ${rT.toFixed(2)}`);
             setTextSafe('movCurrentBalanceSqm', `المساحة المتاحة: ${(curRolls * area).toFixed(2)} م²`);
 
             const events = [];
@@ -6587,13 +6742,13 @@ ${statusLine}
                     if (whFilter === 'all' || t.warehouseId === whFilter) {
                         const r = Number(t.rolls || 0);
                         totIn += r;
-                        events.push({ date: t.date, type: 'توريد للمخزن', id: t.id, party: t.waybillRef || 'توريد جديد', wh: t.warehouseId === 'wh_tahlia' ? 'التحلية' : 'السامر', delta: r, price: '-', total: '-' });
+                        events.push({ date: t.date, type: 'توريد للمخزن', id: t.id, party: t.waybillRef || 'توريد جديد', wh: getWarehouseName(t.warehouseId), delta: r, price: '-', total: '-' });
                     }
                 } else if (t.type === 'return' && (t.itemId === item.id || t.itemName === item.name)) {
                     if (whFilter === 'all' || t.warehouseId === whFilter) {
                         const r = area > 0 ? Number(t.totalSqm || 0) / area : 0;
                         totIn += r;
-                        events.push({ date: t.date, type: 'مرتجع عميل', id: t.id, party: t.customerName || '-', wh: t.warehouseId === 'wh_tahlia' ? 'التحلية' : 'السامر', delta: r, price: '-', total: Number(t.totalAmount || 0).toFixed(2) });
+                        events.push({ date: t.date, type: 'مرتجع عميل', id: t.id, party: t.customerName || '-', wh: getWarehouseName(t.warehouseId), delta: r, price: '-', total: Number(t.totalAmount || 0).toFixed(2) });
                     }
                 } else if (t.type === 'sale') {
                     if (whFilter === 'all' || t.warehouseId === whFilter) {
@@ -6601,7 +6756,7 @@ ${statusLine}
                             if (ln.itemId === item.id || ln.itemName === item.name) {
                                 const r = area > 0 ? Number(ln.sqm || 0) / area : 0;
                                 totOut += r;
-                                events.push({ date: t.date, type: 'إذن صرف مبيعات', id: t.id, party: t.customerName || '-', wh: t.warehouseId === 'wh_tahlia' ? 'التحلية' : 'السامر', delta: -r, price: Number(ln.price || 0).toFixed(2), total: Number(ln.total || 0).toFixed(2) });
+                                events.push({ date: t.date, type: 'إذن صرف مبيعات', id: t.id, party: t.customerName || '-', wh: getWarehouseName(t.warehouseId), delta: -r, price: Number(ln.price || 0).toFixed(2), total: Number(ln.total || 0).toFixed(2) });
                             }
                         });
                     }
@@ -6609,18 +6764,18 @@ ${statusLine}
                     if (whFilter === 'all' || t.warehouseId === whFilter) {
                         const r = Number(t.rolls || (area > 0 ? Number(t.sqm || 0) / area : 0));
                         totOut += r;
-                        events.push({ date: t.date, type: 'هالك وتالف', id: t.id, party: t.reason || '-', wh: t.warehouseId === 'wh_tahlia' ? 'التحلية' : 'السامر', delta: -r, price: '-', total: '-' });
+                        events.push({ date: t.date, type: 'هالك وتالف', id: t.id, party: t.reason || '-', wh: getWarehouseName(t.warehouseId), delta: -r, price: '-', total: '-' });
                     }
                 } else if (t.type === 'transfer' && (t.itemId === item.id || t.itemName === item.name)) {
                     const r = Number(t.rolls || 0);
                     if (whFilter === 'all') {
-                        events.push({ date: t.date, type: 'تحويل مخزني', id: t.id, party: `${t.fromWh === 'wh_tahlia' ? 'التحلية' : 'السامر'} ← ${t.toWh === 'wh_tahlia' ? 'التحلية' : 'السامر'}`, wh: 'بين المخازن', delta: 0, price: '-', total: '-' });
+                        events.push({ date: t.date, type: 'تحويل مخزني', id: t.id, party: `${getWarehouseName(t.fromWh)} ← ${getWarehouseName(t.toWh)}`, wh: 'بين المخازن', delta: 0, price: '-', total: '-' });
                     } else if (t.toWh === whFilter) {
                         totIn += r;
-                        events.push({ date: t.date, type: 'تحويل وارد', id: t.id, party: 'تحويل داخلي', wh: whFilter === 'wh_tahlia' ? 'التحلية' : 'السامر', delta: r, price: '-', total: '-' });
+                        events.push({ date: t.date, type: 'تحويل وارد', id: t.id, party: 'تحويل داخلي', wh: getWarehouseName(whFilter), delta: r, price: '-', total: '-' });
                     } else if (t.fromWh === whFilter) {
                         totOut += r;
-                        events.push({ date: t.date, type: 'تحويل صادر', id: t.id, party: 'تحويل داخلي', wh: whFilter === 'wh_tahlia' ? 'التحلية' : 'السامر', delta: -r, price: '-', total: '-' });
+                        events.push({ date: t.date, type: 'تحويل صادر', id: t.id, party: 'تحويل داخلي', wh: getWarehouseName(whFilter), delta: -r, price: '-', total: '-' });
                     }
                 }
             });
@@ -6776,7 +6931,7 @@ ${statusLine}
             if (wh === 'wh_tahlia') item.stockTahlia = Number(item.stockTahlia || 0) + rolls;
             else item.stockSamir = Number(item.stockSamir || 0) + rolls;
 
-            const inId = 'INB-' + (1000 + appState.transactions.length + 1);
+            const inId = getNextSequentialDocNumber('INB-', 'inbound');
             appState.transactions.push({
                 id: inId,
                 seq: Date.now(),
@@ -6816,7 +6971,7 @@ ${statusLine}
             const submitBtn = document.getElementById('submitSaleOrderBtn');
             if (submitBtn) submitBtn.innerHTML = '<i class="fa-solid fa-check ml-1"></i> اعتماد إذن الصرف وخصم المخزون';
 
-            const nextNum = 'OUT-' + (1000 + appState.transactions.filter(t => t.type === 'sale').length + 1);
+            const nextNum = getNextSequentialDocNumber('OUT-', 'sale');
             const cfg = getCompanySettings();
             document.getElementById('saleOrderNumberInput').value = nextNum;
             document.getElementById('saleWarehouse').value = cfg.defaultWarehouse || 'wh_samir';
@@ -6870,89 +7025,29 @@ ${statusLine}
             if (submitBtn) submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk ml-1"></i> حفظ التعديلات وتحديث المخزون';
 
             document.getElementById('saleOrderNumberInput').value = tx.id;
-            document.getElementById('saleWarehouse').value = tx.warehouseId || 'wh_samir';
+            const whSel = document.getElementById('saleWarehouse');
+            if (whSel) {
+                whSel.value = tx.warehouseId || 'wh_samir';
+                syncUniversalComboboxFromSelect(whSel);
+            }
             document.getElementById('saleDate').value = tx.date || getNowLocalInputStr();
             document.getElementById('saleQuoteRef').value = tx.quoteRef || '';
-            document.getElementById('saleTaxMode').value = tx.taxMode || 'none';
-            document.getElementById('salePaymentStatus').value = tx.paymentStatus || 'credit';
+            const taxSel = document.getElementById('saleTaxMode');
+            if (taxSel) {
+                taxSel.value = tx.taxMode || 'none';
+                syncUniversalComboboxFromSelect(taxSel);
+            }
+            const payStSel = document.getElementById('salePaymentStatus');
+            if (payStSel) {
+                payStSel.value = tx.paymentStatus || 'credit';
+                syncUniversalComboboxFromSelect(payStSel);
+            }
             toggleSalePaymentMethodField();
-            if (tx.paidMethod) document.getElementById('salePaidMethod').value = tx.paidMethod;
-
-            selectSaleCustomerById(tx.customerId, false);
-            document.getElementById('saleDriverName').value = tx.driverName || '';
-            document.getElementById('saleVehiclePlate').value = tx.vehiclePlate || '';
-            document.getElementById('saleAttachmentRef').value = tx.attachmentRef || '';
-
-            saleCart = (tx.lines || []).map(ln => ({
-                itemId: ln.itemId,
-                itemName: ln.itemName,
-                billingName: ln.billingName || '',
-                rollArea: Number(ln.rollArea || 50),
-                width: Number(ln.width || 1),
-                length: Number(ln.length || 50),
-                qty: Number(ln.qty || 1),
-                sqm: Number(ln.sqm || 0),
-                price: Number(ln.price || 0),
-                total: Number(ln.total || 0)
-            }));
-
-            renderSaleCart();
-            document.querySelectorAll('.tab-section').forEach(sec => sec.classList.add('hidden'));
-            const editorSec = document.getElementById('tab-sales-editor');
-            if (editorSec) {
-                editorSec.classList.remove('hidden');
-                editorSec.classList.add('tab-animate-in');
-            }
-            const headerTitle = document.querySelector('#headerActiveScreenTitle span');
-            if (headerTitle) headerTitle.textContent = `تعديل إذن الصرف: ${tx.id}`;
-        }
-
-        function toggleSalePaymentMethodField() {
-            const st = document.getElementById('salePaymentStatus')?.value || 'credit';
-            document.getElementById('salePaidMethodWrap')?.classList.toggle('hidden', st !== 'paid');
-        }
-
-        function checkSaleCustomerCreditAlert() {
-            const custId = document.getElementById('saleCustomerSelect')?.value;
-            const banner = document.getElementById('saleCustomerCreditBanner');
-            if (!banner) return;
-            const cust = appState.customers.find(c => c.id === custId);
-            if (!cust) {
-                banner.classList.add('hidden');
-                return;
-            }
-            const st = getCustomerStats(cust.id);
-            const notesPart = cust.notes ? `<div class="mt-1 text-amber-800"><i class="fa-solid fa-circle-info ml-1"></i> ملاحظة: ${escapeHtmlAttr(cust.notes)}</div>` : '';
-            const limitPart = Number(cust.creditLimit || 0) > 0 && st.balance >= Number(cust.creditLimit)
-                ? `<div class="mt-1 text-rose-700 font-black"><i class="fa-solid fa-triangle-exclamation ml-1"></i> تنبيه: العميل تجاوز الحد الائتماني (${Number(cust.creditLimit).toFixed(2)} ر.س)</div>`
-                : '';
-
-            banner.innerHTML = `
-                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700">
-                    <div>الرصيد الحالي على العميل: <strong class="${st.balance > 0 ? 'text-rose-600' : 'text-emerald-600'}">${st.balance.toFixed(2)} ر.س</strong></div>
-                    ${notesPart}
-                    ${limitPart}
-                </div>
-            `;
-            banner.classList.remove('hidden');
-        }
-
-        function onSaleItemPicked(focusQty = true) {
-            const itemId = document.getElementById('saleItemSelect')?.value;
-            const item = appState.items.find(x => x.id === itemId);
-            if (!item) return;
-
-            document.getElementById('saleLength').value = item.length || 50;
-            document.getElementById('saleWidth').value = item.width || 1;
-            document.getElementById('saleQty').value = '1';
-            calcSaleLineSqm();
-            updateSaleAvailableStockBanner();
-
-            if (focusQty) {
-                const qtyInp = document.getElementById('saleQty');
-                if (qtyInp) {
-                    qtyInp.focus();
-                    qtyInp.select();
+            if (tx.paidMethod) {
+                const pmSel = document.getElementById('salePaidMethod');
+                if (pmSel) {
+                    pmSel.value = tx.paidMethod;
+                    syncUniversalComboboxFromSelect(pmSel);
                 }
             }
         }
@@ -6988,7 +7083,7 @@ ${statusLine}
             const reqRolls = area > 0 ? (w * l * q) / area : 0;
 
             banner.className = `px-3.5 py-2 rounded-xl border text-xs font-extrabold flex items-center justify-between ${reqRolls > avail ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-blue-50 border-blue-200 text-blue-800'}`;
-            setTextSafe('saleStockAvailText', `المتوفر في ${wh === 'wh_tahlia' ? 'مخزن التحلية' : 'مخزن السامر'}: ${avail.toFixed(2)} رول`);
+            setTextSafe('saleStockAvailText', `المتوفر في ${getWarehouseName(wh)}: ${avail.toFixed(2)} رول`);
             setTextSafe('saleStockReqText', reqRolls > avail ? `تنبيه: الكمية المطلوبة (${reqRolls.toFixed(2)} رول) أكبر من المتاح!` : `المطلوب: ${reqRolls.toFixed(2)} رول`);
         }
 
@@ -7144,7 +7239,7 @@ ${statusLine}
             }
 
             const wh = document.getElementById('saleWarehouse')?.value || 'wh_samir';
-            const orderNum = (document.getElementById('saleOrderNumberInput')?.value || '').trim() || ('OUT-' + (1000 + appState.transactions.length + 1));
+            const orderNum = (document.getElementById('saleOrderNumberInput')?.value || '').trim() || getNextSequentialDocNumber('OUT-', 'sale');
             const date = document.getElementById('saleDate')?.value || getNowLocalInputStr();
             const quoteRef = (document.getElementById('saleQuoteRef')?.value || '').trim();
             const taxMode = document.getElementById('saleTaxMode')?.value || 'none';
@@ -7154,20 +7249,52 @@ ${statusLine}
             const vehiclePlate = (document.getElementById('saleVehiclePlate')?.value || '').trim();
             const attachmentRef = (document.getElementById('saleAttachmentRef')?.value || '').trim();
 
-            if (editingId) {
-                const oldTx = appState.transactions.find(t => t.id === editingId && t.type === 'sale');
-                if (oldTx) {
-                    (oldTx.lines || []).forEach(ln => {
-                        const it = appState.items.find(x => x.id === ln.itemId || x.name === ln.itemName);
-                        if (it) {
+            if (!editingId && appState.transactions.some(t => t.id === orderNum)) {
+                showToast(`رقم إذن الصرف (${orderNum}) مستخدم مسبقاً! يرجى اختيار رقم آخر.`, true);
+                document.getElementById('saleOrderNumberInput')?.focus();
+                return;
+            }
+
+            // التحقق من توفر الرصيد الكافي قبل الخصم (مع احتساب رصيد الإذن القديم في حالة التعديل)
+            const oldTx = editingId ? appState.transactions.find(t => t.id === editingId && t.type === 'sale') : null;
+            const requiredRollsByItem = {};
+            saleCart.forEach(ln => {
+                const it = appState.items.find(x => x.id === ln.itemId);
+                if (!it) return;
+                const area = (Number(it.length) || 50) * (Number(it.width) || 1);
+                const rolls = area > 0 ? Number(ln.sqm || 0) / area : 0;
+                requiredRollsByItem[it.id] = (requiredRollsByItem[it.id] || 0) + rolls;
+            });
+
+            for (const [itemId, reqRolls] of Object.entries(requiredRollsByItem)) {
+                const it = appState.items.find(x => x.id === itemId);
+                if (!it) continue;
+                let availRolls = wh === 'wh_tahlia' ? Number(it.stockTahlia || 0) : Number(it.stockSamir || 0);
+                if (oldTx && oldTx.warehouseId === wh) {
+                    (oldTx.lines || []).forEach(ol => {
+                        if (ol.itemId === itemId || ol.itemName === it.name) {
                             const area = (Number(it.length) || 50) * (Number(it.width) || 1);
-                            const rolls = area > 0 ? Number(ln.sqm || 0) / area : 0;
-                            if (oldTx.warehouseId === 'wh_tahlia') it.stockTahlia = Number(it.stockTahlia || 0) + rolls;
-                            else it.stockSamir = Number(it.stockSamir || 0) + rolls;
+                            availRolls += area > 0 ? Number(ol.sqm || 0) / area : 0;
                         }
                     });
-                    appState.transactions = appState.transactions.filter(t => t.id !== editingId && !(t.type === 'payment' && t.linkedSaleId === editingId));
                 }
+                if (reqRolls > availRolls + 0.0001) {
+                    showToast(`الرصيد غير كافٍ للصنف "${it.name}" في ${getWarehouseName(wh)}! المتاح: ${availRolls.toFixed(2)} رول والمطلوب: ${reqRolls.toFixed(2)} رول`, true);
+                    return;
+                }
+            }
+
+            if (oldTx) {
+                (oldTx.lines || []).forEach(ln => {
+                    const it = appState.items.find(x => x.id === ln.itemId || x.name === ln.itemName);
+                    if (it) {
+                        const area = (Number(it.length) || 50) * (Number(it.width) || 1);
+                        const rolls = area > 0 ? Number(ln.sqm || 0) / area : 0;
+                        if (oldTx.warehouseId === 'wh_tahlia') it.stockTahlia = Number(it.stockTahlia || 0) + rolls;
+                        else it.stockSamir = Number(it.stockSamir || 0) + rolls;
+                    }
+                });
+                appState.transactions = appState.transactions.filter(t => t.id !== editingId && !(t.type === 'payment' && t.linkedSaleId === editingId));
             }
 
             const totalSqm = saleCart.reduce((s, x) => s + Number(x.sqm || 0), 0);
@@ -7193,8 +7320,8 @@ ${statusLine}
                 if (it) {
                     const area = (Number(it.length) || 50) * (Number(it.width) || 1);
                     const rolls = area > 0 ? Number(ln.sqm || 0) / area : 0;
-                    if (wh === 'wh_tahlia') it.stockTahlia = Math.max(0, Number(it.stockTahlia || 0) - rolls);
-                    else it.stockSamir = Math.max(0, Number(it.stockSamir || 0) - rolls);
+                    if (wh === 'wh_tahlia') it.stockTahlia = Number((Number(it.stockTahlia || 0) - rolls).toFixed(4));
+                    else it.stockSamir = Number((Number(it.stockSamir || 0) - rolls).toFixed(4));
                 }
             });
 
@@ -7224,7 +7351,7 @@ ${statusLine}
 
             if (paymentStatus === 'paid' && totalAmount > 0) {
                 appState.transactions.push({
-                    id: 'RCP-' + (1000 + appState.transactions.length + 1),
+                    id: getNextSequentialDocNumber('RCP-', 'payment'),
                     seq: Date.now() + 1,
                     type: 'payment',
                     linkedSaleId: finalId,
@@ -7550,8 +7677,11 @@ ${statusLine}
         }
 
         async function callGeminiVisionWithBackoff(payload) {
-            const apiKey = "";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            let apiKey = "";
+            try {
+                apiKey = (localStorage.getItem(LOCAL_GEMINI_KEY_STORAGE) || '').trim();
+            } catch (e) {}
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
             const delays = [1000, 2000, 4000, 8000, 16000];
             for (let attempt = 0; attempt <= delays.length; attempt++) {
                 const res = await fetch(url, {
@@ -7640,7 +7770,7 @@ ${statusLine}
         function exportWasteAnalysisExcel() {
             const data = [['رقم السند', 'التاريخ', 'الصنف', 'المستودع', 'المساحة التالفة (م²)', 'السبب', 'ملاحظات']];
             appState.transactions.filter(t => t.type === 'waste').forEach(w => {
-                data.push([w.id, formatDateTimeAr(w.date), w.itemName, w.warehouseId === 'wh_tahlia' ? 'التحلية' : 'السامر', Number(w.sqm || 0), w.reason || '', w.notes || '']);
+                data.push([w.id, formatDateTimeAr(w.date), w.itemName, getWarehouseName(w.warehouseId), Number(w.sqm || 0), w.reason || '', w.notes || '']);
             });
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'تحليل_الهالك');
@@ -7861,12 +7991,12 @@ ${statusLine}
 
             tbody.innerHTML = filtered.map(r => `
                 <tr class="hover:bg-slate-50 transition">
-                    <td class="py-3.5 px-4 font-black text-emerald-700">${r.id}</td>
+                    <td class="py-3.5 px-4 font-black text-emerald-700">${escapeHtmlAttr(r.id)}</td>
                     <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap">${formatDateTimeAr(r.date)}</td>
-                    <td class="py-3.5 px-4 font-extrabold text-slate-900">${r.customerName || '-'}</td>
-                    <td class="py-3.5 px-4 text-center"><span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-black">${r.method || 'تحويل بنكي'}</span></td>
-                    <td class="py-3.5 px-4 text-slate-600">${r.notes || '-'}</td>
-                    <td class="py-3.5 px-4 text-center font-black text-emerald-700">${Number(r.amount || 0).toFixed(2)} ر.س</td>
+                    <td class="py-3.5 px-4 font-extrabold text-slate-900">${escapeHtmlAttr(r.customerName || '-')}</td>
+                    <td class="py-3.5 px-4 text-center"><span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-black">${escapeHtmlAttr(r.method || 'تحويل بنكي')}</span></td>
+                    <td class="py-3.5 px-4 text-slate-600">${escapeHtmlAttr(r.notes || '-')}</td>
+                    <td class="py-3.5 px-4 text-center font-black text-emerald-700">${Number(r.amount || 0).toFixed(2)} ${escapeHtmlAttr(getCompanySettings().currencySymbol || 'ر.س')}</td>
                     <td class="py-3.5 px-4 text-center">
                         <button type="button" onclick="toggleActionMenu('rcpMenu_${r.id}', this)" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold">
                             إجراءات <i class="fa-solid fa-chevron-down mr-1"></i>
@@ -7994,7 +8124,7 @@ ${statusLine}
                 refreshAllViews();
                 showToast(`تم حفظ تعديلات سند القبض ${editingId} بنجاح`);
             } else {
-                const rcpId = 'RCP-' + (1000 + appState.transactions.length + 1);
+                const rcpId = getNextSequentialDocNumber('RCP-', 'payment');
                 appState.transactions.push({
                     id: rcpId,
                     seq: Date.now(),
@@ -8039,7 +8169,7 @@ ${statusLine}
                 showToast('يرجى إدخال مبلغ صحيح', true);
                 return;
             }
-            const rcpId = 'RCP-' + (1000 + appState.transactions.length + 1);
+            const rcpId = getNextSequentialDocNumber('RCP-', 'payment');
             appState.transactions.push({
                 id: rcpId,
                 seq: Date.now(),
@@ -8297,8 +8427,15 @@ ${statusLine}
                 return;
             }
             const target = appState.customers.find(x => x.id === id);
+            if (!target) return;
+            const hasTx = appState.transactions.some(t => t.customerId === id);
+            const hasOpening = Number(target.openingBalance || 0) !== 0;
+            if (hasTx || hasOpening) {
+                showToast('لا يمكن حذف العميل لوجود فواتير أو سندات أو رصيد افتتاحي مرتبط بحسابه!', true);
+                return;
+            }
             appState.customers = appState.customers.filter(x => x.id !== id);
-            logUserActivity('delete', 'العملاء', `حذف العميل: ${target ? target.name : id}`);
+            logUserActivity('delete', 'العملاء', `حذف العميل: ${target.name}`);
             saveState();
             refreshAllViews();
             showToast('تم حذف العميل');
@@ -8722,13 +8859,19 @@ ${statusLine}
                 return;
             }
 
-            if (fromWh === 'wh_tahlia') item.stockTahlia = Math.max(0, Number(item.stockTahlia || 0) - rolls);
-            else item.stockSamir = Math.max(0, Number(item.stockSamir || 0) - rolls);
+            const availRolls = fromWh === 'wh_tahlia' ? Number(item.stockTahlia || 0) : Number(item.stockSamir || 0);
+            if (rolls > availRolls + 0.0001) {
+                showToast(`الرصيد المتاح في ${getWarehouseName(fromWh)} هو (${availRolls.toFixed(2)} رول) فقط!`, true);
+                return;
+            }
 
-            if (toWh === 'wh_tahlia') item.stockTahlia = Number(item.stockTahlia || 0) + rolls;
-            else item.stockSamir = Number(item.stockSamir || 0) + rolls;
+            if (fromWh === 'wh_tahlia') item.stockTahlia = Number((Number(item.stockTahlia || 0) - rolls).toFixed(4));
+            else item.stockSamir = Number((Number(item.stockSamir || 0) - rolls).toFixed(4));
 
-            const trId = 'TRN-' + (1000 + appState.transactions.length + 1);
+            if (toWh === 'wh_tahlia') item.stockTahlia = Number((Number(item.stockTahlia || 0) + rolls).toFixed(4));
+            else item.stockSamir = Number((Number(item.stockSamir || 0) + rolls).toFixed(4));
+
+            const trId = getNextSequentialDocNumber('TRN-', 'transfer');
             appState.transactions.push({
                 id: trId,
                 seq: Date.now(),
@@ -8777,7 +8920,7 @@ ${statusLine}
             else item.stockSamir = Number(item.stockSamir || 0) + rolls;
 
             const totalAmount = totalSqm * price;
-            const retId = 'RET-' + (1000 + appState.transactions.length + 1);
+            const retId = getNextSequentialDocNumber('RET-', 'return');
             appState.transactions.push({
                 id: retId,
                 seq: Date.now(),
@@ -8862,10 +9005,15 @@ ${statusLine}
 
             const area = (Number(item.length) || 50) * (Number(item.width) || 1);
             const rolls = area > 0 ? sqm / area : 0;
-            if (wh === 'wh_tahlia') item.stockTahlia = Math.max(0, Number(item.stockTahlia || 0) - rolls);
-            else item.stockSamir = Math.max(0, Number(item.stockSamir || 0) - rolls);
+            const availRolls = wh === 'wh_tahlia' ? Number(item.stockTahlia || 0) : Number(item.stockSamir || 0);
+            if (rolls > availRolls + 0.0001) {
+                showToast(`الكمية التالفة (${rolls.toFixed(2)} رول) تتجاوز المتاح في ${getWarehouseName(wh)} (${availRolls.toFixed(2)} رول)!`, true);
+                return;
+            }
+            if (wh === 'wh_tahlia') item.stockTahlia = Number((Number(item.stockTahlia || 0) - rolls).toFixed(4));
+            else item.stockSamir = Number((Number(item.stockSamir || 0) - rolls).toFixed(4));
 
-            const wstId = 'WST-' + (1000 + appState.transactions.length + 1);
+            const wstId = getNextSequentialDocNumber('WST-', 'waste');
             appState.transactions.push({
                 id: wstId,
                 seq: Date.now(),
@@ -8901,12 +9049,12 @@ ${statusLine}
 
             tbody.innerHTML = list.map(w => `
                 <tr class="hover:bg-slate-50">
-                    <td class="py-3 px-3 font-black text-rose-700">${w.id}</td>
+                    <td class="py-3 px-3 font-black text-rose-700">${escapeHtmlAttr(w.id)}</td>
                     <td class="py-3 px-3 text-slate-600">${formatDateTimeAr(w.date)}</td>
-                    <td class="py-3 px-3 font-extrabold">${w.itemName}</td>
-                    <td class="py-3 px-3">${w.warehouseId === 'wh_tahlia' ? 'مخزن التحلية' : 'مخزن السامر'}</td>
+                    <td class="py-3 px-3 font-extrabold">${escapeHtmlAttr(w.itemName)}</td>
+                    <td class="py-3 px-3">${escapeHtmlAttr(getWarehouseName(w.warehouseId))}</td>
                     <td class="py-3 px-3 text-center font-black text-rose-600">${Number(w.sqm || 0).toFixed(2)} م²</td>
-                    <td class="py-3 px-3">${w.reason || ''} ${w.notes ? '— ' + w.notes : ''}</td>
+                    <td class="py-3 px-3">${escapeHtmlAttr(w.reason || '')} ${w.notes ? '— ' + escapeHtmlAttr(w.notes) : ''}</td>
                     <td class="py-3 px-3 text-center">
                         ${hasPermission('waste', 'delete') ? `<button type="button" onclick="requestVoidTransaction('${w.id}')" class="text-rose-600 hover:text-rose-800"><i class="fa-solid fa-trash"></i></button>` : '-'}
                     </td>
@@ -8953,13 +9101,13 @@ ${statusLine}
 
                 return `
                     <tr class="hover:bg-slate-50">
-                        <td class="py-3 px-3 font-black text-blue-700">${inv.invoiceId}</td>
-                        <td class="py-3 px-3 font-extrabold">${inv.customerName}</td>
+                        <td class="py-3 px-3 font-black text-blue-700">${escapeHtmlAttr(inv.invoiceId)}</td>
+                        <td class="py-3 px-3 font-extrabold">${escapeHtmlAttr(inv.customerName)}</td>
                         <td class="py-3 px-3">${new Date(inv.issueDateStr).toLocaleDateString('ar-SA')}</td>
                         <td class="py-3 px-3">${new Date(inv.dueDateStr).toLocaleDateString('ar-SA')}</td>
                         <td class="py-3 px-3 text-center">${inv.invTotal.toFixed(2)}</td>
                         <td class="py-3 px-3 text-center text-emerald-700">${inv.paidApplied.toFixed(2)}</td>
-                        <td class="py-3 px-3 text-center font-black text-rose-600">${inv.remaining.toFixed(2)} ر.س</td>
+                        <td class="py-3 px-3 text-center font-black text-rose-600">${inv.remaining.toFixed(2)} ${escapeHtmlAttr(getCompanySettings().currencySymbol || 'ر.س')}</td>
                         <td class="py-3 px-3 text-center">${badge}</td>
                         <td class="py-3 px-3 text-center">
                             <button type="button" onclick="sendOverdueInvoiceWhatsApp('${inv.invoiceId}', ${inv.remaining}, ${inv.overdueDays}, ${inv.ageDays})" class="px-3 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-black"><i class="fa-brands fa-whatsapp ml-1"></i> تذكير</button>
@@ -8998,12 +9146,12 @@ ${statusLine}
                     const st = getCustomerStats(c.id);
                     return `
                         <tr class="hover:bg-slate-50">
-                            <td class="py-3 px-4 font-extrabold">${c.name}</td>
-                            <td class="py-3 px-3 text-slate-500">${c.type || 'عميل'} ${c.city ? '• ' + c.city : ''}</td>
+                            <td class="py-3 px-4 font-extrabold">${escapeHtmlAttr(c.name)}</td>
+                            <td class="py-3 px-3 text-slate-500">${escapeHtmlAttr(c.type || 'عميل')} ${c.city ? '• ' + escapeHtmlAttr(c.city) : ''}</td>
                             <td class="py-3 px-3 text-center"><input type="date" data-op-cust-date="${c.id}" value="${c.openingDate || ''}" class="p-1.5 border rounded-lg text-xs"></td>
                             <td class="py-3 px-3 text-center"><input type="number" step="any" data-op-cust-val="${c.id}" value="${Number(c.openingBalance || 0)}" class="w-28 p-1.5 border rounded-lg text-center font-black"></td>
                             <td class="py-3 px-3"><input type="text" data-op-cust-note="${c.id}" value="${escapeHtmlAttr(c.openingNote || '')}" placeholder="بيان..." class="w-full p-1.5 border rounded-lg text-xs"></td>
-                            <td class="py-3 px-3 text-center font-black text-blue-700">${st.balance.toFixed(2)} ر.س</td>
+                            <td class="py-3 px-3 text-center font-black text-blue-700">${st.balance.toFixed(2)} ${escapeHtmlAttr(getCompanySettings().currencySymbol || 'ر.س')}</td>
                         </tr>
                     `;
                 }).join('');
@@ -9023,7 +9171,7 @@ ${statusLine}
                     const curTot = Number(it.stockSamir || 0) + Number(it.stockTahlia || 0);
                     return `
                         <tr class="hover:bg-slate-50">
-                            <td class="py-3 px-4 font-extrabold">${it.name}</td>
+                            <td class="py-3 px-4 font-extrabold">${escapeHtmlAttr(it.name)}</td>
                             <td class="py-3 px-3 text-center">${it.length}م × ${it.width}م</td>
                             <td class="py-3 px-3 text-center"><input type="date" data-op-item-date="${it.id}" value="${it.openingDate || ''}" class="p-1.5 border rounded-lg text-xs"></td>
                             <td class="py-3 px-3 text-center"><input type="number" step="any" data-op-item-samir="${it.id}" value="${opS}" class="w-24 p-1.5 border rounded-lg text-center font-black"></td>
@@ -9249,10 +9397,10 @@ ${statusLine}
             tbody.innerHTML = list.map(l => `
                 <tr class="hover:bg-slate-50">
                     <td class="py-3 px-4 text-slate-600 whitespace-nowrap">${formatDateTimeAr(l.timestamp)}</td>
-                    <td class="py-3 px-4 font-extrabold">${l.userName || '-'}</td>
-                    <td class="py-3 px-4">${actBadges[l.actionType] || l.actionType}</td>
-                    <td class="py-3 px-4 text-slate-700">${l.moduleName || '-'}</td>
-                    <td class="py-3 px-4 text-slate-800">${l.details || '-'}</td>
+                    <td class="py-3 px-4 font-extrabold">${escapeHtmlAttr(l.userName || '-')}</td>
+                    <td class="py-3 px-4">${actBadges[l.actionType] || escapeHtmlAttr(l.actionType)}</td>
+                    <td class="py-3 px-4 text-slate-700">${escapeHtmlAttr(l.moduleName || '-')}</td>
+                    <td class="py-3 px-4 text-slate-800">${escapeHtmlAttr(l.details || '-')}</td>
                 </tr>
             `).join('');
         }
@@ -9299,6 +9447,11 @@ ${statusLine}
                     appState.transactions = appState.transactions.filter(t => !(t.type === 'payment' && t.linkedSaleId === tx.id));
                 } else if (tx.type === 'inbound') {
                     const it = appState.items.find(x => x.id === tx.itemId);
+                    if (it) {
+                        const rolls = Number(tx.rolls || 0);
+                        if (tx.warehouseId === 'wh_tahlia') it.stockTahlia = Math.max(0, Number(it.stockTahlia || 0) - rolls);
+                        else it.stockSamir = Math.max(0, Number(it.stockSamir || 0) - rolls);
+                    }
                 } else if (tx.type === 'transfer') {
                     const it = appState.items.find(x => x.id === tx.itemId || x.name === tx.itemName);
                     const rolls = Number(tx.rolls || 0);
@@ -9363,34 +9516,42 @@ ${statusLine}
                 const cfg = getCompanySettings();
                 const svgIconUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(PRINT_HD_LOGO_SVG.trim());
 
-                const applyManifestAndLinks = (png512Url, png192Url) => {
+                const applyManifestAndLinks = (png512Any, png512Maskable, png192Any, png180Apple) => {
                     const fav = document.getElementById('pwaFavicon');
                     const apple = document.getElementById('pwaAppleIcon');
                     const manifestLink = document.getElementById('pwaManifestLink');
 
                     if (fav) {
-                        fav.type = png192Url ? 'image/png' : 'image/svg+xml';
-                        fav.href = png192Url || svgIconUrl;
+                        fav.type = png192Any ? 'image/png' : 'image/svg+xml';
+                        fav.href = png192Any || svgIconUrl;
                     }
                     if (apple) {
-                        apple.href = png192Url || svgIconUrl;
+                        apple.href = png180Apple || png192Any || svgIconUrl;
                     }
                     if (manifestLink) {
                         const icons = [];
-                        if (png192Url) icons.push({ src: png192Url, sizes: '192x192', type: 'image/png', purpose: 'any maskable' });
-                        if (png512Url) icons.push({ src: png512Url, sizes: '512x512', type: 'image/png', purpose: 'any maskable' });
+                        if (png192Any) icons.push({ src: png192Any, sizes: '192x192', type: 'image/png', purpose: 'any' });
+                        if (png512Any) icons.push({ src: png512Any, sizes: '512x512', type: 'image/png', purpose: 'any' });
+                        if (png512Maskable) icons.push({ src: png512Maskable, sizes: '512x512', type: 'image/png', purpose: 'maskable' });
                         if (icons.length === 0) icons.push({ src: svgIconUrl, sizes: 'any', type: 'image/svg+xml' });
 
+                        const startUrl = window.location.href.split('#')[0];
                         const manifestObj = {
                             name: cfg.companyName || 'مؤسسة الطريق الأمثل للدعاية والإعلان',
                             short_name: 'الطريق الأمثل',
-                            start_url: '.',
+                            start_url: startUrl,
+                            scope: './',
                             display: 'standalone',
                             background_color: '#ffffff',
                             theme_color: '#1C2C6E',
                             icons
                         };
-                        manifestLink.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestObj));
+                        if (window._pwaManifestBlobUrl) {
+                            URL.revokeObjectURL(window._pwaManifestBlobUrl);
+                        }
+                        const blob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+                        window._pwaManifestBlobUrl = URL.createObjectURL(blob);
+                        manifestLink.href = window._pwaManifestBlobUrl;
                     }
                 };
 
@@ -9398,7 +9559,7 @@ ${statusLine}
                 const img = new Image();
                 img.onload = function() {
                     try {
-                        const renderPng = (size) => {
+                        const renderPng = (size, padRatio = 0.06) => {
                             const canvas = document.createElement('canvas');
                             canvas.width = size;
                             canvas.height = size;
@@ -9406,7 +9567,7 @@ ${statusLine}
                             if (!ctx) return null;
                             ctx.fillStyle = '#ffffff';
                             ctx.fillRect(0, 0, size, size);
-                            const pad = Math.round(size * 0.06);
+                            const pad = Math.round(size * padRatio);
                             const maxW = size - pad * 2;
                             const maxH = size - pad * 2;
                             const ratio = Math.min(maxW / (img.width || 260), maxH / (img.height || 245));
@@ -9415,15 +9576,48 @@ ${statusLine}
                             ctx.drawImage(img, Math.round((size - drawW) / 2), Math.round((size - drawH) / 2), drawW, drawH);
                             return canvas.toDataURL('image/png');
                         };
-                        applyManifestAndLinks(renderPng(512), renderPng(192));
+                        applyManifestAndLinks(
+                            renderPng(512, 0.06),
+                            renderPng(512, 0.22),
+                            renderPng(192, 0.06),
+                            renderPng(180, 0.06)
+                        );
                     } catch (err) {
-                        applyManifestAndLinks(null, null);
+                        applyManifestAndLinks(null, null, null, null);
                     }
                 };
                 img.onerror = function() {
-                    applyManifestAndLinks(null, null);
+                    applyManifestAndLinks(null, null, null, null);
                 };
                 img.src = sourceUrl;
+
+                if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+                    const swCode = [
+                        "const CACHE_NAME = 'altariq-wms-v2';",
+                        "self.addEventListener('install', (e) => {",
+                        "  self.skipWaiting();",
+                        "  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['./']).catch(() => {})));",
+                        "});",
+                        "self.addEventListener('activate', (e) => {",
+                        "  e.waitUntil(self.clients.claim());",
+                        "});",
+                        "self.addEventListener('fetch', (e) => {",
+                        "  if (e.request.method !== 'GET') return;",
+                        "  e.respondWith(",
+                        "    fetch(e.request).then(res => {",
+                        "      if (res && res.status === 200 && res.type === 'basic') {",
+                        "        const clone = res.clone();",
+                        "        caches.open(CACHE_NAME).then(c => c.put(e.request, clone));",
+                        "      }",
+                        "      return res;",
+                        "    }).catch(() => caches.match(e.request))",
+                        "  );",
+                        "});"
+                    ].join('\n');
+                    const swBlob = new Blob([swCode], { type: 'application/javascript' });
+                    const swUrl = URL.createObjectURL(swBlob);
+                    navigator.serviceWorker.register(swUrl).catch(() => {});
+                }
             } catch (e) {}
         }
 
