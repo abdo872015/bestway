@@ -884,801 +884,115 @@
                 </section>
 
                 <!-- 2. التقارير والرسوم البيانية -->
-                <section id="tab-reports" class="tab-section hidden space-y-6">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex flex-wrap items-center gap-3">
-                            <select id="repYearSelect" onchange="renderReportsTab()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black"></select>
-                            <select id="repMonthSelect" onchange="renderReportsTab()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black">
-                                <option value="all">جميع أشهر السنة</option>
-                                <option value="1">يناير</option><option value="2">فبراير</option><option value="3">مارس</option>
-                                <option value="4">أبريل</option><option value="5">مايو</option><option value="6">يونيو</option>
-                                <option value="7">يوليو</option><option value="8">أغسطس</option><option value="9">سبتمبر</option>
-                                <option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option>
-                            </select>
-                        </div>
-                        <button type="button" onclick="exportAnnualReportExcel()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-2">
-                            <i class="fa-solid fa-file-excel"></i> <span>تصدير التقرير السنوي Excel</span>
+                <section id="tab-reports" class="tab-section hidden space-y-5">
+                    <!-- شريط التنقل الفرعي بين التقارير المتخصصة -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-3 flex flex-wrap items-center gap-2 no-print">
+                        <button type="button" data-rep-sub="monthly" onclick="switchReportSubTab('monthly')" class="rep-sub-btn px-3.5 py-2 rounded-xl text-xs font-black bg-blue-600 text-white shadow-xs transition">
+                            <i class="fa-solid fa-chart-column ml-1"></i> الملخص الشهري والرسوم البيانية
+                        </button>
+                        <button type="button" data-rep-sub="stockMovement" onclick="switchReportSubTab('stockMovement')" class="rep-sub-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                            <i class="fa-solid fa-boxes-packing ml-1 text-sky-600"></i> حركة المخزون التفصيلية
+                        </button>
+                        <button type="button" data-rep-sub="whCompare" onclick="switchReportSubTab('whCompare')" class="rep-sub-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                            <i class="fa-solid fa-warehouse ml-1 text-indigo-600"></i> مقارنة السامر والتحلية
+                        </button>
+                        <button type="button" data-rep-sub="topItems" onclick="switchReportSubTab('topItems')" class="rep-sub-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                            <i class="fa-solid fa-fire ml-1 text-orange-600"></i> الأكثر سحباً ومبيعاً
+                        </button>
+                        <button type="button" data-rep-sub="custBalances" onclick="switchReportSubTab('custBalances')" class="rep-sub-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                            <i class="fa-solid fa-users-viewfinder ml-1 text-purple-600"></i> أرصدة العملاء الشامل
+                        </button>
+                        <button type="button" data-rep-sub="dailyOps" onclick="switchReportSubTab('dailyOps')" class="rep-sub-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                            <i class="fa-solid fa-clipboard-list ml-1 text-emerald-600"></i> ملخص العمليات الدورية
+                        </button>
+                        <button type="button" data-rep-sub="wasteAnalysis" onclick="switchReportSubTab('wasteAnalysis')" class="rep-sub-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                            <i class="fa-solid fa-scissors ml-1 text-rose-600"></i> تحليل الهالك والتالف
                         </button>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div class="bg-white border border-slate-200 rounded-2xl p-4">
-                            <span class="text-xs font-extrabold text-slate-500">إجمالي المبيعات</span>
-                            <div id="repSalesAmount" class="text-xl font-black text-blue-700 mt-1">0.00 ر.س</div>
-                            <div id="repOrdersCount" class="text-xs font-bold text-slate-500 mt-1">عدد الإذون: 0 إذن</div>
-                        </div>
-                        <div class="bg-white border border-slate-200 rounded-2xl p-4">
-                            <span class="text-xs font-extrabold text-slate-500">إجمالي التحصيلات</span>
-                            <div id="repPaymentsAmount" class="text-xl font-black text-emerald-700 mt-1">0.00 ر.س</div>
-                            <div id="repNetGap" class="text-xs font-bold text-rose-600 mt-1">المتبقي غير المحصل: 0.00 ر.س</div>
-                        </div>
-                        <div class="bg-white border border-slate-200 rounded-2xl p-4">
-                            <span class="text-xs font-extrabold text-slate-500">إجمالي الأمتار المنصرفة</span>
-                            <div id="repTotalSqm" class="text-xl font-black text-indigo-700 mt-1">0.00 م²</div>
-                            <div id="repWarehouseSqmSplit" class="text-xs font-bold text-slate-500 mt-1">السامر: 0 م² | التحلية: 0 م²</div>
-                        </div>
-                        <div class="bg-white border border-slate-200 rounded-2xl p-4">
-                            <span class="text-xs font-extrabold text-slate-500">الهالك والمرتجعات</span>
-                            <div id="repWasteSqm" class="text-xl font-black text-rose-600 mt-1">0.00 م²</div>
-                            <div id="repReturnsVal" class="text-xs font-bold text-slate-500 mt-1">المرتجعات: 0.00 ر.س</div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white border border-slate-200 rounded-2xl p-5">
-                        <h3 class="text-sm font-black text-slate-900 mb-4">الرسم البياني للمبيعات والتحصيلات الشهرية</h3>
-                        <div class="h-72"><canvas id="monthlySalesChart"></canvas></div>
-                    </div>
-
-                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                        <div class="p-4 border-b border-slate-200 font-black text-sm">الملخص الشهري لسنة <span id="repTableYearLabel">2026</span></div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right text-xs font-bold">
-                                <thead class="bg-slate-900 text-white">
-                                    <tr>
-                                        <th class="py-3 px-4">الشهر</th>
-                                        <th class="py-3 px-4 text-center">عدد الإذون</th>
-                                        <th class="py-3 px-4 text-center">منصرف السامر (م²)</th>
-                                        <th class="py-3 px-4 text-center">منصرف التحلية (م²)</th>
-                                        <th class="py-3 px-4 text-center">إجمالي الأمتار</th>
-                                        <th class="py-3 px-4 text-center">المبيعات</th>
-                                        <th class="py-3 px-4 text-center">التحصيلات</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="monthlyReportTableBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 3. تقرير الفواتير المتأخرة (25 يوم FIFO) -->
-                <section id="tab-overdue" class="tab-section hidden space-y-5">
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4">
-                            <span class="text-xs font-extrabold text-rose-700">فواتير متأخرة (تجاوزت 25 يوماً)</span>
-                            <div id="ovdTotalLateAmount" class="text-xl font-black text-rose-700 mt-1">0.00 ر.س</div>
-                            <div id="ovdTotalLateCount" class="text-xs font-bold text-rose-600 mt-1">عدد الفواتير المتأخرة: 0 فاتورة</div>
-                        </div>
-                        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-                            <span class="text-xs font-extrabold text-amber-700">قاربت على الاستحقاق (20 - 25 يوم)</span>
-                            <div id="ovdTotalWarningAmount" class="text-xl font-black text-amber-700 mt-1">0.00 ر.س</div>
-                            <div id="ovdTotalWarningCount" class="text-xs font-bold text-amber-600 mt-1">عدد الفواتير: 0 فاتورة</div>
-                        </div>
-                        <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4">
-                            <span class="text-xs font-extrabold text-blue-700">فواتير مفتوحة سارية (أقل من 20 يوم)</span>
-                            <div id="ovdTotalCurrentAmount" class="text-xl font-black text-blue-700 mt-1">0.00 ر.س</div>
-                            <div id="ovdTotalCurrentCount" class="text-xs font-bold text-blue-600 mt-1">عدد الفواتير: 0 فاتورة</div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex flex-wrap items-center gap-3 flex-1">
-                            <input type="text" id="ovdSearchInput" oninput="renderOverdueInvoicesReport()" placeholder="ابحث باسم العميل أو رقم الفاتورة..." class="w-full sm:w-72 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            <select id="ovdStatusFilter" onchange="renderOverdueInvoicesReport()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black">
-                                <option value="overdue">المتأخرة فقط (> 25 يوم)</option>
-                                <option value="warning">قاربت على الاستحقاق (20-25 يوم)</option>
-                                <option value="current">السارية (< 20 يوم)</option>
-                                <option value="all">جميع الفواتير المفتوحة</option>
-                            </select>
-                        </div>
-                        <button type="button" onclick="exportOverdueExcel()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-2">
-                            <i class="fa-solid fa-file-excel"></i> <span>تصدير Excel</span>
-                        </button>
-                    </div>
-
-                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right text-xs font-bold">
-                                <thead class="bg-slate-900 text-white">
-                                    <tr>
-                                        <th class="py-3.5 px-3">رقم الفاتورة</th>
-                                        <th class="py-3.5 px-3">اسم العميل</th>
-                                        <th class="py-3.5 px-3">تاريخ الإصدار</th>
-                                        <th class="py-3.5 px-3">تاريخ الاستحقاق (25 يوم)</th>
-                                        <th class="py-3.5 px-3 text-center">إجمالي الفاتورة</th>
-                                        <th class="py-3.5 px-3 text-center">المسدد (FIFO)</th>
-                                        <th class="py-3.5 px-3 text-center">المتبقي المفتوح</th>
-                                        <th class="py-3.5 px-3 text-center">الحالة</th>
-                                        <th class="py-3.5 px-3 text-center">إجراءات</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="overdueInvoicesTableBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 4. إذون الصرف والمبيعات -->
-                <section id="tab-sales" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex flex-wrap items-center gap-2.5 flex-1">
-                            <input type="text" id="salesSearchInput" oninput="renderSalesOrdersTable()" placeholder="بحث برقم الإذن، بيان السعر، العميل..." class="w-full sm:w-64 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            <input type="date" id="salesFromDate" onchange="renderSalesOrdersTable()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            <input type="date" id="salesToDate" onchange="renderSalesOrdersTable()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            <button type="button" onclick="resetSalesFilters()" class="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-extrabold">
-                                إعادة ضبط
-                            </button>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" onclick="openQuickReceiptModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-md flex items-center gap-1.5">
-                                <i class="fa-solid fa-hand-holding-dollar"></i>
-                                <span>سند قبض</span>
-                            </button>
-                            <button type="button" onclick="openNewSaleOrderModal()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-md flex items-center gap-1.5">
-                                <i class="fa-solid fa-plus"></i>
-                                <span>إضافة إذن صرف جديد</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right text-xs font-bold">
-                                <thead class="bg-slate-900 text-white">
-                                    <tr>
-                                        <th class="py-3.5 px-4">رقم الإذن</th>
-                                        <th class="py-3.5 px-4">التاريخ والوقت</th>
-                                        <th class="py-3.5 px-4">العميل</th>
-                                        <th class="py-3.5 px-4">بيان الأسعار</th>
-                                        <th class="py-3.5 px-4">المستودع</th>
-                                        <th class="py-3.5 px-4 text-center">إجمالي الأمتار</th>
-                                        <th class="py-3.5 px-4 text-center">الإجمالي</th>
-                                        <th class="py-3.5 px-4 text-center">الإجراءات</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="salesOrdersTableBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 4.1 شاشة إصدار / تعديل إذن صرف بضاعة (صفحة كاملة) -->
-                <section id="tab-sales-editor" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-3xl shadow-xs p-5 sm:p-6 space-y-5">
-                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
-                            <div class="flex items-center gap-3">
-                                <button type="button" onclick="closeNewSaleOrderModal()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-black flex items-center gap-1.5">
-                                    <i class="fa-solid fa-arrow-right"></i>
-                                    <span>رجوع لإذون الصرف</span>
-                                </button>
-                                <h3 id="saleOrderModalTitle" class="text-base sm:text-lg font-black text-slate-900">إصدار إذن صرف بضاعة جديد</h3>
-                            </div>
-                            <button type="button" onclick="closeNewSaleOrderModal()" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-black">
-                                إلغاء وإغلاق
-                            </button>
-                        </div>
-                        <input type="hidden" id="editingSaleOrderId" value="">
-
-                        <!-- شريط استخراج البيانات من صورة بيان الأسعار الورقي أو المكتوب يدوياً بالذكاء الاصطناعي -->
-                        <div class="bg-gradient-to-l from-indigo-50 via-blue-50 to-sky-50 border border-indigo-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-                            <div class="flex items-center gap-3 min-w-0 flex-1">
-                                <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                                </div>
-                                <div class="min-w-0">
-                                    <h4 class="text-xs sm:text-sm font-black text-indigo-950">استخراج بيانات إذن الصرف من صورة بيان الأسعار المطبوع أو المكتوب يدوياً (AI)</h4>
-                                    <p id="aiQuoteScanStatusText" class="text-xs font-bold text-indigo-700 mt-0.5 leading-relaxed">ارفع صورة بيان الأسعار المكتوب بخط اليد أو المطبوع لتعبئة العميل والرقم والأصناف والأسعار تلقائياً</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-2 shrink-0">
-                                <label id="aiQuoteUploadLabel" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black cursor-pointer flex items-center gap-1.5 shadow-xs transition">
-                                    <i id="aiQuoteScanIcon" class="fa-solid fa-camera"></i>
-                                    <span id="aiQuoteScanBtnLabel">رفع صورة بيان الأسعار</span>
-                                    <input type="file" id="aiQuoteImageInput" accept="image/*" onchange="handleAiQuoteImageUpload(event)" class="hidden">
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div class="searchable-select-wrapper relative sm:col-span-2" id="saleCustomerComboWrap">
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">اسم العميل</label>
-                                <div class="relative">
-                                    <i class="fa-solid fa-magnifying-glass absolute right-3 top-3 text-slate-400 text-xs pointer-events-none"></i>
-                                    <input type="text" id="saleCustomerSearch" autocomplete="off" placeholder="ابحث باسم العميل، المدينة، أو الجوال..." class="w-full pr-9 pl-16 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white outline-none transition">
-                                    <div class="absolute left-2 top-1.5 flex items-center gap-1">
-                                        <button type="button" id="saleCustomerClearBtn" onclick="clearSaleCustomerCombo()" title="مسح" class="hidden w-6 h-6 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center text-xs"><i class="fa-solid fa-xmark"></i></button>
-                                        <button type="button" onclick="toggleSaleCustomerMenu()" title="فتح القائمة" class="w-6 h-6 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center text-xs"><i class="fa-solid fa-chevron-down"></i></button>
-                                    </div>
-                                </div>
-                                <input type="hidden" id="saleCustomerSelect" value="">
-                                <div id="saleCustomerMenu" class="hidden absolute left-0 right-0 mt-1.5 bg-white border border-slate-300 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto divide-y divide-slate-100"></div>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">المستودع المصروف منه</label>
-                                <select id="saleWarehouse" onchange="updateSaleAvailableStockBanner()" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">نوع الفاتورة (الضريبة)</label>
-                                <select id="saleTaxMode" onchange="renderSaleCart()" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                                    <option value="none" selected>بدون ضريبة</option>
-                                    <option value="inclusive">شامل الضريبة</option>
-                                    <option value="exclusive">خال من الضريبة</option>
+                    <!-- 2.1 التقرير الفرعي الأول: الملخص الشهري والرسوم البيانية -->
+                    <div id="rep-panel-monthly" class="rep-sub-panel space-y-5">
+                        <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+                            <div class="flex flex-wrap items-center gap-3">
+                                <select id="repYearSelect" onchange="renderReportsTab()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black"></select>
+                                <select id="repMonthSelect" onchange="renderReportsTab()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black">
+                                    <option value="all">جميع أشهر السنة</option>
+                                    <option value="1">يناير</option><option value="2">فبراير</option><option value="3">مارس</option>
+                                    <option value="4">أبريل</option><option value="5">مايو</option><option value="6">يونيو</option>
+                                    <option value="7">يوليو</option><option value="8">أغسطس</option><option value="9">سبتمبر</option>
+                                    <option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option>
                                 </select>
                             </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">حالة الفاتورة</label>
-                                <select id="salePaymentStatus" onchange="toggleSalePaymentMethodField()" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                                    <option value="credit" selected>آجل</option>
-                                    <option value="paid">مدفوعة</option>
-                                </select>
-                            </div>
-                            <div id="salePaidMethodWrap" class="hidden">
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">طريقة التحصيل (للمدفوعة)</label>
-                                <select id="salePaidMethod" class="w-full p-2.5 bg-emerald-50 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-900">
-                                    <option value="تحويل بنكي">تحويل بنكي</option>
-                                    <option value="كاش">كاش</option>
-                                    <option value="شبكة / مدى">شبكة / مدى</option>
-                                    <option value="شيك">شيك</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div id="saleCustomerCreditBanner" class="hidden"></div>
-
-                        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
-                            <div class="searchable-select-wrapper relative" id="saleItemComboWrap">
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">اختيار الصنف / الخامة</label>
-                                <div class="relative">
-                                    <i class="fa-solid fa-boxes-stacked absolute right-3 top-3 text-slate-400 text-xs pointer-events-none"></i>
-                                    <input type="text" id="saleItemSearch" autocomplete="off" placeholder="ابحث باسم الصنف أو المقاس (استخدم ↑ ↓ و Enter)..." class="w-full pr-9 pl-16 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-                                    <div class="absolute left-2 top-1.5 flex items-center gap-1">
-                                        <button type="button" id="saleItemClearBtn" onclick="clearSaleItemCombo()" title="مسح" class="hidden w-6 h-6 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center text-xs"><i class="fa-solid fa-xmark"></i></button>
-                                        <button type="button" onclick="toggleSaleItemMenu()" title="فتح القائمة" class="w-6 h-6 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center text-xs"><i class="fa-solid fa-chevron-down"></i></button>
-                                    </div>
-                                </div>
-                                <input type="hidden" id="saleItemSelect" value="">
-                                <div id="saleItemMenu" class="hidden absolute left-0 right-0 mt-1.5 bg-white border border-slate-300 rounded-2xl shadow-2xl z-50 max-h-64 overflow-y-auto divide-y divide-slate-100"></div>
-                            </div>
-
-                            <div>
-                                <label class="block text-[11px] font-extrabold text-indigo-800 mb-1">
-                                    <i class="fa-solid fa-tag ml-1"></i> مسمى الصنف في كشف الحساب / الطباعة (اختياري - يُترك فارغاً لاستخدام اسم الصنف الفعلي)
-                                </label>
-                                <input type="text" id="saleBillingName" list="saleBillingNamesList" placeholder="اكتب أو اختر المسمى البديل الذي يظهر للعميل في الفاتورة وكشف الحساب..." class="w-full px-3 py-2 bg-white border border-indigo-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-                                <datalist id="saleBillingNamesList"></datalist>
-                            </div>
-
-                            <div id="saleStockAvailBanner" class="hidden">
-                                <span id="saleStockAvailText"></span>
-                                <span id="saleStockReqText"></span>
-                            </div>
-
-                            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 items-end">
-                                <div>
-                                    <label class="block text-[11px] font-extrabold text-slate-600 mb-1">العرض (م)</label>
-                                    <input type="number" step="any" id="saleWidth" oninput="calcSaleLineSqm()" class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-center">
-                                </div>
-                                <div>
-                                    <label class="block text-[11px] font-extrabold text-slate-600 mb-1">الطول (م)</label>
-                                    <input type="number" step="any" id="saleLength" oninput="calcSaleLineSqm()" class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-center">
-                                </div>
-                                <div>
-                                    <label class="block text-[11px] font-extrabold text-slate-600 mb-1">العدد (رول/قطعة)</label>
-                                    <input type="number" step="any" id="saleQty" value="1" oninput="calcSaleLineSqm()" class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-center">
-                                </div>
-                                <div>
-                                    <label class="block text-[11px] font-extrabold text-slate-600 mb-1">سعر المتر (ر.س)</label>
-                                    <input type="number" step="any" id="salePrice" placeholder="0.00" oninput="renderSaleCart()" class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-center">
-                                </div>
-                                <button type="button" id="addSaleCartLineBtn" onclick="addSaleCartLine()" class="py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black">
-                                    + إضافة البند
-                                </button>
-                            </div>
-                            <div class="text-[11px] font-extrabold text-slate-600">
-                                مساحة البند: <span id="saleLinePreviewSqm" class="text-blue-700">0.00</span> م² | يعادل: <span id="saleLinePreviewRolls" class="text-indigo-700">0.00</span> رول
-                            </div>
-                        </div>
-
-                        <div class="overflow-x-auto border border-slate-200 rounded-2xl">
-                            <table class="w-full text-right text-xs font-bold">
-                                <thead class="bg-slate-100 text-slate-700">
-                                    <tr>
-                                        <th class="p-3">الصنف</th>
-                                        <th class="p-3 text-center">المقاس × العدد</th>
-                                        <th class="p-3 text-center">المساحة</th>
-                                        <th class="p-3 text-center">السعر</th>
-                                        <th class="p-3 text-center">الإجمالي</th>
-                                        <th class="p-3 text-center">حذف</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="saleCartBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                            <div>
-                                <label class="block text-[11px] font-extrabold text-slate-600 mb-1">رقم إذن الصرف</label>
-                                <input type="text" id="saleOrderNumberInput" class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-black text-blue-700">
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-extrabold text-slate-600 mb-1">رقم بيان الأسعار / المرجع</label>
-                                <input type="text" id="saleQuoteRef" placeholder="اختياري..." class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-extrabold text-slate-600 mb-1">تاريخ ووقت الصرف</label>
-                                <input type="datetime-local" id="saleDate" class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-extrabold text-slate-600 mb-1">اسم السائق / شركة الشحن</label>
-                                <input type="text" id="saleDriverName" placeholder="اختياري..." class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-extrabold text-slate-600 mb-1">رقم اللوحة / البوليصة</label>
-                                <input type="text" id="saleVehiclePlate" placeholder="اختياري..." class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-extrabold text-slate-600 mb-1">مرجع الاستلام / التحويل</label>
-                                <input type="text" id="saleAttachmentRef" placeholder="اختياري..." class="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                        </div>
-
-                        <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900 text-white p-4 rounded-2xl">
-                            <div class="text-xs font-black space-x-4 space-x-reverse">
-                                <span>إجمالي الأمتار: <strong id="saleCartTotalSqm" class="text-blue-400">0.00 م²</strong></span>
-                                <span id="saleCartVatWrap" class="hidden">الضريبة (15%): <strong id="saleCartVatAmount" class="text-amber-300">0.00 ر.س</strong></span>
-                                <span>الإجمالي المستحق: <strong id="saleCartTotalAmount" class="text-emerald-400 text-base">0.00 ر.س</strong></span>
-                            </div>
-                            <button type="button" id="submitSaleOrderBtn" onclick="submitSaleOrder()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-lg">
-                                <i class="fa-solid fa-check ml-1"></i> اعتماد إذن الصرف وخصم المخزون
+                            <button type="button" onclick="exportAnnualReportExcel()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-2">
+                                <i class="fa-solid fa-file-excel"></i> <span>تصدير التقرير السنوي Excel</span>
                             </button>
                         </div>
-                    </div>
-                </section>
 
-                <!-- 4.5 كشف سندات القبض -->
-                <section id="tab-receipts" class="tab-section hidden space-y-5">
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
-                            <span class="text-xs font-extrabold text-emerald-800">إجمالي سندات القبض (حسب الفلتر)</span>
-                            <div id="rcpTotalAmountCard" class="text-xl font-black text-emerald-700 mt-1">0.00 ر.س</div>
-                            <div id="rcpTotalCountCard" class="text-xs font-bold text-emerald-700 mt-1">عدد السندات: 0 سند</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-white border border-slate-200 rounded-2xl p-4">
+                                <span class="text-xs font-extrabold text-slate-500">إجمالي المبيعات</span>
+                                <div id="repSalesAmount" class="text-xl font-black text-blue-700 mt-1">0.00 ر.س</div>
+                                <div id="repOrdersCount" class="text-xs font-bold text-slate-500 mt-1">عدد الإذون: 0 إذن</div>
+                            </div>
+                            <div class="bg-white border border-slate-200 rounded-2xl p-4">
+                                <span class="text-xs font-extrabold text-slate-500">إجمالي التحصيلات</span>
+                                <div id="repPaymentsAmount" class="text-xl font-black text-emerald-700 mt-1">0.00 ر.س</div>
+                                <div id="repNetGap" class="text-xs font-bold text-rose-600 mt-1">المتبقي غير المحصل: 0.00 ر.س</div>
+                            </div>
+                            <div class="bg-white border border-slate-200 rounded-2xl p-4">
+                                <span class="text-xs font-extrabold text-slate-500">إجمالي الأمتار المنصرفة</span>
+                                <div id="repTotalSqm" class="text-xl font-black text-indigo-700 mt-1">0.00 م²</div>
+                                <div id="repWarehouseSqmSplit" class="text-xs font-bold text-slate-500 mt-1">السامر: 0 م² | التحلية: 0 م²</div>
+                            </div>
+                            <div class="bg-white border border-slate-200 rounded-2xl p-4">
+                                <span class="text-xs font-extrabold text-slate-500">الهالك والمرتجعات</span>
+                                <div id="repWasteSqm" class="text-xl font-black text-rose-600 mt-1">0.00 م²</div>
+                                <div id="repReturnsVal" class="text-xs font-bold text-slate-500 mt-1">المرتجعات: 0.00 ر.س</div>
+                            </div>
                         </div>
-                        <div class="bg-white border border-slate-200 rounded-2xl p-4">
-                            <span class="text-xs font-extrabold text-slate-500">التحويلات البنكية والشبكة</span>
-                            <div id="rcpBankAmountCard" class="text-xl font-black text-blue-700 mt-1">0.00 ر.س</div>
-                        </div>
-                        <div class="bg-white border border-slate-200 rounded-2xl p-4">
-                            <span class="text-xs font-extrabold text-slate-500">المقبوضات النقدية (كاش)</span>
-                            <div id="rcpCashAmountCard" class="text-xl font-black text-slate-900 mt-1">0.00 ر.س</div>
-                        </div>
-                    </div>
 
-                    <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex flex-wrap items-center gap-2.5 flex-1">
-                            <input type="text" id="rcpSearchInput" oninput="renderReceiptsStatementTable()" placeholder="بحث برقم السند، اسم العميل، أو البيان..." class="w-full sm:w-64 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            <select id="rcpMethodFilter" onchange="renderReceiptsStatementTable()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black">
-                                <option value="all">جميع طرق الدفع</option>
-                                <option value="تحويل بنكي">تحويل بنكي</option>
-                                <option value="كاش">كاش</option>
-                                <option value="شبكة / مدى">شبكة / مدى</option>
-                                <option value="شيك">شيك</option>
-                            </select>
-                            <input type="date" id="rcpFromDate" onchange="renderReceiptsStatementTable()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            <input type="date" id="rcpToDate" onchange="renderReceiptsStatementTable()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            <button type="button" onclick="resetReceiptsFilters()" class="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-extrabold">
-                                إعادة ضبط
-                            </button>
+                        <div class="bg-white border border-slate-200 rounded-2xl p-5">
+                            <h3 class="text-sm font-black text-slate-900 mb-4">الرسم البياني للمبيعات والتحصيلات الشهرية</h3>
+                            <div class="h-72"><canvas id="monthlySalesChart"></canvas></div>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" onclick="exportReceiptsExcel()" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-black flex items-center gap-1.5">
-                                <i class="fa-solid fa-file-excel text-emerald-600"></i>
-                                <span>تصدير Excel</span>
-                            </button>
-                            <button type="button" onclick="openQuickReceiptModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-md flex items-center gap-1.5">
-                                <i class="fa-solid fa-plus"></i>
-                                <span>تسجيل سند قبض جديد</span>
-                            </button>
-                        </div>
-                    </div>
 
-                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right text-xs font-bold">
-                                <thead class="bg-slate-900 text-white">
-                                    <tr>
-                                        <th class="py-3.5 px-4">رقم السند</th>
-                                        <th class="py-3.5 px-4">التاريخ والوقت</th>
-                                        <th class="py-3.5 px-4">اسم العميل</th>
-                                        <th class="py-3.5 px-4 text-center">طريقة الدفع</th>
-                                        <th class="py-3.5 px-4">الملاحظات / المرجع</th>
-                                        <th class="py-3.5 px-4 text-center">المبلغ المقبوض</th>
-                                        <th class="py-3.5 px-4 text-center">الإجراءات</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="receiptsStatementTableBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 5. توريد وتغذية المخزن -->
-                <section id="tab-inbound" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
-                        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
-                            <i class="fa-solid fa-truck-ramp-box text-emerald-600"></i>
-                            <span>تسجيل توريد وتغذية المخزون (رولات)</span>
-                        </h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">المستودع المستلم</label>
-                                <select id="inWarehouse" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
+                        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+                            <div class="p-4 border-b border-slate-200 font-black text-sm">الملخص الشهري لسنة <span id="repTableYearLabel">2026</span></div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-right text-xs font-bold">
+                                    <thead class="bg-slate-900 text-white">
+                                        <tr>
+                                            <th class="py-3 px-4">الشهر</th>
+                                            <th class="py-3 px-4 text-center">عدد الإذون</th>
+                                            <th class="py-3 px-4 text-center">منصرف السامر (م²)</th>
+                                            <th class="py-3 px-4 text-center">منصرف التحلية (م²)</th>
+                                            <th class="py-3 px-4 text-center">إجمالي الأمتار</th>
+                                            <th class="py-3 px-4 text-center">المبيعات</th>
+                                            <th class="py-3 px-4 text-center">التحصيلات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="monthlyReportTableBody" class="divide-y divide-slate-100"></tbody>
+                                </table>
                             </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">التاريخ والوقت</label>
-                                <input type="datetime-local" id="inDate" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">الصنف / الخامة</label>
-                                <select id="inItemSelect" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">عدد الرولات الواردة</label>
-                                <input type="number" step="any" min="0" id="inRollsQty" placeholder="0.00" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">رقم البوليصة / المرجع</label>
-                                <input type="text" id="inWaybillRef" placeholder="اختياري..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">اسم السائق / الناقل</label>
-                                <input type="text" id="inDriverName" placeholder="اختياري..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                            <div class="sm:col-span-3">
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">ملاحظات التوريد</label>
-                                <input type="text" id="inNotes" placeholder="تفاصيل إضافية..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                        </div>
-                        <div class="flex justify-end">
-                            <button type="button" onclick="submitInbound()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-md">
-                                اعتماد التوريد وإضافة الرصيد
-                            </button>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 6. التحويل بين المستودعات -->
-                <section id="tab-transfers" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
-                        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
-                            <i class="fa-solid fa-right-left text-indigo-600"></i>
-                            <span>تحويل رولات بين المستودعات</span>
-                        </h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-5 gap-4">
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">من مستودع</label>
-                                <select id="trFromWarehouse" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">إلى مستودع</label>
-                                <select id="trToWarehouse" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">التاريخ والوقت</label>
-                                <input type="datetime-local" id="trDate" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">الصنف</label>
-                                <select id="trItemSelect" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">عدد الرولات</label>
-                                <input type="number" step="any" min="0" id="trRollsQty" placeholder="0.00" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                        </div>
-                        <div class="flex justify-end">
-                            <button type="button" onclick="submitTransfer()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black shadow-md">
-                                تنفيذ التحويل المخزني
-                            </button>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 7. مرتجعات العملاء -->
-                <section id="tab-returns" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
-                        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
-                            <i class="fa-solid fa-rotate-left text-amber-600"></i>
-                            <span>تسجيل مرتجع بضاعة من عميل</span>
-                        </h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">العميل</label>
-                                <select id="retCustomerSelect" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">المستودع المستلم</label>
-                                <select id="retWarehouse" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">الصنف</label>
-                                <select id="retItemSelect" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">المساحة المرتجعة (م²)</label>
-                                <input type="number" step="any" min="0" id="retSqm" placeholder="0.00" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">قيمة المرتجع (ر.س)</label>
-                                <input type="number" step="any" min="0" id="retAmount" placeholder="0.00" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                        </div>
-                        <div class="flex justify-end">
-                            <button type="button" onclick="submitReturn()" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black shadow-md">
-                                اعتماد المرتجع وترحيله للحساب
-                            </button>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 8. الأصناف وأرصدة الرولات -->
-                <section id="tab-inventory" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex flex-wrap items-center gap-2.5 flex-1">
-                            <input type="text" id="invSearchInput" oninput="renderInventoryTable()" placeholder="ابحث باسم الصنف أو الخامة..." class="w-full sm:w-72 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            <select id="invAlertFilter" onchange="renderInventoryTable()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black">
-                                <option value="all">جميع الأصناف</option>
-                                <option value="critical">رصيد حرج (≤ 5 رول)</option>
-                                <option value="low">رصيد منخفض (≤ 10 رول)</option>
-                            </select>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" onclick="openItemMovementModal()" class="px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-black">
-                                <i class="fa-solid fa-arrows-left-right-to-line ml-1"></i> كارت حركة صنف
-                            </button>
-                            <button type="button" onclick="openImportItemsModal()" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-black">
-                                <i class="fa-solid fa-file-import text-blue-600 ml-1"></i> استيراد Excel
-                            </button>
-                            <button type="button" onclick="exportInventoryExcel()" class="px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-black">
-                                <i class="fa-solid fa-file-excel ml-1"></i> تصدير Excel
-                            </button>
-                            <button type="button" onclick="openAddRollModal()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-md">
-                                <i class="fa-solid fa-plus ml-1"></i> إضافة صنف جديد
-                            </button>
                         </div>
                     </div>
 
-                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right text-xs font-bold">
-                                <thead class="bg-slate-900 text-white">
-                                    <tr>
-                                        <th class="py-3.5 px-4">اسم الصنف وتوزيع المخازن</th>
-                                        <th class="py-3.5 px-4 text-center">الطول (م)</th>
-                                        <th class="py-3.5 px-4 text-center">العرض (م)</th>
-                                        <th class="py-3.5 px-4 text-center">إجمالي الأمتار (م²)</th>
-                                        <th class="py-3.5 px-4 text-center">إجمالي الرولات</th>
-                                        <th class="py-3.5 px-4 text-center">الإجراءات</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="inventoryTableBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 9. الجرد الفعلي والمطابقة -->
-                <section id="tab-stocktake" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h3 id="stocktakeDocNumber" class="text-base font-black text-slate-900">جرد المخزون #000001</h3>
-                                <span id="stocktakeRecordedBadge" class="px-2.5 py-0.5 rounded-lg bg-blue-100 text-blue-800 text-xs font-black">0 / 0 المنتجات المسجلة</span>
-                            </div>
-                            <p id="stocktakeRangeLabel" class="text-xs font-bold text-slate-500 mt-0.5">0 - 0 من 0</p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" onclick="openMobileQuickCountModal()" class="px-3.5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black shadow-xs">
-                                <i class="fa-solid fa-mobile-screen-button ml-1"></i> جرد سريع بالجوال (+ / -)
-                            </button>
-                            <button type="button" onclick="loadAllWarehouseItemsToStocktake()" class="px-3.5 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-black">
-                                إضافة جميع المنتجات من المستودع
-                            </button>
-                            <button type="button" onclick="openStocktakeAddItemModal()" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-black">
-                                + إضافة صنف محدد
-                            </button>
-                            <button type="button" onclick="syncStocktakeProgramCounts()" class="px-3.5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl text-xs font-black">
-                                تحديث أرصدة البرنامج
-                            </button>
-                            <button type="button" onclick="completeStocktake()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-md">
-                                اعتماد الجرد وتسوية المخازن
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
-                        <div class="flex flex-wrap items-center justify-between gap-2">
-                            <input type="text" id="stocktakeSearchInput" oninput="renderStocktakeTable()" placeholder="بحث في قائمة الجرد..." class="w-full sm:w-72 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            <button type="button" onclick="clearStocktakeList()" class="text-xs font-extrabold text-rose-600 hover:underline">تفريغ القائمة</button>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right text-xs font-bold">
-                                <thead class="bg-slate-900 text-white">
-                                    <tr>
-                                        <th class="py-3 px-4">اسم الصنف</th>
-                                        <th class="py-3 px-3 text-center">فعلي التحلية</th>
-                                        <th class="py-3 px-3 text-center">فعلي السامر</th>
-                                        <th class="py-3 px-3 text-center">إجمالي الفعلي</th>
-                                        <th class="py-3 px-3 text-center">برنامج التحلية</th>
-                                        <th class="py-3 px-3 text-center">برنامج السامر</th>
-                                        <th class="py-3 px-3 text-center">الفرق</th>
-                                        <th class="py-3 px-3">ملاحظة</th>
-                                        <th class="py-3 px-3 text-center">حذف</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="stocktakeTableBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="bg-white border border-slate-200 rounded-2xl p-4">
-                        <h4 class="text-xs font-black text-slate-700 mb-2">سجل عمليات الجرد المعتمدة السابقة:</h4>
-                        <div id="stocktakeHistoryList" class="text-xs font-bold text-slate-600">لا توجد عمليات جرد معتمدة سابقة.</div>
-                    </div>
-                </section>
-
-                <!-- 10. الهالك والتالف والقصاقيص -->
-                <section id="tab-waste" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-base font-black text-slate-900 flex items-center gap-2"><i class="fa-solid fa-scissors text-rose-600"></i> تسجيل هالك / تالف / قصاقيص</h3>
-                            <span id="wasteAvailBadge" class="text-xs font-black text-blue-700"></span>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">المستودع</label>
-                                <select id="wasteWarehouse" onchange="updateWasteAvailHint()" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">التاريخ</label>
-                                <input type="datetime-local" id="wasteDate" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">الصنف</label>
-                                <select id="wasteItemSelect" onchange="onWasteItemPicked()" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">العرض (م)</label>
-                                <input type="number" step="any" id="wasteWidth" oninput="calcWasteSqmPreview()" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">الطول التالف (م)</label>
-                                <input type="number" step="any" id="wasteLength" oninput="calcWasteSqmPreview()" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">العدد</label>
-                                <input type="number" step="any" id="wasteQty" value="1" oninput="calcWasteSqmPreview()" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">سبب التلف</label>
-                                <select id="wasteReasonSelect" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                                    <option value="قصاقيص طباعة">قصاقيص طباعة</option>
-                                    <option value="تلف أثناء التحميل">تلف أثناء التحميل</option>
-                                    <option value="عيب تصنيع في الرول">عيب تصنيع في الرول</option>
-                                    <option value="أخرى">أخرى</option>
-                                </select>
-                            </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">ملاحظات إضافية</label>
-                                <input type="text" id="wasteNotesInput" placeholder="تفاصيل إضافية..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                        </div>
-                        <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
-                            <div class="text-xs font-black text-rose-700">المساحة المخصومة: <span id="wasteSqmPreview">0.00 م² (0.00 رول)</span></div>
-                            <button type="button" onclick="submitWasteRecord()" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black">اعتماد وخصم التالف</button>
-                        </div>
-                    </div>
-
-                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                        <div class="p-4 border-b border-slate-200 flex items-center justify-between">
-                            <span class="text-sm font-black">سجل الهالك والتالف</span>
-                            <span id="wasteTotalSummaryBadge" class="px-3 py-1 rounded-lg bg-rose-100 text-rose-800 text-xs font-black">الإجمالي: 0.00 م²</span>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right text-xs font-bold">
-                                <thead class="bg-slate-900 text-white">
-                                    <tr>
-                                        <th class="py-3 px-3">رقم السند</th>
-                                        <th class="py-3 px-3">التاريخ</th>
-                                        <th class="py-3 px-3">الصنف</th>
-                                        <th class="py-3 px-3">المستودع</th>
-                                        <th class="py-3 px-3 text-center">الكمية التالفة</th>
-                                        <th class="py-3 px-3">السبب والملاحظات</th>
-                                        <th class="py-3 px-3 text-center">إجراء</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="wasteTableBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 11. الأصناف الراكدة -->
-                <section id="tab-stagnant" class="tab-section hidden space-y-5">
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div class="bg-orange-50 border border-orange-200 rounded-2xl p-4">
-                            <span class="text-xs font-extrabold text-orange-700">عدد الأصناف الراكدة</span>
-                            <div id="stagCountCard" class="text-xl font-black text-orange-800 mt-1">0 صنف</div>
-                        </div>
-                        <div class="bg-white border border-slate-200 rounded-2xl p-4">
-                            <span class="text-xs font-extrabold text-slate-500">إجمالي الرولات المجمدة</span>
-                            <div id="stagRollsCard" class="text-xl font-black text-slate-900 mt-1">0.00 رول</div>
-                            <div id="stagWhSplitCard" class="text-xs font-bold text-slate-500 mt-1">السامر: 0 | التحلية: 0</div>
-                        </div>
-                        <div class="bg-white border border-slate-200 rounded-2xl p-4">
-                            <span class="text-xs font-extrabold text-slate-500">إجمالي الأمتار الراكدة</span>
-                            <div id="stagSqmCard" class="text-xl font-black text-indigo-700 mt-1">0.00 م²</div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex items-center gap-2">
-                            <label class="text-xs font-extrabold text-slate-700">مدة التوقف عن الصرف:</label>
-                            <select id="stagnantDaysThreshold" onchange="renderStagnantItemsTab()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black">
-                                <option value="30">أكثر من 30 يوماً</option>
-                                <option value="60" selected>أكثر من 60 يوماً</option>
-                                <option value="90">أكثر من 90 يوماً</option>
-                                <option value="180">أكثر من 180 يوماً</option>
-                            </select>
-                        </div>
-                        <button type="button" onclick="exportStagnantExcel()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black">
-                            <i class="fa-solid fa-file-excel ml-1"></i> تصدير Excel
-                        </button>
-                    </div>
-
-                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right text-xs font-bold">
-                                <thead class="bg-slate-900 text-white">
-                                    <tr>
-                                        <th class="py-3.5 px-4">اسم الصنف</th>
-                                        <th class="py-3 px-3 text-center">المقاس</th>
-                                        <th class="py-3 px-3 text-center">السامر</th>
-                                        <th class="py-3 px-3 text-center">التحلية</th>
-                                        <th class="py-3 px-3 text-center">الإجمالي (رول)</th>
-                                        <th class="py-3 px-3 text-center">الإجمالي (م²)</th>
-                                        <th class="py-3 px-3 text-center">آخر صرف</th>
-                                        <th class="py-3 px-3 text-center">مدة الركود</th>
-                                        <th class="py-3 px-3 text-center">حركة الصنف</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="stagnantItemsTableBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 12. العملاء وكشوف الحساب -->
-                <section id="tab-customers" class="tab-section hidden space-y-5">
-                    <div id="customersListContainer" class="space-y-4">
+                    <!-- 2.2 التقرير الفرعي الثاني: حركة المخزون التفصيلية -->
+                    <div id="rep-panel-stockMovement" class="rep-sub-panel hidden space-y-4">
                         <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-                            <input type="text" id="customerTableSearch" oninput="renderCustomersTable()" placeholder="ابحث باسم العميل، المدينة، الجوال، أو الرقم الضريبي..." class="w-full sm:w-80 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <button type="button" onclick="openImportCustomersModal()" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-black">
-                                    <i class="fa-solid fa-file-import text-blue-600 ml-1"></i> استيراد عملاء Excel
-                                </button>
-                                <button type="button" onclick="openAddCustomerModal()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-md">
-                                    <i class="fa-solid fa-user-plus ml-1"></i> إضافة عميل جديد
-                                </button>
+                            <div class="flex flex-wrap items-center gap-2.5 flex-1">
+                                <input type="text" id="repMovSearch" oninput="renderStockMovementSummaryReport()" placeholder="ابحث باسم الصنف..." class="w-full sm:w-64 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                <select id="repMovWarehouse" onchange="renderStockMovementSummaryReport()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black">
+                                    <option value="all">جميع المستودعات (السامر + التحلية)</option>
+                                    <option value="wh_samir">مخزن السامر</option>
+                                    <option value="wh_tahlia">مخزن التحلية</option>
+                                </select>
+                                <input type="date" id="repMovFrom" onchange="renderStockMovementSummaryReport()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                <input type="date" id="repMovTo" onchange="renderStockMovementSummaryReport()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
                             </div>
+                            <button type="button" onclick="exportStockMovementSummaryExcel()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-excel"></i> <span>تصدير Excel</span>
+                            </button>
                         </div>
 
                         <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
@@ -1686,306 +1000,218 @@
                                 <table class="w-full text-right text-xs font-bold">
                                     <thead class="bg-slate-900 text-white">
                                         <tr>
-                                            <th class="py-3.5 px-4">التصنيف</th>
-                                            <th class="py-3.5 px-4">اسم العميل</th>
-                                            <th class="py-3.5 px-4">المدينة</th>
-                                            <th class="py-3.5 px-4">الجوال</th>
-                                            <th class="py-3.5 px-4">الرقم الضريبي</th>
-                                            <th class="py-3.5 px-4">الدولة</th>
-                                            <th class="py-3.5 px-4 text-center">الرصيد المتبقي</th>
-                                            <th class="py-3.5 px-4 text-center">الإجراءات</th>
+                                            <th class="py-3 px-4">اسم الصنف</th>
+                                            <th class="py-3 px-3 text-center">المقاس</th>
+                                            <th class="py-3 px-3 text-center">الوارد (رول)</th>
+                                            <th class="py-3 px-3 text-center">المرتجع (رول)</th>
+                                            <th class="py-3 px-3 text-center">المنصرف مبيعات (رول)</th>
+                                            <th class="py-3 px-3 text-center">الهالك والتالف (رول)</th>
+                                            <th class="py-3 px-3 text-center">الرصيد الحالي (رول)</th>
+                                            <th class="py-3 px-3 text-center">الرصيد الحالي (م²)</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="customersTableBody" class="divide-y divide-slate-100"></tbody>
+                                    <tbody id="repStockMovementTableBody" class="divide-y divide-slate-100"></tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
 
-                    <div id="customerStatementBox" class="hidden bg-white border border-slate-200 rounded-2xl p-6 space-y-5 print-container">
-                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4 no-print">
-                            <button type="button" onclick="closeCustomerStatement()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-black">
-                                <i class="fa-solid fa-arrow-right ml-1"></i> رجوع لقائمة العملاء
-                            </button>
-                            <div class="flex flex-wrap items-center gap-2">
-                                <div class="bg-slate-100 p-1 rounded-xl flex items-center gap-1">
-                                    <button id="stmtModeDetailedBtn" type="button" onclick="setStatementViewMode('detailed')" class="px-3.5 py-1.5 rounded-lg text-xs font-black bg-white text-blue-700 shadow-xs transition">كشف تفصيلي</button>
-                                    <button id="stmtModeSummaryBtn" type="button" onclick="setStatementViewMode('summary')" class="px-3.5 py-1.5 rounded-lg text-xs font-extrabold text-slate-600 hover:text-slate-900 transition">كشف مختصر</button>
-                                </div>
-                                <button type="button" onclick="openPaymentModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black">
-                                    <i class="fa-solid fa-hand-holding-dollar ml-1"></i> تسجيل سند قبض
-                                </button>
-                                <button type="button" onclick="sendCustomerWhatsApp()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-black">
-                                    <i class="fa-brands fa-whatsapp ml-1"></i> إرسال واتساب
-                                </button>
-                                <button type="button" onclick="window.print()" class="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-black">
-                                    <i class="fa-solid fa-print ml-1"></i> طباعة الكشف
-                                </button>
+                    <!-- 2.3 التقرير الفرعي الثالث: مقارنة أرصدة المستودعات (السامر مقابل التحلية) -->
+                    <div id="rep-panel-whCompare" class="rep-sub-panel hidden space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="bg-sky-50 border border-sky-200 rounded-2xl p-4">
+                                <span class="text-xs font-extrabold text-sky-800">إجمالي مخزون السامر</span>
+                                <div id="repWhSamirTotalCard" class="text-xl font-black text-sky-900 mt-1">0.00 رول (0 م²)</div>
+                            </div>
+                            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                                <span class="text-xs font-extrabold text-amber-800">إجمالي مخزون التحلية</span>
+                                <div id="repWhTahliaTotalCard" class="text-xl font-black text-amber-900 mt-1">0.00 رول (0 م²)</div>
+                            </div>
+                            <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4">
+                                <span class="text-xs font-extrabold text-rose-800">أصناف منعدمة في أحد المستودعين</span>
+                                <div id="repWhImbalanceCountCard" class="text-xl font-black text-rose-700 mt-1">0 صنف بحاجة لتغذية</div>
                             </div>
                         </div>
 
-                        <div class="flex flex-wrap items-center justify-between gap-4 border-b-2 border-slate-800 pb-4">
-                            <div class="flex items-center gap-4">
-                                <div class="brand-logo-slot w-22 h-20 rounded-2xl border border-slate-300 bg-white p-1 shrink-0">
-                                    <svg viewBox="0 0 260 245" class="w-full h-full"><use href="#bestway-hd-logo"/></svg>
-                                </div>
-                                <div>
-                                    <h2 id="stmtCompanyNameTitle" class="text-lg font-black text-slate-900">مؤسسة الطريق الأمثل للدعاية والإعلان</h2>
-                                    <p id="stmtCompanySubMeta" class="text-xs font-bold text-slate-500">كشف حساب عميل تفصيلي • Best Way Advertising</p>
-                                </div>
+                        <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex flex-wrap items-center gap-2.5 flex-1">
+                                <input type="text" id="repWhCompSearch" oninput="renderWarehouseComparisonReport()" placeholder="ابحث باسم الصنف..." class="w-full sm:w-64 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                <select id="repWhCompFilter" onchange="renderWarehouseComparisonReport()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black">
+                                    <option value="all">جميع الأصناف</option>
+                                    <option value="missing_one">منعدم في مستودع ومتوفر في الآخر</option>
+                                    <option value="zero_both">منعدم في المستودعين</option>
+                                </select>
                             </div>
-                            <div class="text-left text-xs font-bold text-slate-600">
-                                <div id="stmtPrintDate"></div>
-                                <div id="stmtPeriodLabel" class="text-blue-700 mt-1"></div>
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                                <span class="text-xs font-bold text-slate-500">اسم العميل:</span>
-                                <h3 id="stmtCustomerNameTitle" class="text-lg font-black text-slate-900"></h3>
-                                <p id="stmtCustomerInfo" class="text-xs font-bold text-slate-600 mt-1"></p>
-                            </div>
-                            <div class="flex flex-wrap items-center gap-2 no-print">
-                                <input type="date" id="stmtFromDate" onchange="renderCustomerStatement()" class="p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold">
-                                <input type="date" id="stmtToDate" onchange="renderCustomerStatement()" class="p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold">
-                                <button type="button" onclick="resetStatementDates()" class="px-3 py-2 bg-slate-200 rounded-xl text-xs font-extrabold">الكل</button>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                            <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-center">
-                                <span class="text-xs font-extrabold text-amber-800 block">الرصيد السابق المرحّل</span>
-                                <span id="stmtBoxPrevBalance" class="text-lg font-black text-amber-900 mt-1 block">0.00 ر.س</span>
-                            </div>
-                            <div class="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-center">
-                                <span class="text-xs font-extrabold text-blue-800 block">قيمة البضاعة المسحوبة (+)</span>
-                                <span id="stmtBoxSales" class="text-lg font-black text-blue-700 mt-1 block">0.00 ر.س</span>
-                            </div>
-                            <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-center">
-                                <span class="text-xs font-extrabold text-emerald-800 block">المدفوع والمرتجع (-)</span>
-                                <span id="stmtBoxPayments" class="text-lg font-black text-emerald-700 mt-1 block">0.00 ر.س</span>
-                            </div>
-                            <div id="stmtRemainingCard" class="p-4 rounded-2xl bg-rose-50 border-2 border-rose-200 text-center">
-                                <span id="stmtRemainingLabel" class="text-xs font-extrabold text-rose-700 block">المبلغ الصافي المتبقي عليكم</span>
-                                <span id="stmtBoxRemaining" class="text-xl font-black text-rose-600 mt-1 block">0.00 ر.س</span>
-                            </div>
-                        </div>
-
-                        <div class="overflow-x-auto border border-slate-200 rounded-2xl">
-                            <table id="stmtTable" class="w-full text-right text-xs font-bold">
-                                <thead class="bg-slate-900 text-white">
-                                    <tr>
-                                        <th class="py-3 px-2 w-[11%]">التاريخ</th>
-                                        <th class="py-3 px-2 w-[11%]">العملية</th>
-                                        <th class="py-3 px-2 w-[9%]">رقم السند</th>
-                                        <th class="py-3 px-3 w-[40%] min-w-[330px]">الصنف والبيان وتفاصيل البضاعة</th>
-                                        <th class="py-3 px-2 text-center w-[9%]">قيمة البضاعة (+)</th>
-                                        <th class="py-3 px-2 text-center w-[9%]">المدفوع (-)</th>
-                                        <th class="py-3 px-2 text-center w-[11%]">المتبقي بعد الحركة</th>
-                                        <th class="py-3 px-2 text-center no-print">حذف</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="stmtTableBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 13. الأرصدة الافتتاحية للعملاء والأصناف -->
-                <section id="tab-opening" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                            <h3 class="text-base font-black text-slate-900">الأرصدة الافتتاحية للعملاء والأصناف</h3>
-                            <p class="text-xs font-bold text-slate-500">إدخال رصيد أول المدة ليظهر تلقائياً كـ "رصيد سابق" في كشف الحساب</p>
-                        </div>
-                        <div class="bg-slate-100 p-1 rounded-xl flex items-center gap-1">
-                            <button id="opSubTabCustBtn" type="button" onclick="switchOpeningSubTab('customers')" class="px-4 py-2 rounded-lg text-xs font-black bg-white text-blue-700 shadow-xs transition">الأرصدة الافتتاحية للعملاء</button>
-                            <button id="opSubTabItemsBtn" type="button" onclick="switchOpeningSubTab('items')" class="px-4 py-2 rounded-lg text-xs font-extrabold text-slate-600 hover:text-slate-900 transition">الأرصدة الافتتاحية للأصناف</button>
-                        </div>
-                    </div>
-
-                    <div id="openingCustomersPanel" class="bg-white border border-slate-200 rounded-2xl p-4 space-y-4">
-                        <div class="flex flex-wrap items-center justify-between gap-3">
-                            <input type="text" id="opCustSearchInput" oninput="renderOpeningBalancesTab()" placeholder="ابحث باسم العميل لإدخال رصيده الافتتاحي..." class="w-full sm:w-72 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            <div class="flex flex-wrap items-center gap-2.5">
-                                <span id="opCustTotalBadge" class="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-800 text-xs font-black">إجمالي افتتاحي العملاء: 0.00 ر.س</span>
-                                <button type="button" onclick="openImportOpeningCustomersModal()" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-black flex items-center gap-1.5">
-                                    <i class="fa-solid fa-file-import text-blue-600"></i>
-                                    <span>استيراد Excel</span>
-                                </button>
-                                <button type="button" onclick="saveAllOpeningCustomers()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-md">حفظ أرصدة العملاء</button>
-                            </div>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right text-xs font-bold">
-                                <thead class="bg-slate-900 text-white">
-                                    <tr>
-                                        <th class="py-3 px-4">اسم العميل</th>
-                                        <th class="py-3 px-3">التصنيف والمدينة</th>
-                                        <th class="py-3 px-3 text-center">تاريخ الرصيد الافتتاحي</th>
-                                        <th class="py-3 px-3 text-center">الرصيد الافتتاحي (ر.س)</th>
-                                        <th class="py-3 px-3">بيان / ملاحظة الرصيد</th>
-                                        <th class="py-3 px-3 text-center">إجمالي الرصيد الحالي</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="openingCustomersTableBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div id="openingItemsPanel" class="hidden bg-white border border-slate-200 rounded-2xl p-4 space-y-4">
-                        <div class="flex flex-wrap items-center justify-between gap-3">
-                            <input type="text" id="opItemSearchInput" oninput="renderOpeningBalancesTab()" placeholder="ابحث باسم الصنف لإدخال رصيده الافتتاحي..." class="w-full sm:w-72 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            <div class="flex flex-wrap items-center gap-2.5">
-                                <span id="opItemsTotalBadge" class="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-800 text-xs font-black">إجمالي افتتاحي الرولات: 0.00 رول</span>
-                                <button type="button" onclick="openImportOpeningItemsModal()" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-black flex items-center gap-1.5">
-                                    <i class="fa-solid fa-file-import text-blue-600"></i>
-                                    <span>استيراد Excel</span>
-                                </button>
-                                <button type="button" onclick="saveAllOpeningItems()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-md">حفظ أرصدة الأصناف</button>
-                            </div>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right text-xs font-bold">
-                                <thead class="bg-slate-900 text-white">
-                                    <tr>
-                                        <th class="py-3 px-4">اسم الصنف</th>
-                                        <th class="py-3 px-3 text-center">المقاس (طول × عرض)</th>
-                                        <th class="py-3 px-3 text-center">تاريخ الرصيد الافتتاحي</th>
-                                        <th class="py-3 px-3 text-center">افتتاحي السامر (رول)</th>
-                                        <th class="py-3 px-3 text-center">افتتاحي التحلية (رول)</th>
-                                        <th class="py-3 px-3 text-center">إجمالي الافتتاحي (م²)</th>
-                                        <th class="py-3 px-3 text-center">الرصيد الحالي الفعلي</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="openingItemsTableBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 14. السجل العام للحركات -->
-                <section id="tab-logs" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                        <div class="p-4 border-b border-slate-200 font-black text-sm">السجل العام لجميع الحركات المخزنية والمالية</div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right text-xs font-bold">
-                                <thead class="bg-slate-900 text-white">
-                                    <tr>
-                                        <th class="p-3.5">التاريخ والوقت</th>
-                                        <th class="p-3.5">نوع الحركة</th>
-                                        <th class="p-3.5">رقم السند</th>
-                                        <th class="p-3.5">البيان والتفاصيل</th>
-                                        <th class="p-3.5 text-center">القيمة</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="logsTableBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 15. سجل مراقبة نشاط المستخدمين (Audit Log) -->
-                <section id="tab-audit" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex flex-wrap items-center gap-2.5 flex-1">
-                            <input type="text" id="auditSearchInput" oninput="renderAuditLogTable()" placeholder="ابحث باسم الموظف، القسم، أو تفاصيل العملية..." class="w-full sm:w-72 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            <select id="auditActionFilter" onchange="renderAuditLogTable()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black">
-                                <option value="all">جميع الإجراءات</option>
-                                <option value="create">إضافة / اعتماد</option>
-                                <option value="edit">تعديل / تحديث</option>
-                                <option value="delete">حذف / إلغاء</option>
-                                <option value="auth">تسجيل دخول</option>
-                            </select>
-                        </div>
-                        <button type="button" onclick="exportAuditLogExcel()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black">
-                            <i class="fa-solid fa-file-excel ml-1"></i> تصدير سجل المراقبة
-                        </button>
-                    </div>
-
-                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right text-xs font-bold">
-                                <thead class="bg-slate-900 text-white">
-                                    <tr>
-                                        <th class="py-3.5 px-4">التاريخ والوقت</th>
-                                        <th class="py-3.5 px-4">اسم الموظف</th>
-                                        <th class="py-3.5 px-4">نوع الإجراء</th>
-                                        <th class="py-3.5 px-4">الشاشة / القسم</th>
-                                        <th class="py-3.5 px-4">تفاصيل العملية</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="auditLogTableBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- شاشة الإعدادات وهوية الشركة -->
-                <section id="tab-settings" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-6">
-                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
-                            <div>
-                                <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
-                                    <i class="fa-solid fa-gear text-blue-600"></i>
-                                    <span>إعدادات النظام وبيانات الشركة والشعار</span>
-                                </h3>
-                                <p class="text-xs font-bold text-slate-500 mt-0.5">أي تعديل أو رفع للشعار هنا يتحدث تلقائياً في واجهة البرنامج والطباعة والمراسلات</p>
-                            </div>
-                            <button type="button" onclick="saveCompanySettings()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-md flex items-center gap-2">
-                                <i class="fa-solid fa-floppy-disk"></i>
-                                <span>حفظ الإعدادات</span>
+                            <button type="button" onclick="exportWarehouseComparisonExcel()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-excel"></i> <span>تصدير Excel</span>
                             </button>
                         </div>
 
-                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                            <div class="lg:col-span-4 bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col items-center justify-between gap-4 text-center">
-                                <span class="text-xs font-black text-slate-700">شعار الشركة المعتمد</span>
-                                <div id="cfgLogoPreviewBox" class="w-40 h-36 rounded-2xl bg-white border border-slate-200 p-2 flex items-center justify-center shadow-xs overflow-hidden">
-                                    <svg viewBox="0 0 260 245" class="w-full h-full"><use href="#bestway-hd-logo"/></svg>
-                                </div>
-                                <div class="w-full space-y-2">
-                                    <label class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black cursor-pointer flex items-center justify-center gap-2 shadow-xs">
-                                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                                        <span>رفع شعار جديد (تحديث فوري)</span>
-                                        <input type="file" id="cfgLogoFileInput" accept="image/*" onchange="handleCompanyLogoUpload(event)" class="hidden">
-                                    </label>
-                                    <button type="button" onclick="resetCompanyLogoToDefault()" class="w-full py-2 px-3 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold">
-                                        استعادة الشعار الافتراضي
-                                    </button>
+                        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-right text-xs font-bold">
+                                    <thead class="bg-slate-900 text-white">
+                                        <tr>
+                                            <th class="py-3 px-4">اسم الصنف</th>
+                                            <th class="py-3 px-3 text-center">مخزن السامر (رول)</th>
+                                            <th class="py-3 px-3 text-center">مخزن التحلية (رول)</th>
+                                            <th class="py-3 px-3 text-center">الإجمالي (رول)</th>
+                                            <th class="py-3 px-3 text-center">إجمالي الأمتار (م²)</th>
+                                            <th class="py-3 px-3 text-center">حالة التوزيع بين المستودعين</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="repWhCompareTableBody" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2.4 التقرير الفرعي الرابع: الأكثر سحباً ومبيعاً (Top Moving Items) -->
+                    <div id="rep-panel-topItems" class="rep-sub-panel hidden space-y-4">
+                        <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex flex-wrap items-center gap-2.5 flex-1">
+                                <input type="date" id="repTopFrom" onchange="renderTopMovingItemsReport()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                <input type="date" id="repTopTo" onchange="renderTopMovingItemsReport()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                <select id="repTopSortBy" onchange="renderTopMovingItemsReport()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black">
+                                    <option value="sqm">الترتيب حسب الأمتار المنصرفة (م²)</option>
+                                    <option value="amount">الترتيب حسب قيمة المبيعات (ر.س)</option>
+                                    <option value="orders">الترتيب حسب عدد مرات الطلب</option>
+                                </select>
+                            </div>
+                            <button type="button" onclick="exportTopMovingItemsExcel()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-excel"></i> <span>تصدير Excel</span>
+                            </button>
+                        </div>
+
+                        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-right text-xs font-bold">
+                                    <thead class="bg-slate-900 text-white">
+                                        <tr>
+                                            <th class="py-3 px-4 w-12 text-center">#</th>
+                                            <th class="py-3 px-4">اسم الصنف</th>
+                                            <th class="py-3 px-3 text-center">عدد مرات الصرف</th>
+                                            <th class="py-3 px-3 text-center">إجمالي الأمتار المنصرفة (م²)</th>
+                                            <th class="py-3 px-3 text-center">المكافئ بالرولات</th>
+                                            <th class="py-3 px-3 text-center">إجمالي قيمة المبيعات</th>
+                                            <th class="py-3 px-3 text-center">الرصيد المتبقي بالمخزن</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="repTopItemsTableBody" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2.5 التقرير الفرعي الخامس: أرصدة وكشوف حسابات العملاء الشامل -->
+                    <div id="rep-panel-custBalances" class="rep-sub-panel hidden space-y-4">
+                        <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex flex-wrap items-center gap-2.5 flex-1">
+                                <input type="text" id="repCustBalSearch" oninput="renderCustomerBalancesSummaryReport()" placeholder="ابحث باسم العميل أو المدينة..." class="w-full sm:w-64 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                <select id="repCustBalFilter" onchange="renderCustomerBalancesSummaryReport()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black">
+                                    <option value="debtors">العملاء المدينون فقط (عليهم رصيد)</option>
+                                    <option value="all">جميع العملاء</option>
+                                    <option value="creditors">عملاء لهم رصيد دائن / صفر</option>
+                                </select>
+                            </div>
+                            <button type="button" onclick="exportCustomerBalancesSummaryExcel()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-excel"></i> <span>تصدير Excel</span>
+                            </button>
+                        </div>
+
+                        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-right text-xs font-bold">
+                                    <thead class="bg-slate-900 text-white">
+                                        <tr>
+                                            <th class="py-3 px-4">اسم العميل</th>
+                                            <th class="py-3 px-3 text-center">الرصيد الافتتاحي</th>
+                                            <th class="py-3 px-3 text-center">إجمالي المسحوبات (+)</th>
+                                            <th class="py-3 px-3 text-center">التحصيلات (-)</th>
+                                            <th class="py-3 px-3 text-center">المرتجعات (-)</th>
+                                            <th class="py-3 px-3 text-center">الرصيد الصافي المتبقي</th>
+                                            <th class="py-3 px-3 text-center">آخر دفعة سداد</th>
+                                            <th class="py-3 px-3 text-center">كشف الحساب</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="repCustBalancesTableBody" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2.6 التقرير الفرعي السادس: ملخص العمليات اليومية / الدورية الشامل -->
+                    <div id="rep-panel-dailyOps" class="rep-sub-panel hidden space-y-4">
+                        <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex flex-wrap items-center gap-2.5">
+                                <label class="text-xs font-extrabold text-slate-700">من تاريخ:</label>
+                                <input type="date" id="repDailyFrom" onchange="renderDailyOperationsSummaryReport()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                <label class="text-xs font-extrabold text-slate-700">إلى تاريخ:</label>
+                                <input type="date" id="repDailyTo" onchange="renderDailyOperationsSummaryReport()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                <button type="button" onclick="setDailyOpsToday()" class="px-3 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-black">اليوم</button>
+                            </div>
+                            <button type="button" onclick="printDailyOperationsReport()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center gap-1.5">
+                                <i class="fa-solid fa-print"></i> <span>طباعة ملخص العمليات</span>
+                            </button>
+                        </div>
+
+                        <div id="dailyOpsPrintableArea" class="space-y-4">
+                            <div id="dailyOpsSummaryCards" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"></div>
+                            <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-right text-xs font-bold">
+                                        <thead class="bg-slate-900 text-white">
+                                            <tr>
+                                                <th class="py-3 px-4">التاريخ والوقت</th>
+                                                <th class="py-3 px-3">نوع العملية</th>
+                                                <th class="py-3 px-3">رقم السند</th>
+                                                <th class="py-3 px-4">الطرف / البيان</th>
+                                                <th class="py-3 px-3 text-center">الكمية / الأمتار</th>
+                                                <th class="py-3 px-3 text-center">القيمة المالية</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="repDailyOpsTableBody" class="divide-y divide-slate-100"></tbody>
+                                    </table>
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
-                            <div class="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">اسم الشركة / المؤسسة</label>
-                                    <input type="text" id="cfgCompanyName" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">الاسم المختصر / العلامة التجارية</label>
-                                    <input type="text" id="cfgBrandShort" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">رقم السجل التجاري</label>
-                                    <input type="text" id="cfgCrNumber" placeholder="مثال: 4030xxxxxx" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">الرقم الضريبي (VAT)</label>
-                                    <input type="text" id="cfgVatNumber" placeholder="مثال: 3xxxxxxxxxxxx03" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">رقم الهاتف / الجوال الأول</label>
-                                    <input type="text" id="cfgPhone1" dir="ltr" placeholder="05xxxxxxxx" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">رقم الهاتف / الجوال الثاني</label>
-                                    <input type="text" id="cfgPhone2" dir="ltr" placeholder="012xxxxxxx" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                                </div>
-                                <div class="sm:col-span-2">
-                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">العنوان التفصيلي</label>
-                                    <input type="text" id="cfgAddress" placeholder="المدينة - الحي - الشارع" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                                </div>
+                    <!-- 2.7 التقرير الفرعي السابع: تحليل الهالك والتالف والقصاقيص -->
+                    <div id="rep-panel-wasteAnalysis" class="rep-sub-panel hidden space-y-4">
+                        <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex flex-wrap items-center gap-2.5">
+                                <select id="repWasteWhFilter" onchange="renderWasteAnalysisReport()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black">
+                                    <option value="all">جميع المستودعات</option>
+                                    <option value="wh_samir">مخزن السامر</option>
+                                    <option value="wh_tahlia">مخزن التحلية</option>
+                                </select>
+                                <input type="date" id="repWasteFrom" onchange="renderWasteAnalysisReport()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                <input type="date" id="repWasteTo" onchange="renderWasteAnalysisReport()" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                            </div>
+                            <button type="button" onclick="exportWasteAnalysisExcel()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-excel"></i> <span>تصدير Excel</span>
+                            </button>
+                        </div>
+
+                        <div id="repWasteReasonsCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+
+                        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-right text-xs font-bold">
+                                    <thead class="bg-slate-900 text-white">
+                                        <tr>
+                                            <th class="py-3 px-4">اسم الصنف</th>
+                                            <th class="py-3 px-3 text-center">عدد حالات التلف</th>
+                                            <th class="py-3 px-3 text-center">تالف السامر (م²)</th>
+                                            <th class="py-3 px-3 text-center">تالف التحلية (م²)</th>
+                                            <th class="py-3 px-3 text-center">إجمالي التالف (م²)</th>
+                                            <th class="py-3 px-3 text-center">المكافئ بالرولات</th>
+                                            <th class="py-3 px-4">أبرز أسباب التلف</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="repWasteAnalysisTableBody" class="divide-y divide-slate-100"></tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -5127,6 +4353,521 @@ ${statusLine}
             const ws = XLSX.utils.aoa_to_sheet(data);
             XLSX.utils.book_append_sheet(wb, ws, `تقرير_${year}`);
             XLSX.writeFile(wb, `التقرير_السنوي_الطريق_الأمثل_${year}.xlsx`);
+        }
+
+        // ==========================================
+        // 4.6 التقارير المخزنية والمالية المتخصصة الإضافية
+        // ==========================================
+        function switchReportSubTab(subKey) {
+            document.querySelectorAll('.rep-sub-panel').forEach(p => p.classList.add('hidden'));
+            const panel = document.getElementById('rep-panel-' + subKey);
+            if (panel) panel.classList.remove('hidden');
+
+            document.querySelectorAll('.rep-sub-btn').forEach(btn => {
+                if (btn.dataset.repSub === subKey) {
+                    btn.className = 'rep-sub-btn px-3.5 py-2 rounded-xl text-xs font-black bg-blue-600 text-white shadow-xs transition';
+                } else {
+                    btn.className = 'rep-sub-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-slate-100 hover:bg-slate-200 text-slate-700 transition';
+                }
+            });
+
+            if (subKey === 'monthly') renderReportsTab();
+            else if (subKey === 'stockMovement') renderStockMovementSummaryReport();
+            else if (subKey === 'whCompare') renderWarehouseComparisonReport();
+            else if (subKey === 'topItems') renderTopMovingItemsReport();
+            else if (subKey === 'custBalances') renderCustomerBalancesSummaryReport();
+            else if (subKey === 'dailyOps') renderDailyOperationsSummaryReport();
+            else if (subKey === 'wasteAnalysis') renderWasteAnalysisReport();
+        }
+
+        function getStockMovementSummaryRows() {
+            const search = (document.getElementById('repMovSearch')?.value || '').trim().toLowerCase();
+            const whFilter = document.getElementById('repMovWarehouse')?.value || 'all';
+            const fromStr = document.getElementById('repMovFrom')?.value || '';
+            const toStr = document.getElementById('repMovTo')?.value || '';
+            const fromDate = fromStr ? new Date(fromStr + 'T00:00:00') : null;
+            const toDate = toStr ? new Date(toStr + 'T23:59:59') : null;
+
+            return appState.items
+                .filter(it => !search || (it.name || '').toLowerCase().includes(search))
+                .map(it => {
+                    const area = (Number(it.length) || 50) * (Number(it.width) || 1);
+                    let inRolls = 0, retRolls = 0, outRolls = 0, wasteRolls = 0;
+
+                    appState.transactions.forEach(t => {
+                        const d = new Date(t.date);
+                        if (fromDate && d < fromDate) return;
+                        if (toDate && d > toDate) return;
+
+                        if (t.type === 'inbound' && (t.itemId === it.id || t.itemName === it.name)) {
+                            if (whFilter === 'all' || t.warehouseId === whFilter) {
+                                inRolls += Number(t.rolls || 0);
+                            }
+                        } else if (t.type === 'return' && (t.itemId === it.id || t.itemName === it.name)) {
+                            if (whFilter === 'all' || t.warehouseId === whFilter) {
+                                retRolls += area > 0 ? (Number(t.totalSqm || 0) / area) : 0;
+                            }
+                        } else if (t.type === 'sale') {
+                            if (whFilter === 'all' || t.warehouseId === whFilter) {
+                                (t.lines || []).forEach(ln => {
+                                    if (ln.itemId === it.id || ln.itemName === it.name) {
+                                        outRolls += area > 0 ? (Number(ln.sqm || 0) / area) : 0;
+                                    }
+                                });
+                            }
+                        } else if (t.type === 'waste' && (t.itemId === it.id || t.itemName === it.name)) {
+                            if (whFilter === 'all' || t.warehouseId === whFilter) {
+                                wasteRolls += Number(t.rolls || (area > 0 ? Number(t.sqm || 0) / area : 0));
+                            }
+                        } else if (t.type === 'transfer' && (t.itemId === it.id || t.itemName === it.name)) {
+                            if (whFilter !== 'all') {
+                                if (t.toWh === whFilter) inRolls += Number(t.rolls || 0);
+                                if (t.fromWh === whFilter) outRolls += Number(t.rolls || 0);
+                            }
+                        }
+                    });
+
+                    const curRolls = whFilter === 'wh_samir'
+                        ? Number(it.stockSamir || 0)
+                        : (whFilter === 'wh_tahlia'
+                            ? Number(it.stockTahlia || 0)
+                            : Number(it.stockSamir || 0) + Number(it.stockTahlia || 0));
+
+                    return {
+                        id: it.id,
+                        name: it.name,
+                        dims: `${it.length}م × ${it.width}م`,
+                        inRolls,
+                        retRolls,
+                        outRolls,
+                        wasteRolls,
+                        curRolls,
+                        curSqm: curRolls * area
+                    };
+                });
+        }
+
+        function renderStockMovementSummaryReport() {
+            const tbody = document.getElementById('repStockMovementTableBody');
+            if (!tbody) return;
+            const rows = getStockMovementSummaryRows();
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-400">لا توجد أصناف مطابقة.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map(r => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-3 px-4 font-extrabold text-slate-900">${r.name}</td>
+                    <td class="py-3 px-3 text-center text-slate-500">${r.dims}</td>
+                    <td class="py-3 px-3 text-center text-emerald-700 font-black">+${r.inRolls.toFixed(2)}</td>
+                    <td class="py-3 px-3 text-center text-amber-700">+${r.retRolls.toFixed(2)}</td>
+                    <td class="py-3 px-3 text-center text-blue-700 font-black">-${r.outRolls.toFixed(2)}</td>
+                    <td class="py-3 px-3 text-center text-rose-600">-${r.wasteRolls.toFixed(2)}</td>
+                    <td class="py-3 px-3 text-center font-black text-slate-900">${r.curRolls.toFixed(2)} رول</td>
+                    <td class="py-3 px-3 text-center font-black text-indigo-700">${r.curSqm.toFixed(2)} م²</td>
+                </tr>
+            `).join('');
+        }
+
+        function exportStockMovementSummaryExcel() {
+            const rows = getStockMovementSummaryRows();
+            const data = [['اسم الصنف', 'المقاس', 'الوارد (رول)', 'المرتجع (رول)', 'المنصرف (رول)', 'الهالك (رول)', 'الرصيد الحالي (رول)', 'الرصيد الحالي (م²)']];
+            rows.forEach(r => data.push([r.name, r.dims, r.inRolls, r.retRolls, r.outRolls, r.wasteRolls, r.curRolls, r.curSqm]));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'حركة_المخزون');
+            XLSX.writeFile(wb, `تقرير_حركة_المخزون_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
+        function renderWarehouseComparisonReport() {
+            const tbody = document.getElementById('repWhCompareTableBody');
+            if (!tbody) return;
+            const search = (document.getElementById('repWhCompSearch')?.value || '').trim().toLowerCase();
+            const filter = document.getElementById('repWhCompFilter')?.value || 'all';
+
+            let totSamirRolls = 0, totSamirSqm = 0, totTahliaRolls = 0, totTahliaSqm = 0, imbalanceCount = 0;
+            appState.items.forEach(it => {
+                const area = (Number(it.length) || 50) * (Number(it.width) || 1);
+                const rS = Number(it.stockSamir || 0);
+                const rT = Number(it.stockTahlia || 0);
+                totSamirRolls += rS;
+                totSamirSqm += rS * area;
+                totTahliaRolls += rT;
+                totTahliaSqm += rT * area;
+                if ((rS > 0 && rT <= 0) || (rT > 0 && rS <= 0)) imbalanceCount++;
+            });
+
+            setTextSafe('repWhSamirTotalCard', `${totSamirRolls.toFixed(2)} رول (${totSamirSqm.toFixed(0)} م²)`);
+            setTextSafe('repWhTahliaTotalCard', `${totTahliaRolls.toFixed(2)} رول (${totTahliaSqm.toFixed(0)} م²)`);
+            setTextSafe('repWhImbalanceCountCard', `${imbalanceCount} صنف بحاجة لتغذية`);
+
+            const list = appState.items.filter(it => {
+                if (search && !(it.name || '').toLowerCase().includes(search)) return false;
+                const rS = Number(it.stockSamir || 0);
+                const rT = Number(it.stockTahlia || 0);
+                if (filter === 'missing_one') return (rS > 0 && rT <= 0) || (rT > 0 && rS <= 0);
+                if (filter === 'zero_both') return rS <= 0 && rT <= 0;
+                return true;
+            });
+
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-400">لا توجد أصناف مطابقة.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = list.map(it => {
+                const area = (Number(it.length) || 50) * (Number(it.width) || 1);
+                const rS = Number(it.stockSamir || 0);
+                const rT = Number(it.stockTahlia || 0);
+                const totR = rS + rT;
+                let statusBadge = '<span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-[11px] font-black">متوفر بالمستودعين</span>';
+                if (rS <= 0 && rT <= 0) statusBadge = '<span class="px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800 text-[11px] font-black">نافد من المستودعين</span>';
+                else if (rS <= 0) statusBadge = '<span class="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 text-[11px] font-black">نافد من السامر (متوفر بالتحلية)</span>';
+                else if (rT <= 0) statusBadge = '<span class="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 text-[11px] font-black">نافد من التحلية (متوفر بالسامر)</span>';
+
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3 px-4 font-extrabold text-slate-900">${it.name}</td>
+                        <td class="py-3 px-3 text-center font-black text-sky-700">${rS.toFixed(2)}</td>
+                        <td class="py-3 px-3 text-center font-black text-amber-700">${rT.toFixed(2)}</td>
+                        <td class="py-3 px-3 text-center font-black">${totR.toFixed(2)} رول</td>
+                        <td class="py-3 px-3 text-center text-indigo-700 font-black">${(totR * area).toFixed(2)} م²</td>
+                        <td class="py-3 px-3 text-center">${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function exportWarehouseComparisonExcel() {
+            const data = [['اسم الصنف', 'مخزن السامر (رول)', 'مخزن التحلية (رول)', 'الإجمالي (رول)', 'الإجمالي (م²)']];
+            appState.items.forEach(it => {
+                const area = (Number(it.length) || 50) * (Number(it.width) || 1);
+                const rS = Number(it.stockSamir || 0);
+                const rT = Number(it.stockTahlia || 0);
+                data.push([it.name, rS, rT, rS + rT, (rS + rT) * area]);
+            });
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'مقارنة_المستودعات');
+            XLSX.writeFile(wb, `مقارنة_السامر_والتحلية_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
+        function getTopMovingItemsList() {
+            const fromStr = document.getElementById('repTopFrom')?.value || '';
+            const toStr = document.getElementById('repTopTo')?.value || '';
+            const sortBy = document.getElementById('repTopSortBy')?.value || 'sqm';
+            const fromDate = fromStr ? new Date(fromStr + 'T00:00:00') : null;
+            const toDate = toStr ? new Date(toStr + 'T23:59:59') : null;
+
+            const map = {};
+            appState.items.forEach(it => {
+                const area = (Number(it.length) || 50) * (Number(it.width) || 1);
+                map[it.id] = {
+                    id: it.id,
+                    name: it.name,
+                    area,
+                    ordersCount: 0,
+                    sqmSold: 0,
+                    amountSold: 0,
+                    remRolls: Number(it.stockSamir || 0) + Number(it.stockTahlia || 0)
+                };
+            });
+
+            appState.transactions.forEach(t => {
+                if (t.type !== 'sale') return;
+                const d = new Date(t.date);
+                if (fromDate && d < fromDate) return;
+                if (toDate && d > toDate) return;
+
+                (t.lines || []).forEach(ln => {
+                    const entry = map[ln.itemId] || Object.values(map).find(x => x.name === ln.itemName);
+                    if (entry) {
+                        entry.ordersCount += 1;
+                        entry.sqmSold += Number(ln.sqm || 0);
+                        entry.amountSold += Number(ln.total || 0);
+                    }
+                });
+            });
+
+            return Object.values(map)
+                .filter(x => x.sqmSold > 0)
+                .sort((a, b) => sortBy === 'amount' ? b.amountSold - a.amountSold : (sortBy === 'orders' ? b.ordersCount - a.ordersCount : b.sqmSold - a.sqmSold));
+        }
+
+        function renderTopMovingItemsReport() {
+            const tbody = document.getElementById('repTopItemsTableBody');
+            if (!tbody) return;
+            const list = getTopMovingItemsList();
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400">لا توجد مبيعات مسجلة في الفترة المحددة.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = list.map((it, idx) => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-3 px-4 text-center font-black text-blue-700">${idx + 1}</td>
+                    <td class="py-3 px-4 font-extrabold text-slate-900">${it.name}</td>
+                    <td class="py-3 px-3 text-center">${it.ordersCount} مرة</td>
+                    <td class="py-3 px-3 text-center font-black text-indigo-700">${it.sqmSold.toFixed(2)} م²</td>
+                    <td class="py-3 px-3 text-center">${(it.area > 0 ? it.sqmSold / it.area : 0).toFixed(2)} رول</td>
+                    <td class="py-3 px-3 text-center font-black text-emerald-700">${it.amountSold.toFixed(2)} ر.س</td>
+                    <td class="py-3 px-3 text-center font-black">${it.remRolls.toFixed(2)} رول</td>
+                </tr>
+            `).join('');
+        }
+
+        function exportTopMovingItemsExcel() {
+            const list = getTopMovingItemsList();
+            const data = [['الترتيب', 'اسم الصنف', 'عدد الطلبات', 'الأمتار المنصرفة (م²)', 'المكافئ بالرولات', 'قيمة المبيعات (ر.س)', 'الرصيد المتبقي (رول)']];
+            list.forEach((it, idx) => data.push([idx + 1, it.name, it.ordersCount, it.sqmSold, it.area > 0 ? it.sqmSold / it.area : 0, it.amountSold, it.remRolls]));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'الأكثر_سحباً');
+            XLSX.writeFile(wb, `الأصناف_الأكثر_سحباً_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
+        function getCustomerBalancesSummaryList() {
+            const search = (document.getElementById('repCustBalSearch')?.value || '').trim().toLowerCase();
+            const filter = document.getElementById('repCustBalFilter')?.value || 'debtors';
+
+            return appState.customers
+                .filter(c => !search || `${c.name} ${c.city || ''}`.toLowerCase().includes(search))
+                .map(c => {
+                    const st = getCustomerStats(c.id);
+                    const pays = appState.transactions
+                        .filter(t => t.customerId === c.id && t.type === 'payment')
+                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                    const lastPayDate = pays.length > 0 ? new Date(pays[0].date).toLocaleDateString('ar-SA') : '-';
+                    return { id: c.id, name: c.name, ...st, lastPayDate };
+                })
+                .filter(c => {
+                    if (filter === 'debtors') return c.balance > 0.01;
+                    if (filter === 'creditors') return c.balance <= 0.01;
+                    return true;
+                })
+                .sort((a, b) => b.balance - a.balance);
+        }
+
+        function renderCustomerBalancesSummaryReport() {
+            const tbody = document.getElementById('repCustBalancesTableBody');
+            if (!tbody) return;
+            const list = getCustomerBalancesSummaryList();
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-400">لا يوجد عملاء مطابقون للفلتر.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = list.map(c => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-3 px-4 font-extrabold text-slate-900">${c.name}</td>
+                    <td class="py-3 px-3 text-center">${c.openingBalance.toFixed(2)}</td>
+                    <td class="py-3 px-3 text-center text-blue-700 font-black">${c.salesTotal.toFixed(2)}</td>
+                    <td class="py-3 px-3 text-center text-emerald-700">${c.paymentsTotal.toFixed(2)}</td>
+                    <td class="py-3 px-3 text-center text-amber-700">${c.returnsTotal.toFixed(2)}</td>
+                    <td class="py-3 px-3 text-center font-black ${c.balance > 0 ? 'text-rose-600' : 'text-emerald-600'}">${c.balance.toFixed(2)} ر.س</td>
+                    <td class="py-3 px-3 text-center text-slate-500">${c.lastPayDate}</td>
+                    <td class="py-3 px-3 text-center">
+                        <button type="button" onclick="switchTab('customers'); openCustomerStatement('${c.id}');" class="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-black">كشف حساب</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function exportCustomerBalancesSummaryExcel() {
+            const list = getCustomerBalancesSummaryList();
+            const data = [['اسم العميل', 'الرصيد الافتتاحي', 'إجمالي المسحوبات', 'التحصيلات', 'المرتجعات', 'الرصيد الصافي المتبقي', 'آخر دفعة سداد']];
+            list.forEach(c => data.push([c.name, c.openingBalance, c.salesTotal, c.paymentsTotal, c.returnsTotal, c.balance, c.lastPayDate]));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'أرصدة_العملاء');
+            XLSX.writeFile(wb, `أرصدة_العملاء_الشامل_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
+        function setDailyOpsToday() {
+            const today = new Date().toISOString().slice(0, 10);
+            if (document.getElementById('repDailyFrom')) document.getElementById('repDailyFrom').value = today;
+            if (document.getElementById('repDailyTo')) document.getElementById('repDailyTo').value = today;
+            renderDailyOperationsSummaryReport();
+        }
+
+        function renderDailyOperationsSummaryReport() {
+            const tbody = document.getElementById('repDailyOpsTableBody');
+            const cardsEl = document.getElementById('dailyOpsSummaryCards');
+            if (!tbody || !cardsEl) return;
+
+            const fromStr = document.getElementById('repDailyFrom')?.value || '';
+            const toStr = document.getElementById('repDailyTo')?.value || '';
+            const fromDate = fromStr ? new Date(fromStr + 'T00:00:00') : null;
+            const toDate = toStr ? new Date(toStr + 'T23:59:59') : null;
+
+            const list = appState.transactions
+                .filter(t => {
+                    const d = new Date(t.date);
+                    if (fromDate && d < fromDate) return false;
+                    if (toDate && d > toDate) return false;
+                    return true;
+                })
+                .sort((a, b) => (b.seq || 0) - (a.seq || 0));
+
+            let salesCnt = 0, salesAmt = 0, inCnt = 0, inRolls = 0, trCnt = 0, payCnt = 0, payAmt = 0, retCnt = 0, wasteCnt = 0;
+            list.forEach(t => {
+                if (t.type === 'sale') { salesCnt++; salesAmt += Number(t.totalAmount || 0); }
+                else if (t.type === 'inbound') { inCnt++; inRolls += Number(t.rolls || 0); }
+                else if (t.type === 'transfer') { trCnt++; }
+                else if (t.type === 'payment') { payCnt++; payAmt += Number(t.amount || 0); }
+                else if (t.type === 'return') { retCnt++; }
+                else if (t.type === 'waste') { wasteCnt++; }
+            });
+
+            cardsEl.innerHTML = `
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-3 text-center"><span class="text-[11px] font-extrabold text-blue-700 block">إذون الصرف</span><strong class="text-sm font-black text-blue-900">${salesCnt} (${salesAmt.toFixed(0)} ر.س)</strong></div>
+                <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-center"><span class="text-[11px] font-extrabold text-emerald-700 block">سندات القبض</span><strong class="text-sm font-black text-emerald-900">${payCnt} (${payAmt.toFixed(0)} ر.س)</strong></div>
+                <div class="bg-sky-50 border border-sky-200 rounded-2xl p-3 text-center"><span class="text-[11px] font-extrabold text-sky-700 block">التوريد للمخزن</span><strong class="text-sm font-black text-sky-900">${inCnt} (${inRolls.toFixed(1)} رول)</strong></div>
+                <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-3 text-center"><span class="text-[11px] font-extrabold text-indigo-700 block">التحويلات</span><strong class="text-sm font-black text-indigo-900">${trCnt} تحويل</strong></div>
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-center"><span class="text-[11px] font-extrabold text-amber-700 block">المرتجعات</span><strong class="text-sm font-black text-amber-900">${retCnt} مرتجع</strong></div>
+                <div class="bg-rose-50 border border-rose-200 rounded-2xl p-3 text-center"><span class="text-[11px] font-extrabold text-rose-700 block">الهالك والتالف</span><strong class="text-sm font-black text-rose-900">${wasteCnt} سند</strong></div>
+            `;
+
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-400">لا توجد عمليات مسجلة في هذه الفترة.</td></tr>';
+                return;
+            }
+
+            const labels = { sale: 'إذن صرف', inbound: 'توريد مخزن', transfer: 'تحويل مخزني', payment: 'سند قبض', return: 'مرتجع عميل', waste: 'هالك وتالف' };
+            tbody.innerHTML = list.map(t => {
+                let qtyTxt = '-';
+                if (t.type === 'sale') qtyTxt = `${Number(t.totalSqm || 0).toFixed(2)} م²`;
+                else if (t.type === 'inbound' || t.type === 'transfer') qtyTxt = `${Number(t.rolls || 0).toFixed(2)} رول`;
+                else if (t.type === 'waste') qtyTxt = `${Number(t.sqm || 0).toFixed(2)} م²`;
+                else if (t.type === 'return') qtyTxt = `${Number(t.totalSqm || 0).toFixed(2)} م²`;
+
+                const val = t.totalAmount || t.amount || 0;
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3 px-4 text-slate-600 whitespace-nowrap">${formatDateTimeAr(t.date)}</td>
+                        <td class="py-3 px-3 font-black">${labels[t.type] || t.type}</td>
+                        <td class="py-3 px-3 font-black text-blue-700">${t.id}</td>
+                        <td class="py-3 px-4">${t.customerName || t.itemName || '-'}</td>
+                        <td class="py-3 px-3 text-center">${qtyTxt}</td>
+                        <td class="py-3 px-3 text-center font-black">${val > 0 ? Number(val).toFixed(2) + ' ر.س' : '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function printDailyOperationsReport() {
+            const area = document.getElementById('dailyOpsPrintableArea');
+            if (!area) return;
+            const cfg = getCompanySettings();
+            const win = window.open('', '_blank', 'width=1000,height=800');
+            if (!win) { window.print(); return; }
+            win.document.write(`
+                <!DOCTYPE html>
+                <html lang="ar" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>ملخص العمليات الدورية - ${cfg.companyName}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
+                    <script src="https://cdn.tailwindcss.com"><\/script>
+                    <style>body{font-family:'Cairo',sans-serif;padding:20px;background:#fff;color:#0f172a;}</style>
+                </head>
+                <body>
+                    <div class="flex items-center justify-between border-b-2 border-slate-800 pb-4 mb-5">
+                        <h1 class="text-lg font-black">${cfg.companyName} — ملخص العمليات المخزنية والمالية</h1>
+                        <span class="text-xs font-bold">تاريخ الطباعة: ${new Date().toLocaleDateString('ar-SA')}</span>
+                    </div>
+                    ${area.innerHTML}
+                    <script>setTimeout(()=>{window.print();window.close();},500);<\/script>
+                </body>
+                </html>
+            `);
+            win.document.close();
+        }
+
+        function getWasteAnalysisData() {
+            const whFilter = document.getElementById('repWasteWhFilter')?.value || 'all';
+            const fromStr = document.getElementById('repWasteFrom')?.value || '';
+            const toStr = document.getElementById('repWasteTo')?.value || '';
+            const fromDate = fromStr ? new Date(fromStr + 'T00:00:00') : null;
+            const toDate = toStr ? new Date(toStr + 'T23:59:59') : null;
+
+            const reasonTotals = {};
+            const itemMap = {};
+
+            appState.transactions.forEach(t => {
+                if (t.type !== 'waste') return;
+                if (whFilter !== 'all' && t.warehouseId !== whFilter) return;
+                const d = new Date(t.date);
+                if (fromDate && d < fromDate) return;
+                if (toDate && d > toDate) return;
+
+                const sqm = Number(t.sqm || 0);
+                const rolls = Number(t.rolls || 0);
+                const reason = t.reason || 'أخرى';
+                reasonTotals[reason] = (reasonTotals[reason] || 0) + sqm;
+
+                const key = t.itemId || t.itemName;
+                if (!itemMap[key]) {
+                    itemMap[key] = {
+                        name: t.itemName || 'صنف',
+                        count: 0,
+                        samirSqm: 0,
+                        tahliaSqm: 0,
+                        totalSqm: 0,
+                        totalRolls: 0,
+                        reasons: new Set()
+                    };
+                }
+                itemMap[key].count += 1;
+                if (t.warehouseId === 'wh_tahlia') itemMap[key].tahliaSqm += sqm;
+                else itemMap[key].samirSqm += sqm;
+                itemMap[key].totalSqm += sqm;
+                itemMap[key].totalRolls += rolls;
+                itemMap[key].reasons.add(reason);
+            });
+
+            return {
+                reasonTotals,
+                items: Object.values(itemMap).sort((a, b) => b.totalSqm - a.totalSqm)
+            };
+        }
+
+        function renderWasteAnalysisReport() {
+            const cardsEl = document.getElementById('repWasteReasonsCards');
+            const tbody = document.getElementById('repWasteAnalysisTableBody');
+            if (!cardsEl || !tbody) return;
+
+            const { reasonTotals, items } = getWasteAnalysisData();
+            const reasonsEntries = Object.entries(reasonTotals);
+
+            cardsEl.innerHTML = reasonsEntries.length > 0
+                ? reasonsEntries.map(([reason, sqm]) => `
+                    <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4">
+                        <span class="text-xs font-extrabold text-rose-800">${reason}</span>
+                        <div class="text-lg font-black text-rose-700 mt-1">${sqm.toFixed(2)} م²</div>
+                    </div>
+                `).join('')
+                : '<div class="sm:col-span-4 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center text-xs font-bold text-slate-500">لا توجد بيانات هالك مسجلة في هذه الفترة</div>';
+
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400">لا توجد أصناف تالفة مطابقة للفلتر.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(it => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-3 px-4 font-extrabold text-slate-900">${it.name}</td>
+                    <td class="py-3 px-3 text-center">${it.count}</td>
+                    <td class="py-3 px-3 text-center text-sky-700">${it.samirSqm.toFixed(2)} م²</td>
+                    <td class="py-3 px-3 text-center text-amber-700">${it.tahliaSqm.toFixed(2)} م²</td>
+                    <td class="py-3 px-3 text-center font-black text-rose-600">${it.totalSqm.toFixed(2)} م²</td>
+                    <td class="py-3 px-3 text-center">${it.totalRolls.toFixed(2)} رول</td>
+                    <td class="py-3 px-4 text-slate-600">${Array.from(it.reasons).join('، ')}</td>
+                </tr>
+            `).join('');
+        }
+
+        function exportWasteAnalysisExcel() {
+            const { items } = getWasteAnalysisData();
+            const data = [['اسم الصنف', 'عدد حالات التلف', 'تالف السامر (م²)', 'تالف التحلية (م²)', 'إجمالي التالف (م²)', 'المكافئ بالرولات', 'أسباب التلف']];
+            items.forEach(it => data.push([it.name, it.count, it.samirSqm, it.tahliaSqm, it.totalSqm, it.totalRolls, Array.from(it.reasons).join('، ')]));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'تحليل_الهالك');
+            XLSX.writeFile(wb, `تحليل_الهالك_والتالف_${new Date().toISOString().slice(0, 10)}.xlsx`);
         }
 
         // ==========================================
