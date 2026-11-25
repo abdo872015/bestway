@@ -4821,12 +4821,18 @@
                 const i = Number(rowEl.dataset.ucomboIdx);
                 rowEl.addEventListener('mouseenter', () => {
                     entry.highlightIdx = i;
-                    buildUniversalComboMenu(selectEl, entry.isSearching ? entry.input.value : '');
+                    Array.from(entry.menu.querySelectorAll('[data-ucombo-idx]')).forEach((el, idx) => {
+                        el.classList.toggle('ring-2', idx === i);
+                        el.classList.toggle('ring-blue-400', idx === i);
+                    });
                 });
-                rowEl.addEventListener('mousedown', (ev) => {
+                const handleSelect = (ev) => {
                     ev.preventDefault();
+                    ev.stopPropagation();
                     pickUniversalComboOption(selectEl, i);
-                });
+                };
+                rowEl.addEventListener('mousedown', handleSelect);
+                rowEl.addEventListener('click', handleSelect);
             });
         }
 
@@ -4842,6 +4848,7 @@
             const spaceBelow = window.innerHeight - rect.bottom;
             const maxH = 270;
 
+            entry.menu.style.zIndex = '9999';
             entry.menu.style.width = `${minW}px`;
             const leftPos = Math.max(8, Math.min(rect.right - minW, window.innerWidth - minW - 8));
             entry.menu.style.left = `${leftPos}px`;
@@ -4916,7 +4923,7 @@
             arrowBtn.innerHTML = '<i class="fa-solid fa-chevron-down text-xs"></i>';
 
             const menu = document.createElement('div');
-            menu.className = 'universal-combo-menu hidden fixed overflow-y-auto bg-white border border-slate-300 rounded-2xl shadow-2xl z-50';
+            menu.className = 'universal-combo-menu hidden fixed overflow-y-auto bg-white border border-slate-300 rounded-2xl shadow-2xl z-[9999]';
 
             wrapper.appendChild(input);
             wrapper.appendChild(arrowBtn);
