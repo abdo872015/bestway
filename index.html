@@ -1950,6 +1950,14 @@
                     <div id="saleItemMenu" class="hidden absolute left-0 right-0 mt-1.5 bg-white border border-slate-300 rounded-2xl shadow-2xl z-50 max-h-64 overflow-y-auto divide-y divide-slate-100"></div>
                 </div>
 
+                <div>
+                    <label class="block text-[11px] font-extrabold text-indigo-800 mb-1">
+                        <i class="fa-solid fa-tag ml-1"></i> مسمى الصنف في كشف الحساب / الطباعة (اختياري - يُترك فارغاً لاستخدام اسم الصنف الفعلي)
+                    </label>
+                    <input type="text" id="saleBillingName" list="saleBillingNamesList" placeholder="اكتب أو اختر المسمى البديل الذي يظهر للعميل في الفاتورة وكشف الحساب..." class="w-full px-3 py-2 bg-white border border-indigo-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                    <datalist id="saleBillingNamesList"></datalist>
+                </div>
+
                 <div id="saleStockAvailBanner" class="hidden">
                     <span id="saleStockAvailText"></span>
                     <span id="saleStockReqText"></span>
@@ -3723,6 +3731,11 @@
                     if (prev) el.value = prev;
                 }
             });
+
+            const billingListEl = document.getElementById('saleBillingNamesList');
+            if (billingListEl) {
+                billingListEl.innerHTML = appState.items.map(it => `<option value="${escapeHtmlAttr(it.name)}"></option>`).join('');
+            }
 
             const custOptions = appState.customers.map(c =>
                 `<option value="${c.id}">${c.name}${c.city ? ' - ' + c.city : ''}</option>`
@@ -5915,6 +5928,7 @@ ${statusLine}
 
             setVal('saleItemSearch', '');
             setVal('saleItemSelect', '');
+            setVal('saleBillingName', '');
             document.getElementById('saleItemClearBtn')?.classList.add('hidden');
 
             setVal('saleWidth', '');
@@ -5977,6 +5991,7 @@ ${statusLine}
 
             setVal('saleItemSearch', '');
             setVal('saleItemSelect', '');
+            setVal('saleBillingName', '');
             document.getElementById('saleItemClearBtn')?.classList.add('hidden');
             setVal('saleWidth', '');
             setVal('saleLength', '');
@@ -5998,6 +6013,7 @@ ${statusLine}
                 return {
                     itemId: it ? it.id : ln.itemId,
                     itemName: ln.itemName,
+                    billingName: ln.billingName || '',
                     rollArea,
                     width: Number(ln.width || 0),
                     length: Number(ln.length || 0),
@@ -6111,9 +6127,10 @@ ${statusLine}
             const cust = appState.customers.find(c => c.id === tx.customerId) || {};
             const st = tx.customerId ? getCustomerStats(tx.customerId) : { balance: 0 };
             const cfg = getCompanySettings();
-            const linesTxt = (tx.lines || []).map((ln, i) =>
-                `${i + 1}- ${ln.itemName} (${ln.width}م × ${ln.length}م × ${ln.qty} = ${Number(ln.sqm).toFixed(2)} م²)`
-            ).join('\n');
+            const linesTxt = (tx.lines || []).map((ln, i) => {
+                const displayName = (ln.billingName || '').trim() || ln.itemName;
+                return `${i + 1}- ${displayName} (${ln.width}م × ${ln.length}م × ${ln.qty} = ${Number(ln.sqm).toFixed(2)} م²)`;
+            }).join('\n');
 
             const msg =
 `*${cfg.companyName} (${cfg.brandShort})*
@@ -6291,15 +6308,22 @@ ${linesTxt}
             const whName = tx.warehouseId === 'wh_tahlia' ? 'مخزن التحلية' : 'مخزن السامر';
             document.getElementById('viewSaleModalTitle').textContent = `تفاصيل إذن الصرف (${tx.id})`;
 
-            const linesHtml = (tx.lines || []).map(ln => `
+            const linesHtml = (tx.lines || []).map(ln => {
+                const displayName = (ln.billingName || '').trim() || ln.itemName;
+                const hasAlias = (ln.billingName || '').trim() && ln.billingName.trim() !== ln.itemName;
+                return `
                 <tr class="border-b border-slate-100">
-                    <td class="p-2.5 font-extrabold">${ln.itemName}</td>
+                    <td class="p-2.5 font-extrabold">
+                        <div>${displayName}</div>
+                        ${hasAlias ? `<div class="text-[10px] font-bold text-amber-700 mt-0.5"><i class="fa-solid fa-warehouse ml-1"></i>المصروف فعلياً من المخزن: ${ln.itemName}</div>` : ''}
+                    </td>
                     <td class="p-2.5 text-center">${ln.width}م × ${ln.length}م × ${ln.qty}</td>
                     <td class="p-2.5 text-center text-blue-700">${Number(ln.sqm).toFixed(2)} م²</td>
                     <td class="p-2.5 text-center">${Number(ln.price).toFixed(2)} ر.س</td>
                     <td class="p-2.5 text-center font-black text-emerald-700">${Number(ln.total).toFixed(2)} ر.س</td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
 
             document.getElementById('viewSaleModalBody').innerHTML = `
                 <div class="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200 font-bold text-xs">
@@ -6370,10 +6394,12 @@ ${linesTxt}
             const whName = tx.warehouseId === 'wh_tahlia' ? 'مخزن التحلية' : 'مخزن السامر';
             const cfg = getCompanySettings();
 
-            const linesRows = (tx.lines || []).map((ln, i) => `
+            const linesRows = (tx.lines || []).map((ln, i) => {
+                const displayName = (ln.billingName || '').trim() || ln.itemName;
+                return `
                 <tr class="border-b border-slate-300">
                     <td class="py-2.5 px-3 text-center font-bold">${i + 1}</td>
-                    <td class="py-2.5 px-3 font-extrabold text-slate-900">${ln.itemName}</td>
+                    <td class="py-2.5 px-3 font-extrabold text-slate-900">${displayName}</td>
                     <td class="py-2.5 px-3 text-center">${ln.width} م</td>
                     <td class="py-2.5 px-3 text-center">${ln.length} م</td>
                     <td class="py-2.5 px-3 text-center">${ln.qty}</td>
@@ -6381,7 +6407,8 @@ ${linesTxt}
                     <td class="py-2.5 px-3 text-center">${Number(ln.price).toFixed(2)} ر.س</td>
                     <td class="py-2.5 px-3 text-center font-black">${Number(ln.total).toFixed(2)} ر.س</td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
 
             const win = window.open('', '_blank', 'width=950,height=820');
             if (!win) {
@@ -6493,6 +6520,7 @@ ${linesTxt}
 
         function addSaleCartLine() {
             const item = getSelectedSaleItem();
+            const billingName = (document.getElementById('saleBillingName')?.value || '').trim();
             const width = parseFloat(document.getElementById('saleWidth').value) || 0;
             const length = parseFloat(document.getElementById('saleLength').value) || 0;
             const qty = parseFloat(document.getElementById('saleQty').value) || 0;
@@ -6523,6 +6551,7 @@ ${linesTxt}
             saleCart.push({
                 itemId: item.id,
                 itemName: item.name,
+                billingName: billingName && billingName !== item.name ? billingName : '',
                 rollArea,
                 width,
                 length,
@@ -6537,6 +6566,7 @@ ${linesTxt}
             const itemSel = document.getElementById('saleItemSelect');
             if (itemSearchInp) itemSearchInp.value = '';
             if (itemSel) itemSel.value = '';
+            if (document.getElementById('saleBillingName')) document.getElementById('saleBillingName').value = '';
             document.getElementById('saleItemClearBtn')?.classList.add('hidden');
             document.getElementById('saleItemMenu')?.classList.add('hidden');
             document.getElementById('saleWidth').value = '';
@@ -6577,9 +6607,13 @@ ${linesTxt}
                 totNet += bd.net;
                 totVat += bd.vat;
                 totGross += bd.gross;
+                const hasAlias = (ln.billingName || '').trim() && ln.billingName.trim() !== ln.itemName;
                 return `
                     <tr>
-                        <td class="p-3">${ln.itemName}</td>
+                        <td class="p-3">
+                            <div>${ln.itemName}</div>
+                            ${hasAlias ? `<div class="text-[10px] font-bold text-indigo-700 mt-0.5"><i class="fa-solid fa-tag ml-1"></i>يظهر للعميل: ${escapeHtmlAttr(ln.billingName)}</div>` : ''}
+                        </td>
                         <td class="p-3 text-center">${ln.width}م × ${ln.length}م × ${ln.qty}</td>
                         <td class="p-3 text-center text-blue-700">${ln.sqm.toFixed(2)} م²</td>
                         <td class="p-3 text-center">${ln.price.toFixed(2)} ر.س</td>
@@ -7553,12 +7587,13 @@ ${balanceLine}
                         const itemsCount = (t.lines || []).length;
                         detailsHtml = `${quoteBadge}<div>إجمالي مسحوبات الإذن (${itemsCount} صنف — المساحة الكلية: ${Number(t.totalSqm || 0).toFixed(2)} م²)</div>`;
                     } else {
-                        const linesList = (t.lines || []).map((ln, idx) =>
-                            `<div class="py-0.5 ${idx > 0 ? 'border-t border-slate-100 mt-1 pt-1' : ''}">
-                                <span class="text-slate-900 font-extrabold">• ${ln.itemName}</span>
+                        const linesList = (t.lines || []).map((ln, idx) => {
+                            const displayName = (ln.billingName || '').trim() || ln.itemName;
+                            return `<div class="py-0.5 ${idx > 0 ? 'border-t border-slate-100 mt-1 pt-1' : ''}">
+                                <span class="text-slate-900 font-extrabold">• ${displayName}</span>
                                 <span class="block text-[11px] text-slate-600 pr-2">المقاس: العرض ${ln.width}م × الطول ${ln.length}م × العدد ${ln.qty} = <strong>${Number(ln.sqm).toFixed(2)} م²</strong> (سعر المتر: ${Number(ln.price).toFixed(2)} ر.س)</span>
-                            </div>`
-                        ).join('');
+                            </div>`;
+                        }).join('');
                         detailsHtml = `${quoteBadge}${linesList}`;
                     }
                 } else if (t.type === 'payment') {
