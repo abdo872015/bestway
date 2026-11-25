@@ -1985,10 +1985,10 @@
 
                 <!-- 15.8 إعدادات النظام وهوية الشركة -->
                 <section id="tab-settings" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-6 max-w-4xl space-y-6">
+                    <div class="bg-white border border-slate-200 rounded-2xl p-6 max-w-5xl space-y-6">
                         <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
                             <div>
-                                <h3 class="text-base font-black text-slate-900">إعدادات وهوية المؤسسة والشعار</h3>
+                                <h3 class="text-base font-black text-slate-900">1. إعدادات وهوية المؤسسة والشعار</h3>
                                 <p class="text-xs font-bold text-slate-500">تظهر هذه البيانات في شاشة الدخول والمطبوعات الرسمية وكشوف الحساب</p>
                             </div>
                             <div class="flex items-center gap-3">
@@ -2003,7 +2003,7 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-extrabold text-slate-700 mb-1">اسم الشركة / المؤسسة *</label>
                                 <input type="text" id="cfgCompanyName" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
@@ -2011,6 +2011,10 @@
                             <div>
                                 <label class="block text-xs font-extrabold text-slate-700 mb-1">الاسم المختصر / العلامة التجارية</label>
                                 <input type="text" id="cfgBrandShort" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-extrabold text-slate-700 mb-1">رمز العملة الافتراضية</label>
+                                <input type="text" id="cfgCurrencySymbol" placeholder="ر.س" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black text-center">
                             </div>
                             <div>
                                 <label class="block text-xs font-extrabold text-slate-700 mb-1">رقم السجل التجاري</label>
@@ -2034,260 +2038,93 @@
                             </div>
                         </div>
 
-                        <div class="pt-2">
+                        <!-- 2. إعدادات التنبيهات والحدود الافتراضية -->
+                        <div class="border-t border-slate-200 pt-5 space-y-3">
+                            <h4 class="text-sm font-black text-slate-900 flex items-center gap-2"><i class="fa-solid fa-bell text-amber-500"></i> 2. حدود التنبيهات والاستحقاق والركود</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">حد تنبيه انخفاض المخزون (بالرول)</label>
+                                    <input type="number" min="1" id="cfgLowStockLimit" value="10" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black text-center">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">فترة استحقاق الفواتير المتأخرة (يوم)</label>
+                                    <input type="number" min="1" id="cfgOverdueDays" value="25" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black text-center">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">مدة ركود الأصناف الافتراضية (يوم)</label>
+                                    <input type="number" min="1" id="cfgStagnantDays" value="60" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black text-center">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. الإعدادات الافتراضية للمبيعات والضريبة والمطبوعات -->
+                        <div class="border-t border-slate-200 pt-5 space-y-3">
+                            <h4 class="text-sm font-black text-slate-900 flex items-center gap-2"><i class="fa-solid fa-file-invoice-dollar text-blue-600"></i> 3. الإعدادات الافتراضية للمبيعات والضريبة والمطبوعات</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">المستودع الافتراضي عند الصرف</label>
+                                    <select id="cfgDefaultWarehouse" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                        <option value="wh_samir">مخزن السامر</option>
+                                        <option value="wh_tahlia">مخزن التحلية</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">نوع الضريبة الافتراضي</label>
+                                    <select id="cfgDefaultTaxMode" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                        <option value="none">بدون ضريبة</option>
+                                        <option value="exclusive">تضاف ضريبة</option>
+                                        <option value="inclusive">شامل الضريبة</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">نسبة ضريبة القيمة المضافة (%)</label>
+                                    <input type="number" step="any" min="0" id="cfgVatPercent" value="15" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black text-center">
+                                </div>
+                                <div class="sm:col-span-3">
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">تذييل المطبوعات / رقم الآيبان البنكي (IBAN) والشروط</label>
+                                    <textarea id="cfgPrintFooterNote" rows="2" placeholder="مثال: رقم الحساب البنكي / IBAN: SA0000000000000000000000 — البضاعة المباعة لا تُرد بعد القص." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. تخصيص أسماء المستودعات -->
+                        <div class="border-t border-slate-200 pt-5 space-y-3">
+                            <h4 class="text-sm font-black text-slate-900 flex items-center gap-2"><i class="fa-solid fa-warehouse text-indigo-600"></i> 4. تخصيص مسميات المستودعات</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">اسم المستودع الأول (الأساسي)</label>
+                                    <input type="text" id="cfgWhSamirName" value="مخزن السامر" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1">اسم المستودع الثاني (الفرعي)</label>
+                                    <input type="text" id="cfgWhTahliaName" value="مخزن التحلية" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 5. قوالب رسائل الواتساب -->
+                        <div class="border-t border-slate-200 pt-5 space-y-3">
+                            <h4 class="text-sm font-black text-slate-900 flex items-center gap-2"><i class="fa-brands fa-whatsapp text-emerald-600"></i> 5. تخصيص خاتمة رسائل الواتساب للعملاء</h4>
+                            <div>
+                                <label class="block text-xs font-extrabold text-slate-700 mb-1">نص الخاتمة التلقائية في رسائل الواتساب (بيانات الأسعار وكشوف الحساب)</label>
+                                <input type="text" id="cfgWhatsappFooter" placeholder="مثال: نسعد بخدمتكم دائماً — مؤسسة الطريق الأمثل للدعاية والإعلان" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                            </div>
+                        </div>
+
+                        <div class="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200">
                             <button type="button" onclick="saveCompanySettings()" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-md">
-                                <i class="fa-solid fa-floppy-disk ml-1"></i> حفظ إعدادات الشركة
+                                <i class="fa-solid fa-floppy-disk ml-1"></i> حفظ جميع الإعدادات
                             </button>
-                        </div>
-                    </div>
-                </section>
 
-                <!-- 16. إدارة المستخدمين والصلاحيات -->
-                <section id="tab-users" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
-                        <div>
-                            <h3 class="text-base font-black text-slate-900">المستخدمين ومصفوفة الصلاحيات</h3>
-                            <p class="text-xs font-bold text-slate-500">تحكم كامل في صلاحية (عرض / تعديل / حذف) لكل أيقونة وشاشة لكل موظف</p>
-                        </div>
-                        <button type="button" onclick="openAddSystemUserModal()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-md">
-                            <i class="fa-solid fa-user-plus ml-1"></i> إضافة مستخدم جديد
-                        </button>
-                    </div>
-
-                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right text-xs font-bold">
-                                <thead class="bg-slate-900 text-white">
-                                    <tr>
-                                        <th class="py-3.5 px-4">الاسم الكامل</th>
-                                        <th class="py-3.5 px-4">اسم المستخدم</th>
-                                        <th class="py-3.5 px-4">الدور الوظيفي</th>
-                                        <th class="py-3.5 px-4 text-center">الشاشات المتاحة</th>
-                                        <th class="py-3.5 px-4 text-center">صلاحيات التعديل والحذف</th>
-                                        <th class="py-3.5 px-4 text-center">الإجراءات</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="systemUsersTableBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 17. شاشة إصدار / تعديل إذن صرف بضاعة (صفحة كاملة) -->
-                <section id="tab-sales-editor" class="tab-section hidden space-y-5">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex items-center gap-3">
-                            <button type="button" onclick="closeNewSaleOrderModal()" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-black flex items-center gap-1.5 transition">
-                                <i class="fa-solid fa-arrow-right"></i>
-                                <span>رجوع لإذون الصرف</span>
-                            </button>
-                            <div>
-                                <h3 id="saleOrderModalTitle" class="text-base sm:text-lg font-black text-slate-900">إصدار إذن صرف بضاعة جديد</h3>
-                                <p class="text-[11px] font-bold text-slate-500">اختر العميل وأضف الأصناف للسلة — يمكنك تعديل أي بند داخل السلة مباشرة</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <label id="aiQuoteUploadLabel" class="cursor-pointer px-3.5 py-2.5 bg-gradient-to-l from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-sm transition">
-                                <i id="aiQuoteScanIcon" class="fa-solid fa-camera"></i>
-                                <span id="aiQuoteScanBtnLabel">رفع صورة بيان الأسعار</span>
-                                <input type="file" accept="image/*" onchange="handleAiQuoteImageUpload(event)" class="hidden">
-                            </label>
-                        </div>
-                    </div>
-
-                    <div id="aiQuoteScanStatusText" class="px-4 py-2.5 rounded-xl bg-indigo-50/70 border border-indigo-200 text-indigo-800 text-[11px] font-extrabold">
-                        يمكنك رفع صورة بيان أسعار ورقي أو مكتوب بخط اليد لاستخراج العميل والأصناف والأسعار تلقائياً.
-                    </div>
-
-                    <input type="hidden" id="editingSaleOrderId">
-
-                    <!-- بيانات العميل والمستودع والفاتورة -->
-                    <div class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                            <div class="searchable-select-wrapper relative sm:col-span-2">
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">اسم العميل *</label>
-                                <input type="hidden" id="saleCustomerSelect">
-                                <div class="relative flex items-center">
-                                    <input type="text" id="saleCustomerSearch" autocomplete="off" placeholder="ابحث باسم العميل أو المدينة أو الجوال..." class="w-full p-2.5 pl-16 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none">
-                                    <button type="button" id="saleCustomerClearBtn" onclick="clearSaleCustomerCombo()" class="hidden absolute left-8 text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-xmark text-xs"></i></button>
-                                    <button type="button" onclick="toggleSaleCustomerMenu()" class="absolute left-2 text-slate-400 hover:text-slate-700 p-1"><i class="fa-solid fa-chevron-down text-xs"></i></button>
-                                </div>
-                                <div id="saleCustomerMenu" class="hidden absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white border border-slate-300 rounded-2xl shadow-2xl z-40 divide-y divide-slate-100"></div>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">المستودع المصروف منه</label>
-                                <select id="saleWarehouse" onchange="updateSaleAvailableStockBanner()" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">رقم إذن الصرف</label>
-                                <input type="text" id="saleOrderNumberInput" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black text-blue-700">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">التاريخ والوقت</label>
-                                <input type="datetime-local" id="saleDate" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">رقم بيان الأسعار (اختياري)</label>
-                                <input type="text" id="saleQuoteRef" placeholder="مثال: Q-105" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">نوع الضريبة</label>
-                                <select id="saleTaxMode" onchange="renderSaleCart()" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                                    <option value="none">بدون ضريبة</option>
-                                    <option value="exclusive">تضاف ضريبة 15%</option>
-                                    <option value="inclusive">شامل الضريبة 15%</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">حالة السداد</label>
-                                <select id="salePaymentStatus" onchange="toggleSalePaymentMethodField()" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                                    <option value="credit">آجل (على الحساب)</option>
-                                    <option value="paid">مدفوعة نقداً / تحويل</option>
-                                </select>
-                            </div>
-
-                            <div id="salePaidMethodWrap" class="hidden">
-                                <label class="block text-xs font-extrabold text-slate-700 mb-1">طريقة التحصيل</label>
-                                <select id="salePaidMethod" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                                    <option value="تحويل بنكي">تحويل بنكي</option>
-                                    <option value="كاش">كاش</option>
-                                    <option value="شبكة / مدى">شبكة / مدى</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div id="saleCustomerCreditBanner" class="hidden"></div>
-
-                        <details class="text-xs">
-                            <summary class="cursor-pointer font-extrabold text-slate-500 hover:text-slate-800 select-none">بيانات إضافية للنقل والاستلام (السائق / رقم اللوحة / المرجع)</summary>
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3">
-                                <input type="text" id="saleDriverName" placeholder="اسم السائق / المستلم" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                                <input type="text" id="saleVehiclePlate" placeholder="رقم لوحة المركبة" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                                <input type="text" id="saleAttachmentRef" placeholder="مرجع / ملاحظات إضافية" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                            </div>
-                        </details>
-                    </div>
-
-                    <!-- شريط اختيار الصنف العريض + خانات الطول والعرض والعدد والسعر المدمجة -->
-                    <div class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3">
-                        <div class="flex flex-wrap items-center justify-between gap-2">
-                            <h4 class="text-xs font-black text-slate-800 flex items-center gap-1.5">
-                                <i class="fa-solid fa-cart-plus text-blue-600"></i>
-                                <span>إضافة صنف إلى السلة (اكتب السعر واضغط Enter للإضافة الفورية)</span>
-                            </h4>
-                            <div class="text-[11px] font-extrabold text-slate-600 bg-slate-100 px-3 py-1 rounded-lg">
-                                المساحة: <strong id="saleLinePreviewSqm" class="text-blue-700">0.00</strong> م²
-                                <span class="mx-1 text-slate-400">|</span>
-                                يعادل: <strong id="saleLinePreviewRolls" class="text-indigo-700">0.00</strong> رول
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-12 gap-2.5 items-end">
-                            <!-- خانة عريضة لاختيار الصنف -->
-                            <div class="searchable-select-wrapper relative col-span-12 lg:col-span-5">
-                                <label class="block text-[11px] font-extrabold text-slate-700 mb-1">الصنف / الخامة (المخزني الفعلي) *</label>
-                                <input type="hidden" id="saleItemSelect">
-                                <div class="relative flex items-center">
-                                    <input type="text" id="saleItemSearch" autocomplete="off" placeholder="ابحث واختر الصنف (بنر، فينيل، فلكس...)" class="w-full p-2.5 pl-14 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none">
-                                    <button type="button" id="saleItemClearBtn" onclick="clearSaleItemCombo()" class="hidden absolute left-7 text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-xmark text-xs"></i></button>
-                                    <button type="button" onclick="toggleSaleItemMenu()" class="absolute left-2 text-slate-400 hover:text-slate-700 p-1"><i class="fa-solid fa-chevron-down text-xs"></i></button>
-                                </div>
-                                <div id="saleItemMenu" class="hidden absolute left-0 right-0 mt-1 max-h-64 overflow-y-auto bg-white border border-slate-300 rounded-2xl shadow-2xl z-40 divide-y divide-slate-100"></div>
-                            </div>
-
-                            <!-- خانة الطول صغيرة -->
-                            <div class="col-span-3 sm:col-span-2 lg:col-span-1">
-                                <label class="block text-[11px] font-extrabold text-slate-700 mb-1 text-center">الطول (م)</label>
-                                <input type="number" step="any" min="0" id="saleLength" oninput="calcSaleLineSqm()" placeholder="50" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black text-center focus:ring-2 focus:ring-blue-500 outline-none">
-                            </div>
-
-                            <!-- خانة العرض صغيرة -->
-                            <div class="col-span-3 sm:col-span-2 lg:col-span-1">
-                                <label class="block text-[11px] font-extrabold text-slate-700 mb-1 text-center">العرض (م)</label>
-                                <input type="number" step="any" min="0" id="saleWidth" oninput="calcSaleLineSqm()" placeholder="1" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black text-center focus:ring-2 focus:ring-blue-500 outline-none">
-                            </div>
-
-                            <!-- خانة العدد صغيرة -->
-                            <div class="col-span-3 sm:col-span-2 lg:col-span-1">
-                                <label class="block text-[11px] font-extrabold text-slate-700 mb-1 text-center">العدد</label>
-                                <input type="number" step="any" min="0" id="saleQty" value="1" oninput="calcSaleLineSqm()" placeholder="1" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black text-center focus:ring-2 focus:ring-blue-500 outline-none">
-                            </div>
-
-                            <!-- خانة السعر صغيرة نسبياً (Enter ينزل للسلة فوراً) -->
-                            <div class="col-span-3 sm:col-span-3 lg:col-span-2">
-                                <label class="block text-[11px] font-extrabold text-emerald-700 mb-1 text-center">سعر المتر (Enter)</label>
-                                <input type="number" step="any" min="0" id="salePrice" placeholder="0.00" class="w-full p-2.5 bg-emerald-50/50 border border-emerald-300 rounded-xl text-xs font-black text-center text-emerald-800 focus:ring-2 focus:ring-emerald-500 outline-none">
-                            </div>
-
-                            <!-- زر الإضافة للسلة -->
-                            <div class="col-span-12 sm:col-span-3 lg:col-span-2">
-                                <button id="addSaleCartLineBtn" type="button" onclick="addSaleCartLine()" class="w-full py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition">
-                                    <i class="fa-solid fa-plus"></i>
-                                    <span>إضافة للسلة</span>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button type="button" onclick="exportFullBackup()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-black flex items-center gap-1.5">
+                                    <i class="fa-solid fa-download text-blue-600"></i> <span>تحميل نسخة احتياطية</span>
                                 </button>
-                            </div>
-                        </div>
-
-                        <!-- خانة اختيارية للمسمى البديل في الطباعة وكشف الحساب -->
-                        <div class="pt-1">
-                            <input type="text" id="saleBillingName" list="saleBillingNamesList" placeholder="مسمى الصنف البديل في كشف الحساب / الطباعة (اختياري — اتركه فارغاً لطباعة اسم الصنف الفعلي)" class="w-full p-2 bg-slate-50 border border-dashed border-slate-300 rounded-xl text-[11px] font-bold text-slate-700">
-                            <datalist id="saleBillingNamesList"></datalist>
-                        </div>
-
-                        <div id="saleStockAvailBanner" class="hidden">
-                            <span id="saleStockAvailText"></span>
-                            <span id="saleStockReqText"></span>
-                        </div>
-                    </div>
-
-                    <!-- جدول السلة التفاعلي القابل للتعديل المباشر -->
-                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                        <div class="p-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                            <span class="text-xs font-black text-slate-800"><i class="fa-solid fa-list-check text-blue-600 ml-1"></i> بنود إذن الصرف في السلة (يمكنك تعديل الصنف أو الطول أو العرض أو العدد أو السعر مباشرة)</span>
-                            <span class="text-[11px] font-bold text-slate-500">يتم تحديث الإجمالي تلقائياً عند أي تعديل</span>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right text-xs font-bold">
-                                <thead class="bg-slate-900 text-white">
-                                    <tr>
-                                        <th class="p-3 min-w-[230px]">الصنف / الخامة (قابل للتغيير)</th>
-                                        <th class="p-3 w-24 text-center">الطول (م)</th>
-                                        <th class="p-3 w-24 text-center">العرض (م)</th>
-                                        <th class="p-3 w-24 text-center">العدد</th>
-                                        <th class="p-3 w-28 text-center">المساحة (م²)</th>
-                                        <th class="p-3 w-28 text-center">سعر المتر</th>
-                                        <th class="p-3 w-32 text-center">الإجمالي</th>
-                                        <th class="p-3 w-14 text-center">حذف</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="saleCartBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-
-                        <!-- ملخص الإجماليات وزر الاعتماد -->
-                        <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4">
-                            <div class="flex flex-wrap items-center gap-4 text-xs font-extrabold">
-                                <div class="px-3.5 py-2 rounded-xl bg-white border border-slate-200">
-                                    إجمالي الأمتار: <strong id="saleCartTotalSqm" class="text-blue-700 font-black">0.00 م²</strong>
-                                </div>
-                                <div id="saleCartVatWrap" class="hidden px-3.5 py-2 rounded-xl bg-white border border-slate-200">
-                                    الضريبة (15%): <strong id="saleCartVatAmount" class="text-amber-700 font-black">0.00 ر.س</strong>
-                                </div>
-                                <div class="px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-sm">
-                                    الإجمالي النهائي: <strong id="saleCartTotalAmount" class="text-emerald-700 font-black">0.00 ر.س</strong>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center gap-2">
-                                <button type="button" onclick="closeNewSaleOrderModal()" class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold">إلغاء</button>
-                                <button id="submitSaleOrderBtn" type="button" onclick="submitSaleOrder()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-md transition">
-                                    <i class="fa-solid fa-check ml-1"></i> اعتماد إذن الصرف وخصم المخزون
+                                <button type="button" onclick="triggerRestoreBackup()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-black flex items-center gap-1.5">
+                                    <i class="fa-solid fa-upload text-emerald-600"></i> <span>استعادة نسخة</span>
+                                </button>
+                                <button type="button" onclick="openResetDemoTransactionsModal()" class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-black flex items-center gap-1.5">
+                                    <i class="fa-solid fa-broom"></i> <span>تصفير الحركات التجريبية</span>
                                 </button>
                             </div>
                         </div>
@@ -2812,24 +2649,24 @@
             <div class="flex justify-end gap-2 pt-2">
                 <button type="button" onclick="closePaymentModal()" class="px-4 py-2 bg-slate-100 rounded-xl text-xs font-extrabold">إلغاء</button>
                 <button type="button" onclick="submitCustomerPayment()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black">اعتماد سند القبض</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- نافذة تأكيد حذف / إلغاء حركة -->
-    <div id="confirmVoidModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <!-- نافذة تأكيد تصفير الحركات التجريبية -->
+    <div id="resetDemoTxModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
         <div class="modal-card-animate bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-4">
             <div class="flex items-center gap-3 text-rose-600">
-                <div class="w-11 h-11 rounded-2xl bg-rose-100 flex items-center justify-center text-lg shrink-0"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="w-11 h-11 rounded-2xl bg-rose-100 flex items-center justify-center text-lg shrink-0"><i class="fa-solid fa-broom"></i></div>
                 <div>
-                    <h3 class="text-base font-black text-slate-900">تأكيد إلغاء وحذف الحركة</h3>
-                    <p id="confirmVoidSubtitle" class="text-xs font-bold text-rose-600"></p>
+                    <h3 class="text-base font-black text-slate-900">تصفير الحركات التجريبية</h3>
+                    <p class="text-xs font-bold text-rose-600">إجراء للمدير العام فقط</p>
                 </div>
             </div>
-            <p id="confirmVoidDesc" class="text-xs font-bold text-slate-600 leading-relaxed"></p>
+            <p class="text-xs font-bold text-slate-600 leading-relaxed">سيتم حذف جميع إذون الصرف وسندات القبض والتوريد والتحويلات والهالك وسجلات الجرد، مع الإبقاء على بيانات العملاء والأصناف والمستخدمين وإعادة الأرصدة للأرصدة الافتتاحية.</p>
+            <div>
+                <label class="block text-xs font-extrabold text-slate-700 mb-1">أدخل كلمة مرور المدير العام للتأكيد:</label>
+                <input type="password" id="resetDemoAdminPass" placeholder="••••" dir="ltr" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+            </div>
             <div class="flex justify-end gap-2 pt-2">
-                <button type="button" onclick="closeConfirmVoidModal()" class="px-4 py-2 bg-slate-100 rounded-xl text-xs font-extrabold">تراجع</button>
-                <button type="button" onclick="executeConfirmedVoid()" class="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black">تأكيد الحذف واسترجاع الأرصدة</button>
+                <button type="button" onclick="document.getElementById('resetDemoTxModal').classList.add('hidden')" class="px-4 py-2 bg-slate-100 rounded-xl text-xs font-extrabold">إلغاء</button>
+                <button type="button" onclick="confirmResetDemoTransactions()" class="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black">تأكيد التصفير</button>
             </div>
         </div>
     </div>
@@ -3035,7 +2872,16 @@
             phone1: '',
             phone2: '',
             address: '',
-            logoDataUrl: ''
+            logoDataUrl: '',
+            currencySymbol: 'ر.س',
+            lowStockLimit: 10,
+            overdueDays: 25,
+            stagnantDays: 60,
+            defaultWarehouse: 'wh_samir',
+            defaultTaxMode: 'none',
+            vatPercent: 15,
+            printFooterNote: '',
+            whatsappFooter: 'شكراً لتعاملكم معنا.'
         };
 
         let appState = {
@@ -3141,15 +2987,30 @@
             const cfg = getCompanySettings();
             const setVal = (id, v) => {
                 const el = document.getElementById(id);
-                if (el) el.value = v || '';
+                if (el) el.value = v !== undefined && v !== null ? v : '';
             };
             setVal('cfgCompanyName', cfg.companyName);
             setVal('cfgBrandShort', cfg.brandShort);
+            setVal('cfgCurrencySymbol', cfg.currencySymbol || 'ر.س');
             setVal('cfgCrNumber', cfg.crNumber);
             setVal('cfgVatNumber', cfg.vatNumber);
             setVal('cfgPhone1', cfg.phone1);
             setVal('cfgPhone2', cfg.phone2);
             setVal('cfgAddress', cfg.address);
+            setVal('cfgLowStockLimit', cfg.lowStockLimit ?? 10);
+            setVal('cfgOverdueDays', cfg.overdueDays ?? 25);
+            setVal('cfgStagnantDays', cfg.stagnantDays ?? 60);
+            setVal('cfgDefaultWarehouse', cfg.defaultWarehouse || 'wh_samir');
+            setVal('cfgDefaultTaxMode', cfg.defaultTaxMode || 'none');
+            setVal('cfgVatPercent', cfg.vatPercent ?? 15);
+            setVal('cfgPrintFooterNote', cfg.printFooterNote || '');
+            setVal('cfgWhatsappFooter', cfg.whatsappFooter || '');
+
+            const whS = appState.warehouses.find(w => w.id === 'wh_samir');
+            const whT = appState.warehouses.find(w => w.id === 'wh_tahlia');
+            setVal('cfgWhSamirName', whS ? whS.name : 'مخزن السامر');
+            setVal('cfgWhTahliaName', whT ? whT.name : 'مخزن التحلية');
+
             applyCompanyBrandingToUI();
         }
 
@@ -3244,20 +3105,68 @@
                 showToast('يرجى إدخال اسم الشركة / المؤسسة', true);
                 return;
             }
+            const whSamirName = (document.getElementById('cfgWhSamirName')?.value || '').trim() || 'مخزن السامر';
+            const whTahliaName = (document.getElementById('cfgWhTahliaName')?.value || '').trim() || 'مخزن التحلية';
+
+            appState.warehouses = [
+                { id: 'wh_samir', name: whSamirName },
+                { id: 'wh_tahlia', name: whTahliaName }
+            ];
+
             appState.companySettings = {
                 ...getCompanySettings(),
                 companyName,
                 brandShort: (document.getElementById('cfgBrandShort')?.value || '').trim(),
+                currencySymbol: (document.getElementById('cfgCurrencySymbol')?.value || '').trim() || 'ر.س',
                 crNumber: (document.getElementById('cfgCrNumber')?.value || '').trim(),
                 vatNumber: (document.getElementById('cfgVatNumber')?.value || '').trim(),
                 phone1: (document.getElementById('cfgPhone1')?.value || '').trim(),
                 phone2: (document.getElementById('cfgPhone2')?.value || '').trim(),
-                address: (document.getElementById('cfgAddress')?.value || '').trim()
+                address: (document.getElementById('cfgAddress')?.value || '').trim(),
+                lowStockLimit: Math.max(1, parseInt(document.getElementById('cfgLowStockLimit')?.value, 10) || 10),
+                overdueDays: Math.max(1, parseInt(document.getElementById('cfgOverdueDays')?.value, 10) || 25),
+                stagnantDays: Math.max(1, parseInt(document.getElementById('cfgStagnantDays')?.value, 10) || 60),
+                defaultWarehouse: document.getElementById('cfgDefaultWarehouse')?.value || 'wh_samir',
+                defaultTaxMode: document.getElementById('cfgDefaultTaxMode')?.value || 'none',
+                vatPercent: Math.max(0, parseFloat(document.getElementById('cfgVatPercent')?.value) || 0),
+                printFooterNote: (document.getElementById('cfgPrintFooterNote')?.value || '').trim(),
+                whatsappFooter: (document.getElementById('cfgWhatsappFooter')?.value || '').trim()
             };
-            logUserActivity('edit', 'الإعدادات', `تحديث بيانات الشركة وهوية الشعار (${companyName})`);
+            logUserActivity('edit', 'الإعدادات', `تحديث إعدادات النظام وهوية الشركة (${companyName})`);
             saveState();
             applyCompanyBrandingToUI();
-            showToast('تم حفظ إعدادات الشركة وتحديثها في كافة أنحاء البرنامج بنجاح');
+            refreshAllViews();
+            showToast('تم حفظ جميع إعدادات النظام وتحديثها بنجاح');
+        }
+
+        function openResetDemoTransactionsModal() {
+            if (!canDeleteRecords('settings') && currentUser?.role !== 'admin') {
+                showToast('هذه الميزة متاحة للمدير العام فقط', true);
+                return;
+            }
+            document.getElementById('resetDemoAdminPass').value = '';
+            document.getElementById('resetDemoTxModal')?.classList.remove('hidden');
+        }
+
+        function confirmResetDemoTransactions() {
+            const pass = (document.getElementById('resetDemoAdminPass')?.value || '').trim();
+            const adminUser = appState.users.find(u => u.id === 'user_admin') || currentUser;
+            if (!adminUser || pass !== String(adminUser.password)) {
+                showToast('كلمة مرور المدير العام غير صحيحة!', true);
+                return;
+            }
+            appState.transactions = [];
+            appState.stocktakeLines = [];
+            appState.stocktakeHistory = [];
+            appState.items.forEach(it => {
+                it.stockSamir = Number(it.openingSamir || 0);
+                it.stockTahlia = Number(it.openingTahlia || 0);
+            });
+            logUserActivity('delete', 'الإعدادات', 'تصفير الحركات التجريبية وإعادة الأرصدة للافتتاحي');
+            saveState();
+            document.getElementById('resetDemoTxModal')?.classList.add('hidden');
+            refreshAllViews();
+            showToast('تم تصفير جميع الحركات التجريبية وإعادة الأرصدة الافتتاحية بنجاح');
         }
 
         function logUserActivity(actionType, moduleName, details) {
@@ -3403,6 +3312,8 @@
         function getOverdueInvoicesList() {
             const now = Date.now();
             const dayMs = 24 * 60 * 60 * 1000;
+            const overdueLimitDays = Number(getCompanySettings().overdueDays || 25);
+            const warnLimitDays = Math.max(1, overdueLimitDays - 5);
             const result = [];
 
             appState.customers.forEach(cust => {
@@ -3430,11 +3341,11 @@
                     if (remaining > 0.01) {
                         const issueMs = new Date(inv.date).getTime();
                         const ageDays = Math.max(0, Math.floor((now - issueMs) / dayMs));
-                        const dueDateStr = new Date(issueMs + 25 * dayMs).toISOString();
-                        const overdueDays = Math.max(0, ageDays - 25);
+                        const dueDateStr = new Date(issueMs + overdueLimitDays * dayMs).toISOString();
+                        const overdueDays = Math.max(0, ageDays - overdueLimitDays);
                         let status = 'current';
-                        if (ageDays > 25) status = 'overdue';
-                        else if (ageDays >= 20) status = 'warning';
+                        if (ageDays > overdueLimitDays) status = 'overdue';
+                        else if (ageDays >= warnLimitDays) status = 'warning';
 
                         result.push({
                             invoiceId: inv.id,
@@ -3455,8 +3366,8 @@
 
             return result.sort((a, b) => b.ageDays - a.ageDays);
         }
-
-        function getStagnantItemsList(thresholdDays = 60) {
+        function getStagnantItemsList(thresholdDays = null) {
+            const effectiveThreshold = thresholdDays !== null ? thresholdDays : Number(getCompanySettings().stagnantDays || 60);
             const now = Date.now();
             const dayMs = 24 * 60 * 60 * 1000;
             const lastSaleMap = {};
@@ -3485,7 +3396,7 @@
                 const lastTs = lastSaleMap[it.id] || lastSaleMap[it.name] || null;
                 const daysIdle = lastTs ? Math.floor((now - lastTs) / dayMs) : 999;
 
-                if (daysIdle >= thresholdDays) {
+                if (daysIdle >= effectiveThreshold) {
                     const area = (Number(it.length) || 50) * (Number(it.width) || 1);
                     list.push({
                         id: it.id,
@@ -3544,10 +3455,11 @@
 
             const salesCount = appState.transactions.filter(t => t.type === 'sale').length;
             const receiptsCount = appState.transactions.filter(t => t.type === 'payment').length;
-            const lowStockCount = appState.items.filter(it => (Number(it.stockSamir || 0) + Number(it.stockTahlia || 0)) <= 10).length;
+            const lowLimit = Number(getCompanySettings().lowStockLimit || 10);
+            const stagLimit = Number(getCompanySettings().stagnantDays || 60);
+            const lowStockCount = appState.items.filter(it => (Number(it.stockSamir || 0) + Number(it.stockTahlia || 0)) <= lowLimit).length;
             const overdueCount = getOverdueInvoicesList().filter(x => x.status === 'overdue').length;
-            const stagnantCount = getStagnantItemsList(60).length;
-
+            const stagnantCount = getStagnantItemsList(stagLimit).length;
             const badgeSales = document.getElementById('navBadgeSales');
             if (badgeSales) badgeSales.textContent = salesCount;
 
@@ -4222,16 +4134,16 @@
                     <div data-combo-idx="${idx}"
                          onmouseenter="highlightSaleItemOption(${idx})"
                          onmousedown="event.preventDefault(); selectSaleItemById('${it.id}');"
-                         class="px-3.5 py-2.5 cursor-pointer flex items-center justify-between gap-2 transition-colors ${isActive ? 'bg-blue-600 text-white' : 'hover:bg-blue-50 text-slate-800'}">
-                        <div class="min-w-0">
-                            <div class="text-xs font-black truncate ${isActive ? 'text-white' : 'text-slate-900'}">${escapeHtmlAttr(it.name)}</div>
-                            <div class="text-[11px] font-semibold mt-0.5 ${isActive ? 'text-blue-100' : 'text-slate-500'}">
-                                المقاس القياسي: العرض ${it.width}م × الطول ${it.length}م
+                         class="px-3.5 py-2.5 cursor-pointer flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2 border-b border-slate-100 last:border-b-0 transition-colors ${isActive ? 'bg-blue-600 text-white' : 'hover:bg-blue-50 text-slate-800'}">
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-black whitespace-normal break-words leading-snug sm:truncate ${isActive ? 'text-white' : 'text-slate-900'}">${escapeHtmlAttr(it.name)}</div>
+                            <div class="text-[10px] sm:text-[11px] font-semibold mt-0.5 ${isActive ? 'text-blue-100' : 'text-slate-500'}">
+                                المقاس: ${it.width}م × ${it.length}م
                             </div>
                         </div>
-                        <div class="flex items-center gap-1.5 shrink-0 text-[10px] font-black">
-                            <span class="px-2 py-0.5 rounded-md ${isActive ? 'bg-white/20 text-white' : (rS > 0 ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-400')}">السامر: ${rS.toFixed(2)}</span>
-                            <span class="px-2 py-0.5 rounded-md ${isActive ? 'bg-white/20 text-white' : (rT > 0 ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-400')}">التحلية: ${rT.toFixed(2)}</span>
+                        <div class="flex items-center gap-1 shrink-0 text-[10px] font-black self-start sm:self-center">
+                            <span class="px-1.5 py-0.5 rounded ${isActive ? 'bg-white/20 text-white' : (rS > 0 ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-400')}">السامر: ${rS.toFixed(2)}</span>
+                            <span class="px-1.5 py-0.5 rounded ${isActive ? 'bg-white/20 text-white' : (rT > 0 ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-400')}">التحلية: ${rT.toFixed(2)}</span>
                         </div>
                     </div>
                 `;
@@ -4248,21 +4160,21 @@
                 const rS = Number(it.stockSamir || 0);
                 const rT = Number(it.stockTahlia || 0);
                 if (i === idx) {
-                    el.className = 'px-3.5 py-2.5 cursor-pointer flex items-center justify-between gap-2 transition-colors bg-blue-600 text-white';
-                    el.querySelector('div > div:first-child').className = 'text-xs font-black truncate text-white';
-                    el.querySelector('div > div:last-child').className = 'text-[11px] font-semibold mt-0.5 text-blue-100';
+                    el.className = 'px-3.5 py-2.5 cursor-pointer flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2 border-b border-slate-100 last:border-b-0 transition-colors bg-blue-600 text-white';
+                    el.querySelector('div > div:first-child').className = 'text-xs font-black whitespace-normal break-words leading-snug sm:truncate text-white';
+                    el.querySelector('div > div:last-child').className = 'text-[10px] sm:text-[11px] font-semibold mt-0.5 text-blue-100';
                     el.lastElementChild.innerHTML = `
-                        <span class="px-2 py-0.5 rounded-md bg-white/20 text-white">السامر: ${rS.toFixed(2)}</span>
-                        <span class="px-2 py-0.5 rounded-md bg-white/20 text-white">التحلية: ${rT.toFixed(2)}</span>
+                        <span class="px-1.5 py-0.5 rounded bg-white/20 text-white">السامر: ${rS.toFixed(2)}</span>
+                        <span class="px-1.5 py-0.5 rounded bg-white/20 text-white">التحلية: ${rT.toFixed(2)}</span>
                     `;
                     el.scrollIntoView({ block: 'nearest' });
                 } else {
-                    el.className = 'px-3.5 py-2.5 cursor-pointer flex items-center justify-between gap-2 transition-colors hover:bg-blue-50 text-slate-800';
-                    el.querySelector('div > div:first-child').className = 'text-xs font-black truncate text-slate-900';
-                    el.querySelector('div > div:last-child').className = 'text-[11px] font-semibold mt-0.5 text-slate-500';
+                    el.className = 'px-3.5 py-2.5 cursor-pointer flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2 border-b border-slate-100 last:border-b-0 transition-colors hover:bg-blue-50 text-slate-800';
+                    el.querySelector('div > div:first-child').className = 'text-xs font-black whitespace-normal break-words leading-snug sm:truncate text-slate-900';
+                    el.querySelector('div > div:last-child').className = 'text-[10px] sm:text-[11px] font-semibold mt-0.5 text-slate-500';
                     el.lastElementChild.innerHTML = `
-                        <span class="px-2 py-0.5 rounded-md ${rS > 0 ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-400'}">السامر: ${rS.toFixed(2)}</span>
-                        <span class="px-2 py-0.5 rounded-md ${rT > 0 ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-400'}">التحلية: ${rT.toFixed(2)}</span>
+                        <span class="px-1.5 py-0.5 rounded ${rS > 0 ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-400'}">السامر: ${rS.toFixed(2)}</span>
+                        <span class="px-1.5 py-0.5 rounded ${rT > 0 ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-400'}">التحلية: ${rT.toFixed(2)}</span>
                     `;
                 }
             });
@@ -6341,10 +6253,12 @@ ${statusLine}
             if (submitBtn) submitBtn.innerHTML = '<i class="fa-solid fa-check ml-1"></i> اعتماد إذن الصرف وخصم المخزون';
 
             const nextNum = 'OUT-' + (1000 + appState.transactions.filter(t => t.type === 'sale').length + 1);
+            const cfg = getCompanySettings();
             document.getElementById('saleOrderNumberInput').value = nextNum;
+            document.getElementById('saleWarehouse').value = cfg.defaultWarehouse || 'wh_samir';
             document.getElementById('saleDate').value = getNowLocalInputStr();
             document.getElementById('saleQuoteRef').value = '';
-            document.getElementById('saleTaxMode').value = 'none';
+            document.getElementById('saleTaxMode').value = cfg.defaultTaxMode || 'none';
             document.getElementById('salePaymentStatus').value = 'credit';
             toggleSalePaymentMethodField();
 
@@ -7052,6 +6966,7 @@ ${statusLine}
                             <div>توقيع المستلم: ....................................</div>
                             <div>ختم وتوقيع المؤسسة: ....................................</div>
                         </div>
+                        ${cfg.printFooterNote ? `<div style="margin-top:14px;padding:8px 12px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;text-align:center;font-size:11px;font-weight:800;color:#475569;">${escapeHtmlAttr(cfg.printFooterNote)}</div>` : ''}
                     </div>
                     <script>setTimeout(() => { window.print(); window.close(); }, 450);<\/script>
                 </body>
