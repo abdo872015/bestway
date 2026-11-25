@@ -5070,26 +5070,26 @@
             };
 
             setTextSafe('dashTotalSqm', totSqm.toFixed(2) + ' م²');
-            setTextSafe('dashWarehouseSplit', `السامر: ${samirSqm.toFixed(0)} م² | التحلية: ${tahliaSqm.toFixed(0)} م²`);
+            setTextSafe('dashWarehouseSplit', `${getWarehouseName('wh_samir')}: ${samirSqm.toFixed(0)} م² | ${getWarehouseName('wh_tahlia')}: ${tahliaSqm.toFixed(0)} م²`);
             setTextSafe('dashTotalRolls', totRolls.toFixed(2) + ' رول');
             setTextSafe('dashItemsCount', `عدد الأصناف: ${appState.items.length} صنف`);
-            setTextSafe('dashTotalSales', totalSales.toFixed(2) + ' ر.س');
-            setTextSafe('dashTotalCollected', `المحصل: ${totalCollected.toFixed(2)} ر.س`);
-            setTextSafe('dashTotalDebt', totalDebt.toFixed(2) + ' ر.س');
+            const cur = getCompanySettings().currencySymbol || 'ر.س';
+            setTextSafe('dashTotalSales', totalSales.toFixed(2) + ' ' + cur);
+            setTextSafe('dashTotalCollected', `المحصل: ${totalCollected.toFixed(2)} ${cur}`);
+            setTextSafe('dashTotalDebt', totalDebt.toFixed(2) + ' ' + cur);
             setTextSafe('dashAlertsCount', `تنبيهات المخزون: ${lowItems.length}`);
 
             setTextSafe('cardTopBuyerName', topBuyer ? topBuyer.name : 'لا يوجد بيانات');
-            setTextSafe('cardTopBuyerVal', topBuyer ? `${topBuyer.val.toFixed(2)} ر.س (${topBuyer.sqm.toFixed(1)} م²)` : '0.00 ر.س (0 م²)');
+            setTextSafe('cardTopBuyerVal', topBuyer ? `${topBuyer.val.toFixed(2)} ${cur} (${topBuyer.sqm.toFixed(1)} م²)` : `0.00 ${cur} (0 م²)`);
 
             setTextSafe('cardTopPayerName', topPayer ? topPayer.name : 'لا يوجد بيانات');
-            setTextSafe('cardTopPayerVal', topPayer ? `${topPayer.val.toFixed(2)} ر.س` : '0.00 ر.س');
+            setTextSafe('cardTopPayerVal', topPayer ? `${topPayer.val.toFixed(2)} ${cur}` : `0.00 ${cur}`);
 
             setTextSafe('cardTopDebtorName', topDebtor ? topDebtor.name : 'لا يوجد بيانات');
-            setTextSafe('cardTopDebtorVal', topDebtor ? `${topDebtor.val.toFixed(2)} ر.س` : '0.00 ر.س');
+            setTextSafe('cardTopDebtorVal', topDebtor ? `${topDebtor.val.toFixed(2)} ${cur}` : `0.00 ${cur}`);
 
             setTextSafe('cardLeastBuyerName', leastBuyer ? leastBuyer.name : 'لا يوجد بيانات');
-            setTextSafe('cardLeastBuyerVal', leastBuyer ? `${leastBuyer.val.toFixed(2)} ر.س` : '0.00 ر.س');
-
+            setTextSafe('cardLeastBuyerVal', leastBuyer ? `${leastBuyer.val.toFixed(2)} ${cur}` : `0.00 ${cur}`);
             let topItemName = 'لا يوجد بيانات', topItemSqm = 0;
             Object.entries(itemSqmSold).forEach(([k, v]) => {
                 if (v > topItemSqm) { topItemSqm = v; topItemName = k; }
@@ -7358,7 +7358,7 @@ ${statusLine}
                         </table>
                     </div>
                     <div class="flex justify-end text-sm font-black text-emerald-700">
-                        الإجمالي المستحق: ${Number(tx.totalAmount || 0).toFixed(2)} ر.س
+                        الإجمالي المستحق: ${Number(tx.totalAmount || 0).toFixed(2)} ${escapeHtmlAttr(getCompanySettings().currencySymbol || 'ر.س')}
                     </div>
                 `;
             }
@@ -9295,15 +9295,15 @@ ${statusLine}
                     appState.transactions = appState.transactions.filter(t => !(t.type === 'payment' && t.linkedSaleId === tx.id));
                 } else if (tx.type === 'inbound') {
                     const it = appState.items.find(x => x.id === tx.itemId);
-                    if (it) {
-                        if (tx.warehouseId === 'wh_tahlia') it.stockTahlia = Math.max(0, Number(it.stockTahlia || 0) - Number(tx.rolls || 0));
-                        else it.stockSamir = Math.max(0, Number(it.stockSamir || 0) - Number(tx.rolls || 0));
-                    }
-                } else if (tx.type === 'waste') {
-                    const it = appState.items.find(x => x.id === tx.itemId);
-                    if (it) {
-                        if (tx.warehouseId === 'wh_tahlia') it.stockTahlia = Number(it.stockTahlia || 0) + Number(tx.rolls || 0);
-                        else it.stockSamir = Number(it.stockSamir || 0) + Number(tx.rolls || 0);
+                } else if (tx.type === 'transfer') {
+                    const it = appState.items.find(x => x.id === tx.itemId || x.name === tx.itemName);
+                    const rolls = Number(tx.rolls || 0);
+                    if (it && rolls > 0) {
+                        if (tx.toWh === 'wh_tahlia') it.stockTahlia = Math.max(0, Number(it.stockTahlia || 0) - rolls);
+                        else it.stockSamir = Math.max(0, Number(it.stockSamir || 0) - rolls);
+
+                        if (tx.fromWh === 'wh_tahlia') it.stockTahlia = Number(it.stockTahlia || 0) + rolls;
+                        else it.stockSamir = Number(it.stockSamir || 0) + rolls;
                     }
                 } else if (tx.type === 'return') {
                     const it = appState.items.find(x => x.id === tx.itemId);
@@ -9354,11 +9354,37 @@ ${statusLine}
             document.getElementById('pwaInstallBanner')?.classList.add('hidden');
         }
 
+        function initDynamicPwaAssets() {
+            try {
+                const cfg = getCompanySettings();
+                const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 245"><rect width="260" height="245" rx="36" fill="#0f2361"/><rect x="20" y="20" width="220" height="205" rx="28" fill="#ffffff"/><text x="130" y="135" text-anchor="middle" font-family="Cairo, sans-serif" font-weight="900" font-size="34" fill="#0f2361">BW</text><text x="130" y="178" text-anchor="middle" font-family="Cairo, sans-serif" font-weight="800" font-size="22" fill="#1d4ed8">${escapeHtmlAttr(cfg.brandShort || 'Best Way')}</text></svg>`;
+                const iconUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgIcon);
+                const fav = document.getElementById('pwaFavicon');
+                const apple = document.getElementById('pwaAppleIcon');
+                const manifestLink = document.getElementById('pwaManifestLink');
+                if (fav) fav.href = iconUrl;
+                if (apple) apple.href = iconUrl;
+                if (manifestLink) {
+                    const manifestObj = {
+                        name: cfg.companyName || 'مؤسسة الطريق الأمثل',
+                        short_name: cfg.brandShort || 'الطريق الأمثل',
+                        start_url: '.',
+                        display: 'standalone',
+                        background_color: '#0f2361',
+                        theme_color: '#1C2C6E',
+                        icons: [{ src: iconUrl, sizes: '192x192 512x512', type: 'image/svg+xml' }]
+                    };
+                    manifestLink.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestObj));
+                }
+            } catch (e) {}
+        }
+
         window.addEventListener('load', () => {
             loadState();
             const savedTheme = localStorage.getItem(THEME_KEY) || 'light';
             setAppTheme(savedTheme);
             applyCompanyBrandingToUI();
+            initDynamicPwaAssets();
             restoreUserSession();
             initReportsYearSelect();
             refreshAllViews();
