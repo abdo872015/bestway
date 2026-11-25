@@ -1899,12 +1899,13 @@
     <div id="quickReceiptModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
         <div class="modal-card-animate bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 space-y-4">
             <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                <h3 id="quickReceiptModalTitle" class="text-base font-black text-slate-900 flex items-center gap-2">
                     <i class="fa-solid fa-hand-holding-dollar text-emerald-600"></i>
                     <span>تسجيل سند قبض من عميل</span>
                 </h3>
                 <button type="button" onclick="closeQuickReceiptModal()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700"><i class="fa-solid fa-xmark"></i></button>
             </div>
+            <input type="hidden" id="editingQuickReceiptId">
             <div class="space-y-3">
                 <div class="searchable-select-wrapper relative">
                     <label class="block text-xs font-extrabold text-slate-700 mb-1">اسم العميل</label>
@@ -1938,7 +1939,7 @@
             </div>
             <div class="flex justify-end gap-2 pt-2">
                 <button type="button" onclick="closeQuickReceiptModal()" class="px-4 py-2 bg-slate-100 rounded-xl text-xs font-extrabold">إلغاء</button>
-                <button type="button" onclick="submitQuickReceipt()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black">اعتماد وحفظ سند القبض</button>
+                <button id="submitQuickReceiptBtn" type="button" onclick="submitQuickReceipt()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black">اعتماد وحفظ سند القبض</button>
             </div>
         </div>
     </div>
@@ -6766,10 +6767,24 @@ ${statusLine}
                     <td class="py-3.5 px-4 text-slate-600">${r.notes || '-'}</td>
                     <td class="py-3.5 px-4 text-center font-black text-emerald-700">${Number(r.amount || 0).toFixed(2)} ر.س</td>
                     <td class="py-3.5 px-4 text-center">
-                        <div class="inline-flex items-center gap-1.5">
-                            <button type="button" onclick="printReceiptVoucher('${r.id}')" title="طباعة السند" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-extrabold"><i class="fa-solid fa-print"></i></button>
-                            <button type="button" onclick="sendReceiptWhatsApp('${r.id}')" title="إرسال واتساب" class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-extrabold"><i class="fa-brands fa-whatsapp"></i></button>
-                            ${hasPermission('receipts', 'delete') ? `<button type="button" onclick="requestVoidTransaction('${r.id}')" title="حذف السند" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-extrabold"><i class="fa-solid fa-trash"></i></button>` : ''}
+                        <button type="button" onclick="toggleActionMenu('rcpMenu_${r.id}', this)" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold">
+                            إجراءات <i class="fa-solid fa-chevron-down mr-1"></i>
+                        </button>
+                        <div id="rcpMenu_${r.id}" class="action-dropdown hidden fixed w-44 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 text-right overflow-hidden">
+                            ${hasPermission('receipts', 'edit') || hasPermission('customers', 'edit') ? `
+                            <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); openEditReceiptModal('${r.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-amber-700 hover:bg-amber-50 flex items-center">
+                                <i class="fa-solid fa-pen-to-square text-amber-600"></i> <span>تعديل السند</span>
+                            </button>` : ''}
+                            <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); printReceiptVoucher('${r.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-slate-800 hover:bg-slate-100 flex items-center">
+                                <i class="fa-solid fa-print text-slate-700"></i> <span>طباعة السند</span>
+                            </button>
+                            <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); sendReceiptWhatsApp('${r.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50 flex items-center">
+                                <i class="fa-brands fa-whatsapp text-emerald-600"></i> <span>إرسال واتساب</span>
+                            </button>
+                            ${hasPermission('receipts', 'delete') ? `
+                            <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); requestVoidTransaction('${r.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center">
+                                <i class="fa-solid fa-trash"></i> <span>حذف السند</span>
+                            </button>` : ''}
                         </div>
                     </td>
                 </tr>
@@ -6782,6 +6797,12 @@ ${statusLine}
                 return;
             }
             populateSelects();
+            document.getElementById('editingQuickReceiptId').value = '';
+            const titleSpan = document.querySelector('#quickReceiptModalTitle span');
+            if (titleSpan) titleSpan.textContent = 'تسجيل سند قبض من عميل';
+            const btnEl = document.getElementById('submitQuickReceiptBtn');
+            if (btnEl) btnEl.textContent = 'اعتماد وحفظ سند القبض';
+
             const sel = document.getElementById('qPayCustomerSelect');
             const inp = document.getElementById('qPayCustomerSearch');
             if (sel) sel.selectedIndex = -1;
@@ -6791,6 +6812,34 @@ ${statusLine}
             document.getElementById('qPayDateInput').value = getNowLocalInputStr();
             document.getElementById('qPayMethodInput').value = 'تحويل بنكي';
             document.getElementById('qPayNotesInput').value = '';
+            document.getElementById('quickReceiptModal')?.classList.remove('hidden');
+        }
+
+        function openEditReceiptModal(rcpId) {
+            if (!hasPermission('receipts', 'edit') && !hasPermission('customers', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية تعديل سندات القبض', true);
+                return;
+            }
+            const r = appState.transactions.find(t => t.id === rcpId && t.type === 'payment');
+            if (!r) return;
+
+            populateSelects();
+            document.getElementById('editingQuickReceiptId').value = r.id;
+            const titleSpan = document.querySelector('#quickReceiptModalTitle span');
+            if (titleSpan) titleSpan.textContent = `تعديل سند القبض: ${r.id}`;
+            const btnEl = document.getElementById('submitQuickReceiptBtn');
+            if (btnEl) btnEl.textContent = 'حفظ تعديلات سند القبض';
+
+            const sel = document.getElementById('qPayCustomerSelect');
+            const inp = document.getElementById('qPayCustomerSearch');
+            if (sel) sel.value = r.customerId || '';
+            if (inp) inp.value = r.customerName || '';
+            updateQuickReceiptBalanceHint();
+
+            document.getElementById('qPayAmountInput').value = Number(r.amount || 0);
+            document.getElementById('qPayDateInput').value = r.date ? r.date.slice(0, 16) : getNowLocalInputStr();
+            document.getElementById('qPayMethodInput').value = r.method || 'تحويل بنكي';
+            document.getElementById('qPayNotesInput').value = r.notes || '';
             document.getElementById('quickReceiptModal')?.classList.remove('hidden');
         }
 
@@ -6810,6 +6859,7 @@ ${statusLine}
         }
 
         function submitQuickReceipt() {
+            const editingId = document.getElementById('editingQuickReceiptId')?.value || '';
             const custId = document.getElementById('qPayCustomerSelect')?.value;
             const cust = appState.customers.find(c => c.id === custId);
             const amount = parseFloat(document.getElementById('qPayAmountInput')?.value) || 0;
@@ -6822,538 +6872,43 @@ ${statusLine}
                 return;
             }
 
-            const rcpId = 'RCP-' + (1000 + appState.transactions.length + 1);
-            appState.transactions.push({
-                id: rcpId,
-                seq: Date.now(),
-                type: 'payment',
-                date,
-                customerId: cust.id,
-                customerName: cust.name,
-                amount,
-                method,
-                notes
-            });
-
-            logUserActivity('create', 'سندات القبض', `تسجيل سند قبض ${rcpId} بمبلغ ${amount.toFixed(2)} ر.س من العميل ${cust.name}`);
-            saveState();
-            closeQuickReceiptModal();
-            refreshAllViews();
-            showToast(`تم حفظ سند القبض ${rcpId} بنجاح`);
-        }
-
-        function printReceiptVoucher(rcpId) {
-            const r = appState.transactions.find(t => t.id === rcpId && t.type === 'payment');
-            if (!r) return;
-            const cfg = getCompanySettings();
-            const st = getCustomerStats(r.customerId);
-            const win = window.open('', '_blank', 'width=800,height=650');
-            if (!win) return;
-            win.document.write(`
-                <!DOCTYPE html>
-                <html lang="ar" dir="rtl">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>سند قبض - ${r.id}</title>
-                    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
-                    <style>body{font-family:'Cairo',sans-serif;padding:24px;color:#0f172a;background:#fff;}.box{border:2px solid #0f2361;border-radius:16px;padding:24px;max-width:720px;margin:auto;}</style>
-                </head>
-                <body>
-                    <div class="box">
-                        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #cbd5e1;padding-bottom:14px;">
-                            <div style="display:flex;align-items:center;gap:12px;">
-                                <div style="width:68px;height:60px;">${cfg.logoDataUrl ? `<img src="${cfg.logoDataUrl}" style="width:100%;height:100%;object-fit:contain;">` : PRINT_HD_LOGO_SVG}</div>
-                                <div><h2 style="margin:0;font-size:16px;color:#0f2361;">${escapeHtmlAttr(cfg.companyName)}</h2><div style="font-size:11px;color:#64748b;">${cfg.vatNumber ? 'الرقم الضريبي: ' + cfg.vatNumber : ''}</div></div>
-                            </div>
-                            <div style="background:#ecfdf5;border:1.5px solid #10b981;color:#047857;padding:8px 18px;border-radius:10px;font-weight:900;font-size:15px;">سند قبض مالي</div>
-                        </div>
-                        <div style="margin-top:18px;line-height:2;font-size:13px;">
-                            <div><strong>رقم السند:</strong> ${r.id} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>التاريخ:</strong> ${new Date(r.date).toLocaleDateString('ar-SA')}</div>
-                            <div><strong>استلمنا من السادة:</strong> ${escapeHtmlAttr(r.customerName)}</div>
-                            <div><strong>مبلغ وقدره:</strong> <span style="font-size:16px;font-weight:900;color:#047857;">${Number(r.amount).toFixed(2)} ر.س</span></div>
-                            <div><strong>طريقة الدفع:</strong> ${escapeHtmlAttr(r.method || 'تحويل بنكي')}</div>
-                            ${r.notes ? `<div><strong>وذلك عن / ملاحظات:</strong> ${escapeHtmlAttr(r.notes)}</div>` : ''}
-                            <div><strong>الرصيد المتبقي بحساب العميل:</strong> ${st.balance.toFixed(2)} ر.س</div>
-                        </div>
-                        <div style="margin-top:32px;display:flex;justify-content:space-between;font-size:12px;font-weight:800;">
-                            <div>توقيع المستلم: ........................</div>
-                            <div>الختم الرسمي: ........................</div>
-                        </div>
-                    </div>
-                    <script>setTimeout(()=>{window.print();window.close();},450);<\/script>
-                </body>
-                </html>
-            `);
-            win.document.close();
-        }
-
-        function submitTransfer() {
-            if (!hasPermission('transfers', 'edit')) {
-                showToast('عذراً، ليس لديك صلاحية تنفيذ التحويلات المخزنية', true);
-                return;
-            }
-            const fromWh = document.getElementById('trFromWarehouse').value;
-            const toWh = document.getElementById('trToWarehouse').value;
-            const itemId = document.getElementById('trItemSelect').value;
-            const rolls = parseFloat(document.getElementById('trRollsQty').value) || 0;
-            const date = document.getElementById('trDate').value || getNowLocalInputStr();
-
-            if (fromWh === toWh) {
-                showToast('يجب اختيار مستودع مصدر مختلف عن المستودع المستلم', true);
-                return;
-            }
-            const item = appState.items.find(x => x.id === itemId);
-            if (!item || rolls <= 0) {
-                showToast('يرجى اختيار الصنف وإدخال عدد الرولات المحولة', true);
-                return;
-            }
-
-            const avail = fromWh === 'wh_tahlia' ? Number(item.stockTahlia || 0) : Number(item.stockSamir || 0);
-            if (rolls > avail + 0.0001) {
-                showToast(`الرصيد المتاح في المستودع المصدر (${avail.toFixed(2)} رول) لا يكفي`, true);
-                return;
-            }
-
-            if (fromWh === 'wh_tahlia') {
-                item.stockTahlia = Math.max(0, Number(item.stockTahlia || 0) - rolls);
-                item.stockSamir = Number(item.stockSamir || 0) + rolls;
-            } else {
-                item.stockSamir = Math.max(0, Number(item.stockSamir || 0) - rolls);
-                item.stockTahlia = Number(item.stockTahlia || 0) + rolls;
-            }
-
-            const trId = 'TRN-' + (1000 + appState.transactions.length + 1);
-            appState.transactions.push({
-                id: trId,
-                seq: Date.now(),
-                type: 'transfer',
-                date,
-                fromWh,
-                toWh,
-                itemId: item.id,
-                itemName: item.name,
-                rolls
-            });
-
-            logUserActivity('create', 'التحويل المخزني', `تحويل ${rolls} رول من (${item.name}) - سند ${trId}`);
-            document.getElementById('trRollsQty').value = '';
-            saveState();
-            refreshAllViews();
-            showToast(`تم تنفيذ التحويل المخزني (${trId}) بنجاح`);
-        }
-
-        function submitReturn() {
-            if (!hasPermission('returns', 'edit')) {
-                showToast('عذراً، ليس لديك صلاحية تسجيل المرتجعات', true);
-                return;
-            }
-            const custId = document.getElementById('retCustomerSelect').value;
-            const wh = document.getElementById('retWarehouse').value;
-            const itemId = document.getElementById('retItemSelect').value;
-            const totalSqm = parseFloat(document.getElementById('retSqm').value) || 0;
-            const totalAmount = parseFloat(document.getElementById('retAmount').value) || 0;
-
-            const cust = appState.customers.find(c => c.id === custId);
-            const item = appState.items.find(x => x.id === itemId);
-            if (!cust || !item || totalSqm <= 0) {
-                showToast('يرجى اختيار العميل والصنف وإدخال المساحة المرتجعة', true);
-                return;
-            }
-
-            const area = (Number(item.length) || 50) * (Number(item.width) || 1);
-            const rolls = area > 0 ? (totalSqm / area) : 0;
-            if (wh === 'wh_tahlia') item.stockTahlia = Number(item.stockTahlia || 0) + rolls;
-            else item.stockSamir = Number(item.stockSamir || 0) + rolls;
-
-            const retId = 'RET-' + (1000 + appState.transactions.length + 1);
-            appState.transactions.push({
-                id: retId,
-                seq: Date.now(),
-                type: 'return',
-                date: getNowLocalInputStr(),
-                customerId: cust.id,
-                customerName: cust.name,
-                warehouseId: wh,
-                itemId: item.id,
-                itemName: item.name,
-                totalSqm,
-                totalAmount
-            });
-
-            logUserActivity('create', 'مرتجعات العملاء', `تسجيل مرتجع ${totalSqm.toFixed(2)} م² من العميل ${cust.name} - سند ${retId}`);
-            document.getElementById('retSqm').value = '';
-            document.getElementById('retAmount').value = '';
-            saveState();
-            refreshAllViews();
-            showToast(`تم اعتماد المرتجع (${retId}) وإضافته للمخزن`);
-        }
-
-        function sendReceiptWhatsApp(rcpId) {
-            const r = appState.transactions.find(t => t.id === rcpId && t.type === 'payment');
-            if (!r) return;
-            const cust = appState.customers.find(c => c.id === r.customerId) || {};
-            const st = getCustomerStats(r.customerId);
-            const cfg = getCompanySettings();
-            const msg = `*${cfg.companyName}*\nسند قبض رقم: *${r.id}*\nالسادة / *${r.customerName}*\n\nتم استلام دفعة بقيمة: *${Number(r.amount).toFixed(2)} ر.س* (${r.method || 'تحويل بنكي'})\nالتاريخ: ${new Date(r.date).toLocaleDateString('ar-SA')}\nالرصيد المتبقي في حسابكم: *${st.balance.toFixed(2)} ر.س*\n\nشكراً لتعاملكم معنا.`;
-            openWhatsAppWithText(cust.phone, msg);
-        }
-
-        function exportReceiptsExcel() {
-            const receipts = appState.transactions.filter(t => t.type === 'payment');
-            const data = [['رقم السند', 'التاريخ', 'اسم العميل', 'طريقة الدفع', 'الملاحظات', 'المبلغ المقبوض']];
-            receipts.forEach(r => {
-                data.push([r.id, formatDateTimeAr(r.date), r.customerName, r.method || '', r.notes || '', Number(r.amount || 0)]);
-            });
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(data);
-            XLSX.utils.book_append_sheet(wb, ws, 'سندات_القبض');
-            XLSX.writeFile(wb, `كشف_سندات_القبض_${new Date().toISOString().slice(0, 10)}.xlsx`);
-        }
-
-        // ==========================================
-        // 8. العملاء وكشوف الحساب
-        // ==========================================
-        function renderCustomersTable() {
-            const tbody = document.getElementById('customersTableBody');
-            if (!tbody) return;
-            const q = (document.getElementById('customerTableSearch')?.value || '').trim().toLowerCase();
-
-            const list = appState.customers.filter(c => {
-                if (!q) return true;
-                return (c.name || '').toLowerCase().includes(q) ||
-                       (c.city || '').toLowerCase().includes(q) ||
-                       (c.phone || '').toLowerCase().includes(q) ||
-                       (c.vat || '').toLowerCase().includes(q);
-            });
-
-            if (list.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-400">لا يوجد عملاء مطابقون للبحث.</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = list.map(c => {
-                const st = getCustomerStats(c.id);
-                const balCls = st.balance > 0 ? 'text-rose-600' : 'text-emerald-600';
-                return `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="py-3.5 px-4"><span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-black">${c.type || 'عميل'}</span></td>
-                        <td class="py-3.5 px-4 font-extrabold text-slate-900">${c.name}</td>
-                        <td class="py-3.5 px-4 text-slate-600">${c.city || '-'}</td>
-                        <td class="py-3.5 px-4 text-slate-600" dir="ltr">${c.phone || '-'}</td>
-                        <td class="py-3.5 px-4 text-slate-600">${c.vat || '-'}</td>
-                        <td class="py-3.5 px-4 text-slate-600">${c.country || 'السعودية'}</td>
-                        <td class="py-3.5 px-4 text-center font-black ${balCls}">${st.balance.toFixed(2)} ر.س</td>
-                        <td class="py-3.5 px-4 text-center">
-                            <div class="inline-flex items-center gap-1.5">
-                                <button type="button" onclick="sendCustomerWhatsApp('${c.id}')" title="واتساب" class="w-8 h-8 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fa-brands fa-whatsapp"></i></button>
-                                <button type="button" onclick="toggleActionMenu('custMenu_${c.id}', this)" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold">
-                                    إجراءات <i class="fa-solid fa-chevron-down mr-1"></i>
-                                </button>
-                            </div>
-                            <div id="custMenu_${c.id}" class="action-dropdown hidden fixed w-44 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 text-right overflow-hidden">
-                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); openCustomerStatement('${c.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-blue-700 hover:bg-blue-50 flex items-center">
-                                    <i class="fa-solid fa-file-invoice text-blue-600"></i> <span>كشف حساب العميل</span>
-                                </button>
-                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); sendCustomerWhatsApp('${c.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50 flex items-center">
-                                    <i class="fa-brands fa-whatsapp text-emerald-600"></i> <span>إرسال واتساب</span>
-                                </button>
-                                ${hasPermission('customers', 'edit') ? `
-                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); openEditCustomerModal('${c.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-amber-700 hover:bg-amber-50 flex items-center">
-                                    <i class="fa-solid fa-pen-to-square text-amber-600"></i> <span>تعديل</span>
-                                </button>` : ''}
-                                ${hasPermission('customers', 'delete') ? `
-                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); deleteCustomer('${c.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center">
-                                    <i class="fa-solid fa-trash"></i> <span>حذف</span>
-                                </button>` : ''}
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function openAddCustomerModal() {
-            if (!hasPermission('customers', 'edit')) {
-                showToast('عذراً، ليس لديك صلاحية إضافة عملاء', true);
-                return;
-            }
-            setTextSafe('customerModalTitle', 'إضافة عميل جديد');
-            document.getElementById('editCustomerId').value = '';
-            document.getElementById('custTypeInput').value = 'عميل';
-            document.getElementById('custNameInput').value = '';
-            document.getElementById('custCityInput').value = '';
-            document.getElementById('custPhoneInput').value = '';
-            document.getElementById('custVatInput').value = '';
-            document.getElementById('custCountryInput').value = 'السعودية';
-            document.getElementById('custCreditLimitInput').value = '';
-            document.getElementById('custNotesInput').value = '';
-            document.getElementById('customerModal')?.classList.remove('hidden');
-        }
-
-        function openEditCustomerModal(id) {
-            const c = appState.customers.find(x => x.id === id);
-            if (!c) return;
-            setTextSafe('customerModalTitle', 'تعديل بيانات العميل');
-            document.getElementById('editCustomerId').value = c.id;
-            document.getElementById('custTypeInput').value = c.type || 'عميل';
-            document.getElementById('custNameInput').value = c.name || '';
-            document.getElementById('custCityInput').value = c.city || '';
-            document.getElementById('custPhoneInput').value = c.phone || '';
-            document.getElementById('custVatInput').value = c.vat || '';
-            document.getElementById('custCountryInput').value = c.country || 'السعودية';
-            document.getElementById('custCreditLimitInput').value = c.creditLimit || '';
-            document.getElementById('custNotesInput').value = c.notes || '';
-            document.getElementById('customerModal')?.classList.remove('hidden');
-        }
-
-        function closeCustomerModal() {
-            document.getElementById('customerModal')?.classList.add('hidden');
-        }
-
-        function saveCustomer() {
-            const id = document.getElementById('editCustomerId').value;
-            const type = document.getElementById('custTypeInput').value;
-            const name = (document.getElementById('custNameInput').value || '').trim();
-            const city = (document.getElementById('custCityInput').value || '').trim();
-            const phone = (document.getElementById('custPhoneInput').value || '').trim();
-            const vat = (document.getElementById('custVatInput').value || '').trim();
-            const country = (document.getElementById('custCountryInput').value || '').trim() || 'السعودية';
-            const creditLimit = parseFloat(document.getElementById('custCreditLimitInput').value) || 0;
-            const notes = (document.getElementById('custNotesInput').value || '').trim();
-
-            if (!name) {
-                showToast('يرجى إدخال اسم العميل', true);
-                return;
-            }
-
-            if (id) {
-                const idx = appState.customers.findIndex(x => x.id === id);
+            if (editingId) {
+                const idx = appState.transactions.findIndex(t => t.id === editingId && t.type === 'payment');
                 if (idx !== -1) {
-                    appState.customers[idx] = { ...appState.customers[idx], type, name, city, phone, vat, country, creditLimit, notes };
+                    appState.transactions[idx] = {
+                        ...appState.transactions[idx],
+                        date,
+                        customerId: cust.id,
+                        customerName: cust.name,
+                        amount,
+                        method,
+                        notes
+                    };
                 }
-                logUserActivity('edit', 'العملاء', `تعديل بيانات العميل: ${name}`);
-                showToast('تم تحديث بيانات العميل بنجاح');
+                logUserActivity('edit', 'سندات القبض', `تعديل سند قبض ${editingId} بمبلغ ${amount.toFixed(2)} ر.س للعميل ${cust.name}`);
+                saveState();
+                closeQuickReceiptModal();
+                refreshAllViews();
+                showToast(`تم حفظ تعديلات سند القبض ${editingId} بنجاح`);
             } else {
-                appState.customers.push({
-                    id: 'cust_' + Date.now(),
-                    type,
-                    name,
-                    city,
-                    phone,
-                    vat,
-                    country,
-                    creditLimit,
-                    notes,
-                    openingBalance: 0
+                const rcpId = 'RCP-' + (1000 + appState.transactions.length + 1);
+                appState.transactions.push({
+                    id: rcpId,
+                    seq: Date.now(),
+                    type: 'payment',
+                    date,
+                    customerId: cust.id,
+                    customerName: cust.name,
+                    amount,
+                    method,
+                    notes
                 });
-                logUserActivity('create', 'العملاء', `إضافة عميل جديد: ${name}`);
-                showToast('تم إضافة العميل الجديد بنجاح');
-            }
-            saveState();
-            closeCustomerModal();
-            refreshAllViews();
-        }
 
-        function deleteCustomer(id) {
-            if (!hasPermission('customers', 'delete')) {
-                showToast('عذراً، ليس لديك صلاحية حذف العملاء', true);
-                return;
-            }
-            const target = appState.customers.find(x => x.id === id);
-            appState.customers = appState.customers.filter(x => x.id !== id);
-            logUserActivity('delete', 'العملاء', `حذف العميل: ${target ? target.name : id}`);
-            saveState();
-            refreshAllViews();
-            showToast('تم حذف العميل');
-        }
-
-        function openImportCustomersModal() {
-            pendingImportedCustomers = [];
-            document.getElementById('importCustomersFileInput').value = '';
-            document.getElementById('importCustomersPreviewBox').classList.add('hidden');
-            document.getElementById('confirmImportCustomersBtn').disabled = true;
-            document.getElementById('importCustomersModal')?.classList.remove('hidden');
-        }
-
-        function closeImportCustomersModal() {
-            document.getElementById('importCustomersModal')?.classList.add('hidden');
-        }
-
-        function downloadCustomersExcelTemplate() {
-            const wsData = [['اسم العميل', 'المدينة', 'الجوال', 'الرقم الضريبي', 'الدولة', 'التصنيف']];
-            wsData.push(['مؤسسة الإبداع للدعاية', 'جدة', '0500000000', '300000000000003', 'السعودية', 'عميل']);
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(wsData);
-            XLSX.utils.book_append_sheet(wb, ws, 'العملاء');
-            XLSX.writeFile(wb, 'نموذج_استيراد_العملاء.xlsx');
-        }
-
-        function previewImportedCustomers(e) {
-            const file = e.target.files?.[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                const wb = XLSX.read(evt.target.result, { type: 'binary' });
-                const ws = wb.Sheets[wb.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
-                pendingImportedCustomers = [];
-                for (let i = 1; i < rows.length; i++) {
-                    const r = rows[i];
-                    if (!r || !r[0]) continue;
-                    pendingImportedCustomers.push({
-                        name: String(r[0]).trim(),
-                        city: String(r[1] || '').trim(),
-                        phone: String(r[2] || '').trim(),
-                        vat: String(r[3] || '').trim(),
-                        country: String(r[4] || 'السعودية').trim(),
-                        type: String(r[5] || 'عميل').trim()
-                    });
-                }
-                const box = document.getElementById('importCustomersPreviewBox');
-                if (pendingImportedCustomers.length > 0) {
-                    box.innerHTML = `<p class="text-emerald-700 font-black mb-1">تم قراءة ${pendingImportedCustomers.length} عميل:</p>` +
-                        pendingImportedCustomers.map(c => `<div class="py-1 border-b border-slate-100">${c.name} (${c.city || '-'})</div>`).join('');
-                    box.classList.remove('hidden');
-                    document.getElementById('confirmImportCustomersBtn').disabled = false;
-                }
-            };
-            reader.readAsBinaryString(file);
-        }
-
-        function confirmImportCustomers() {
-            pendingImportedCustomers.forEach((imp, idx) => {
-                if (!appState.customers.some(c => c.name === imp.name)) {
-                    appState.customers.push({
-                        id: 'cust_' + Date.now() + '_' + idx,
-                        ...imp,
-                        openingBalance: 0
-                    });
-                }
-            });
-            saveState();
-            closeImportCustomersModal();
-            refreshAllViews();
-            showToast(`تم استيراد ${pendingImportedCustomers.length} عميل بنجاح`);
-        }
-
-        function openCustomerStatement(custId) {
-            activeStatementCustomerId = custId;
-            document.getElementById('customersListContainer')?.classList.add('hidden');
-            document.getElementById('customerStatementBox')?.classList.remove('hidden');
-            renderCustomerStatement();
-        }
-
-        function closeCustomerStatement() {
-            activeStatementCustomerId = null;
-            document.getElementById('customerStatementBox')?.classList.add('hidden');
-            document.getElementById('customersListContainer')?.classList.remove('hidden');
-        }
-
-        function setStatementViewMode(mode) {
-            statementViewMode = mode;
-            const dBtn = document.getElementById('stmtModeDetailedBtn');
-            const sBtn = document.getElementById('stmtModeSummaryBtn');
-            if (dBtn && sBtn) {
-                dBtn.className = mode === 'detailed'
-                    ? 'px-3.5 py-1.5 rounded-lg text-xs font-black bg-white text-blue-700 shadow-xs transition'
-                    : 'px-3.5 py-1.5 rounded-lg text-xs font-extrabold text-slate-600 hover:text-slate-900 transition';
-                sBtn.className = mode === 'summary'
-                    ? 'px-3.5 py-1.5 rounded-lg text-xs font-black bg-white text-blue-700 shadow-xs transition'
-                    : 'px-3.5 py-1.5 rounded-lg text-xs font-extrabold text-slate-600 hover:text-slate-900 transition';
-            }
-            renderCustomerStatement();
-        }
-
-        function resetStatementDates() {
-            if (document.getElementById('stmtFromDate')) document.getElementById('stmtFromDate').value = '';
-            if (document.getElementById('stmtToDate')) document.getElementById('stmtToDate').value = '';
-            renderCustomerStatement();
-        }
-
-        function renderCustomerStatement() {
-            const cust = appState.customers.find(c => c.id === activeStatementCustomerId);
-            if (!cust) return;
-
-            setTextSafe('stmtCustomerNameTitle', cust.name);
-            setTextSafe('stmtCustomerInfo', [cust.city, cust.phone ? 'جوال: ' + cust.phone : '', cust.vat ? 'الرقم الضريبي: ' + cust.vat : ''].filter(Boolean).join(' • '));
-            setTextSafe('stmtPrintDate', `تاريخ الطباعة: ${new Date().toLocaleDateString('ar-SA')}`);
-
-            const fromStr = document.getElementById('stmtFromDate')?.value || '';
-            const toStr = document.getElementById('stmtToDate')?.value || '';
-            const fromDate = fromStr ? new Date(fromStr + 'T00:00:00') : null;
-            const toDate = toStr ? new Date(toStr + 'T23:59:59') : null;
-
-            const txs = appState.transactions
-                .filter(t => t.customerId === cust.id && ['sale', 'payment', 'return'].includes(t.type))
-                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-            let prevBal = Number(cust.openingBalance || 0);
-            let periodSales = 0;
-            let periodPayments = 0;
-            let running = prevBal;
-            const rows = [];
-
-            txs.forEach(t => {
-                const d = new Date(t.date);
-                const debit = t.type === 'sale' ? Number(t.totalAmount || 0) : 0;
-                const credit = (t.type === 'payment' || t.type === 'return') ? Number(t.amount || t.totalAmount || 0) : 0;
-
-                if (fromDate && d < fromDate) {
-                    prevBal += debit - credit;
-                    running = prevBal;
-                    return;
-                }
-                if (toDate && d > toDate) return;
-
-                periodSales += debit;
-                periodPayments += credit;
-                running += debit - credit;
-
-                let opLabel = 'إذن صرف';
-                let detailHtml = '';
-                if (t.type === 'sale') {
-                    opLabel = 'إذن صرف مبيعات';
-                    if (statementViewMode === 'detailed') {
-                        detailHtml = (t.lines || []).map(ln =>
-                            `<div class="py-0.5">• ${escapeHtmlAttr(ln.billingName || ln.itemName)} (${ln.width}×${ln.length}×${ln.qty} = ${Number(ln.sqm).toFixed(2)} م² × ${Number(ln.price).toFixed(2)})</div>`
-                        ).join('');
-                    } else {
-                        detailHtml = `إجمالي ${Number(t.totalSqm || 0).toFixed(2)} م² ${t.quoteRef ? `(بيان ${t.quoteRef})` : ''}`;
-                    }
-                } else if (t.type === 'payment') {
-                    opLabel = 'سند قبض';
-                    detailHtml = `تحصيل (${t.method || 'تحويل بنكي'}) ${t.notes ? '— ' + escapeHtmlAttr(t.notes) : ''}`;
-                } else if (t.type === 'return') {
-                    opLabel = 'مرتجع مبيعات';
-                    detailHtml = `مرتجع: ${escapeHtmlAttr(t.itemName || '')} (${Number(t.totalSqm || 0).toFixed(2)} م²)`;
-                }
-
-                rows.push(`
-                    <tr class="hover:bg-slate-50">
-                        <td class="py-3 px-2 text-slate-600 whitespace-nowrap">${new Date(t.date).toLocaleDateString('ar-SA')}</td>
-                        <td class="py-3 px-2 font-extrabold">${opLabel}</td>
-                        <td class="py-3 px-2 font-black text-blue-700">${t.id}</td>
-                        <td class="py-3 px-3 text-slate-800">${detailHtml}</td>
-                        <td class="py-3 px-2 text-center font-black text-blue-700">${debit > 0 ? debit.toFixed(2) : '-'}</td>
-                        <td class="py-3 px-2 text-center font-black text-emerald-700">${credit > 0 ? credit.toFixed(2) : '-'}</td>
-                        <td class="py-3 px-2 text-center font-black">${running.toFixed(2)}</td>
-                        <td class="py-3 px-2 text-center no-print">
-                            ${canDeleteRecords() ? `<button type="button" onclick="requestVoidTransaction('${t.id}')" class="text-rose-600 hover:text-rose-800"><i class="fa-solid fa-trash"></i></button>` : '-'}
-                        </td>
-                    </tr>
-                `);
-            });
-
-            setTextSafe('stmtBoxPrevBalance', `${prevBal.toFixed(2)} ر.س`);
-            setTextSafe('stmtBoxSales', `${periodSales.toFixed(2)} ر.س`);
-            setTextSafe('stmtBoxPayments', `${periodPayments.toFixed(2)} ر.س`);
-            setTextSafe('stmtBoxRemaining', `${running.toFixed(2)} ر.س`);
-
-            const tbody = document.getElementById('stmtTableBody');
-            if (tbody) {
-                tbody.innerHTML = rows.length > 0
-                    ? rows.join('')
-                    : '<tr><td colspan="8" class="py-8 text-center text-slate-400">لا توجد حركات مسجلة لهذا العميل في الفترة المحددة.</td></tr>';
+                logUserActivity('create', 'سندات القبض', `تسجيل سند قبض ${rcpId} بمبلغ ${amount.toFixed(2)} ر.س من العميل ${cust.name}`);
+                saveState();
+                closeQuickReceiptModal();
+                refreshAllViews();
+                showToast(`تم حفظ سند القبض ${rcpId} بنجاح`);
             }
         }
 
@@ -7406,8 +6961,543 @@ ${statusLine}
             if (!cust) return;
             const st = getCustomerStats(cust.id);
             const cfg = getCompanySettings();
-            const msg = `*${cfg.companyName}*\nملخص حساب السادة / *${cust.name}*\n\n• إجمالي المسحوبات: *${st.salesTotal.toFixed(2)} ر.س*\n• إجمالي المدفوعات: *${st.paymentsTotal.toFixed(2)} ر.س*\n• الرصيد المتبقي: *${st.balance.toFixed(2)} ر.س*\n\nشكراً لتعاملكم معنا.`;
+            const msg = `*${cfg.companyName}*\nملخص حساب السادة / *${cust.name}*\n\n• إجمالي المسحوبات: *${st.salesTotal.toFixed(2)} ر.س*\n• إجمالي المدفوعات: *${st.paymentsTotal.toFixed(2)} ر.س*\n• الرصيد المتبقي: *${st.balance.toFixed(2)} ر.س*\n\n${cfg.whatsappFooter || 'شكراً لتعاملكم معنا.'}`;
             openWhatsAppWithText(cust.phone, msg);
+        }
+
+        function printReceiptVoucher(rcpId) {
+            const r = appState.transactions.find(t => t.id === rcpId && t.type === 'payment');
+            if (!r) return;
+            const cfg = getCompanySettings();
+            const st = getCustomerStats(r.customerId);
+            const win = window.open('', '_blank', 'width=860,height=700');
+            if (!win) {
+                showToast('يرجى السماح بالنوافذ المنبثقة للطباعة', true);
+                return;
+            }
+            win.document.write(`
+                <!DOCTYPE html>
+                <html lang="ar" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>سند قبض - ${escapeHtmlAttr(r.id)}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
+                    <style>
+                        body { font-family: 'Cairo', sans-serif; margin: 0; padding: 24px; background: #fff; color: #0f172a; }
+                        .box { max-width: 760px; margin: 0 auto; border: 2px solid #047857; border-radius: 18px; padding: 24px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="box">
+                        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #047857;padding-bottom:14px;">
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <div style="width:68px;height:60px;">${cfg.logoDataUrl ? `<img src="${cfg.logoDataUrl}" style="width:100%;height:100%;object-fit:contain;">` : PRINT_HD_LOGO_SVG}</div>
+                                <div>
+                                    <div style="font-size:15px;font-weight:900;color:#0f2361;">${escapeHtmlAttr(cfg.companyName)}</div>
+                                    <div style="font-size:11px;font-weight:700;color:#475569;">${[cfg.phone1, cfg.address].filter(Boolean).join(' • ')}</div>
+                                </div>
+                            </div>
+                            <div style="font-size:16px;font-weight:900;color:#047857;background:#ecfdf5;border:2px solid #10b981;padding:7px 22px;border-radius:12px;">سند قبض نقدية / حوالة</div>
+                            <div style="text-align:left;font-size:12px;font-weight:800;">
+                                <div>رقم السند: <strong style="color:#047857;">${escapeHtmlAttr(r.id)}</strong></div>
+                                <div>التاريخ: <strong>${new Date(r.date).toLocaleDateString('ar-SA')}</strong></div>
+                            </div>
+                        </div>
+                        <div style="margin-top:18px;line-height:2.2;font-size:13px;font-weight:800;">
+                            <div>استلمنا من السادة / <strong style="font-size:15px;color:#0f172a;">${escapeHtmlAttr(r.customerName)}</strong></div>
+                            <div>مبلغاً وقدره: <strong style="font-size:16px;color:#047857;background:#ecfdf5;padding:3px 12px;border-radius:8px;">${Number(r.amount || 0).toFixed(2)} ${escapeHtmlAttr(cfg.currencySymbol || 'ر.س')}</strong></div>
+                            <div>طريقة الدفع: <strong>${escapeHtmlAttr(r.method || 'تحويل بنكي')}</strong></div>
+                            ${r.notes ? `<div>وذلك عن / ملاحظات: <strong>${escapeHtmlAttr(r.notes)}</strong></div>` : ''}
+                            <div>الرصيد المتبقي على العميل بعد السند: <strong>${st.balance.toFixed(2)} ${escapeHtmlAttr(cfg.currencySymbol || 'ر.س')}</strong></div>
+                        </div>
+                        <div style="margin-top:32px;padding-top:12px;border-top:1px dashed #cbd5e1;display:flex;justify-content:space-between;font-size:12px;font-weight:800;">
+                            <div>توقيع المستلم (المحاسب): ..............................</div>
+                            <div>ختم المؤسسة: ..............................</div>
+                        </div>
+                        ${cfg.printFooterNote ? `<div style="margin-top:14px;text-align:center;font-size:11px;font-weight:700;color:#64748b;">${escapeHtmlAttr(cfg.printFooterNote)}</div>` : ''}
+                    </div>
+                    <script>setTimeout(()=>{window.print();window.close();},450);<\/script>
+                </body>
+                </html>
+            `);
+            win.document.close();
+        }
+
+        function sendReceiptWhatsApp(rcpId) {
+            const r = appState.transactions.find(t => t.id === rcpId && t.type === 'payment');
+            if (!r) return;
+            const cust = appState.customers.find(c => c.id === r.customerId) || {};
+            const st = getCustomerStats(r.customerId);
+            const cfg = getCompanySettings();
+            const cur = cfg.currencySymbol || 'ر.س';
+            const msg = `*${cfg.companyName}*\nإيصال استلام دفعة (سند قبض رقم: *${r.id}*)\n\nالسادة / *${r.customerName}*\nتم استلام مبلغ: *${Number(r.amount || 0).toFixed(2)} ${cur}*\nطريقة الدفع: ${r.method || 'تحويل بنكي'}\nالتاريخ: ${new Date(r.date).toLocaleDateString('ar-SA')}\n${r.notes ? `البيان: ${r.notes}\n` : ''}• الرصيد المتبقي في حسابكم: *${st.balance.toFixed(2)} ${cur}*\n\n${cfg.whatsappFooter || 'شكراً لتعاملكم معنا.'}`;
+            openWhatsAppWithText(cust.phone, msg);
+        }
+
+        function exportReceiptsExcel() {
+            const list = appState.transactions.filter(t => t.type === 'payment');
+            const data = [['رقم السند', 'التاريخ', 'اسم العميل', 'طريقة الدفع', 'المبلغ المقبوض', 'ملاحظات']];
+            list.forEach(r => {
+                data.push([r.id, formatDateTimeAr(r.date), r.customerName || '', r.method || '', Number(r.amount || 0), r.notes || '']);
+            });
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'سندات_القبض');
+            XLSX.writeFile(wb, `كشف_سندات_القبض_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
+        // ==========================================
+        // 8. إدارة العملاء وكشوف الحساب
+        // ==========================================
+        function renderCustomersTable() {
+            const tbody = document.getElementById('customersTableBody');
+            if (!tbody) return;
+            const search = (document.getElementById('custSearchInput')?.value || '').trim().toLowerCase();
+            const filter = document.getElementById('custBalanceFilter')?.value || 'all';
+
+            const list = appState.customers.filter(c => {
+                const st = getCustomerStats(c.id);
+                if (filter === 'debtors' && st.balance <= 0.01) return false;
+                if (filter === 'creditors' && st.balance > 0.01) return false;
+                if (search && !`${c.name} ${c.city || ''} ${c.phone || ''} ${c.vat || ''}`.toLowerCase().includes(search)) return false;
+                return true;
+            });
+
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400">لا يوجد عملاء مطابقون للبحث.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = list.map(c => {
+                const st = getCustomerStats(c.id);
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3.5 px-4 font-extrabold text-slate-900">
+                            <div>${escapeHtmlAttr(c.name)}</div>
+                            ${c.notes ? `<div class="text-[11px] text-amber-700 font-bold mt-0.5">${escapeHtmlAttr(c.notes)}</div>` : ''}
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-600">${escapeHtmlAttr(c.city || '-')}</td>
+                        <td class="py-3.5 px-4 text-slate-600" dir="ltr">${escapeHtmlAttr(c.phone || '-')}</td>
+                        <td class="py-3.5 px-4 text-center font-black text-blue-700">${st.salesTotal.toFixed(2)}</td>
+                        <td class="py-3.5 px-4 text-center font-black text-emerald-700">${st.paymentsTotal.toFixed(2)}</td>
+                        <td class="py-3.5 px-4 text-center font-black ${st.balance > 0 ? 'text-rose-600' : 'text-emerald-600'}">${st.balance.toFixed(2)} ر.س</td>
+                        <td class="py-3.5 px-4 text-center">
+                            <button type="button" onclick="toggleActionMenu('custMenu_${c.id}', this)" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold">
+                                إجراءات <i class="fa-solid fa-chevron-down mr-1"></i>
+                            </button>
+                            <div id="custMenu_${c.id}" class="action-dropdown hidden fixed w-44 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 text-right overflow-hidden">
+                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); openCustomerStatement('${c.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-blue-700 hover:bg-blue-50 flex items-center">
+                                    <i class="fa-solid fa-file-invoice text-blue-600"></i> <span>كشف الحساب</span>
+                                </button>
+                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); sendCustomerWhatsApp('${c.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50 flex items-center">
+                                    <i class="fa-brands fa-whatsapp text-emerald-600"></i> <span>إرسال واتساب</span>
+                                </button>
+                                ${hasPermission('customers', 'edit') ? `
+                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); openEditCustomerModal('${c.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-amber-700 hover:bg-amber-50 flex items-center">
+                                    <i class="fa-solid fa-pen-to-square text-amber-600"></i> <span>تعديل العميل</span>
+                                </button>` : ''}
+                                ${hasPermission('customers', 'delete') ? `
+                                <button type="button" onclick="document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden')); deleteCustomer('${c.id}');" class="w-full px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center">
+                                    <i class="fa-solid fa-trash"></i> <span>حذف العميل</span>
+                                </button>` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openAddCustomerModal() {
+            if (!hasPermission('customers', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية إضافة عملاء', true);
+                return;
+            }
+            setTextSafe('customerModalTitle', 'إضافة عميل جديد');
+            document.getElementById('editCustomerId').value = '';
+            document.getElementById('custTypeInput').value = 'عميل';
+            document.getElementById('custNameInput').value = '';
+            document.getElementById('custCityInput').value = '';
+            document.getElementById('custPhoneInput').value = '';
+            document.getElementById('custVatInput').value = '';
+            document.getElementById('custCountryInput').value = 'المملكة العربية السعودية';
+            document.getElementById('custCreditLimitInput').value = '';
+            document.getElementById('custNotesInput').value = '';
+            document.getElementById('customerModal')?.classList.remove('hidden');
+        }
+
+        function openEditCustomerModal(id) {
+            const c = appState.customers.find(x => x.id === id);
+            if (!c) return;
+            setTextSafe('customerModalTitle', 'تعديل بيانات العميل');
+            document.getElementById('editCustomerId').value = c.id;
+            document.getElementById('custTypeInput').value = c.type || 'عميل';
+            document.getElementById('custNameInput').value = c.name || '';
+            document.getElementById('custCityInput').value = c.city || '';
+            document.getElementById('custPhoneInput').value = c.phone || '';
+            document.getElementById('custVatInput').value = c.vat || '';
+            document.getElementById('custCountryInput').value = c.country || 'المملكة العربية السعودية';
+            document.getElementById('custCreditLimitInput').value = c.creditLimit || '';
+            document.getElementById('custNotesInput').value = c.notes || '';
+            document.getElementById('customerModal')?.classList.remove('hidden');
+        }
+
+        function closeCustomerModal() {
+            document.getElementById('customerModal')?.classList.add('hidden');
+        }
+
+        function saveCustomer() {
+            const id = document.getElementById('editCustomerId').value;
+            const type = document.getElementById('custTypeInput').value;
+            const name = (document.getElementById('custNameInput').value || '').trim();
+            const city = (document.getElementById('custCityInput').value || '').trim();
+            const phone = (document.getElementById('custPhoneInput').value || '').trim();
+            const vat = (document.getElementById('custVatInput').value || '').trim();
+            const country = (document.getElementById('custCountryInput').value || '').trim();
+            const creditLimit = parseFloat(document.getElementById('custCreditLimitInput').value) || 0;
+            const notes = (document.getElementById('custNotesInput').value || '').trim();
+
+            if (!name) {
+                showToast('يرجى إدخال اسم العميل', true);
+                return;
+            }
+
+            if (id) {
+                const idx = appState.customers.findIndex(x => x.id === id);
+                if (idx !== -1) {
+                    appState.customers[idx] = { ...appState.customers[idx], type, name, city, phone, vat, country, creditLimit, notes };
+                }
+                logUserActivity('edit', 'العملاء', `تعديل بيانات العميل: ${name}`);
+                showToast('تم تحديث بيانات العميل بنجاح');
+            } else {
+                appState.customers.push({
+                    id: 'cust_' + Date.now(),
+                    type,
+                    name,
+                    city,
+                    phone,
+                    vat,
+                    country,
+                    creditLimit,
+                    notes,
+                    openingBalance: 0
+                });
+                logUserActivity('create', 'العملاء', `إضافة عميل جديد: ${name}`);
+                showToast('تم إضافة العميل الجديد بنجاح');
+            }
+            saveState();
+            closeCustomerModal();
+            refreshAllViews();
+        }
+
+        function deleteCustomer(id) {
+            if (!hasPermission('customers', 'delete')) {
+                showToast('عذراً، ليس لديك صلاحية حذف العملاء', true);
+                return;
+            }
+            const target = appState.customers.find(x => x.id === id);
+            appState.customers = appState.customers.filter(x => x.id !== id);
+            logUserActivity('delete', 'العملاء', `حذف العميل: ${target ? target.name : id}`);
+            saveState();
+            refreshAllViews();
+            showToast('تم حذف العميل');
+        }
+
+        function openCustomerStatement(custId) {
+            activeStatementCustomerId = custId;
+            document.getElementById('customersListWrapper')?.classList.add('hidden');
+            document.getElementById('customerStatementBox')?.classList.remove('hidden');
+            renderCustomerStatement();
+        }
+
+        function closeCustomerStatement() {
+            activeStatementCustomerId = null;
+            document.getElementById('customerStatementBox')?.classList.add('hidden');
+            document.getElementById('customersListWrapper')?.classList.remove('hidden');
+        }
+
+        function setStatementViewMode(mode) {
+            statementViewMode = mode;
+            const btnDet = document.getElementById('stmtModeDetailedBtn');
+            const btnSum = document.getElementById('stmtModeSummaryBtn');
+            if (btnDet && btnSum) {
+                btnDet.className = mode === 'detailed'
+                    ? 'px-3 py-1.5 rounded-lg text-xs font-black bg-blue-600 text-white shadow-xs'
+                    : 'px-3 py-1.5 rounded-lg text-xs font-extrabold text-slate-600';
+                btnSum.className = mode === 'summary'
+                    ? 'px-3 py-1.5 rounded-lg text-xs font-black bg-blue-600 text-white shadow-xs'
+                    : 'px-3 py-1.5 rounded-lg text-xs font-extrabold text-slate-600';
+            }
+            renderCustomerStatement();
+        }
+
+        function renderCustomerStatement() {
+            const cust = appState.customers.find(c => c.id === activeStatementCustomerId);
+            const tbody = document.getElementById('stmtTableBody');
+            if (!cust || !tbody) return;
+
+            setTextSafe('stmtCustomerName', cust.name);
+            setTextSafe('stmtCustomerMeta', [cust.city, cust.phone, cust.vat ? `الرقم الضريبي: ${cust.vat}` : ''].filter(Boolean).join(' • ') || 'عميل معتمد');
+
+            const st = getCustomerStats(cust.id);
+            setTextSafe('stmtTotalSales', `${st.salesTotal.toFixed(2)} ر.س`);
+            setTextSafe('stmtTotalPaid', `${st.paymentsTotal.toFixed(2)} ر.س`);
+            setTextSafe('stmtTotalReturns', `${st.returnsTotal.toFixed(2)} ر.س`);
+            setTextSafe('stmtFinalBalance', `${st.balance.toFixed(2)} ر.س`);
+
+            const rows = [];
+            let running = Number(cust.openingBalance || 0);
+            if (running !== 0) {
+                rows.push({
+                    date: cust.openingDate || '',
+                    ref: 'افتتاحي',
+                    desc: cust.openingNote || 'رصيد أول المدة',
+                    debit: running > 0 ? running : 0,
+                    credit: running < 0 ? Math.abs(running) : 0,
+                    bal: running
+                });
+            }
+
+            const custTx = appState.transactions
+                .filter(t => t.customerId === cust.id)
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+            custTx.forEach(t => {
+                if (t.type === 'sale') {
+                    const amt = Number(t.totalAmount || 0);
+                    running += amt;
+                    const linesDesc = statementViewMode === 'detailed'
+                        ? (t.lines || []).map(ln => `${ln.billingName || ln.itemName} (${ln.length}×${ln.width}×${ln.qty} = ${Number(ln.sqm).toFixed(2)} م²)`).join(' + ')
+                        : `إذن صرف مبيعات (${Number(t.totalSqm || 0).toFixed(2)} م²)`;
+                    rows.push({
+                        date: t.date,
+                        ref: t.quoteRef || t.id,
+                        desc: linesDesc,
+                        debit: amt,
+                        credit: 0,
+                        bal: running
+                    });
+                } else if (t.type === 'payment') {
+                    const amt = Number(t.amount || 0);
+                    running -= amt;
+                    rows.push({
+                        date: t.date,
+                        ref: t.id,
+                        desc: `سند قبض (${t.method || 'تحويل بنكي'})${t.notes ? ' - ' + t.notes : ''}`,
+                        debit: 0,
+                        credit: amt,
+                        bal: running
+                    });
+                } else if (t.type === 'return') {
+                    const amt = Number(t.totalAmount || 0);
+                    running -= amt;
+                    rows.push({
+                        date: t.date,
+                        ref: t.id,
+                        desc: `مرتجع بضاعة: ${t.itemName} (${Number(t.totalSqm || 0).toFixed(2)} م²)`,
+                        debit: 0,
+                        credit: amt,
+                        bal: running
+                    });
+                }
+            });
+
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-400">لا توجد حركات مسجلة لهذا العميل.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = rows.map(r => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-3 px-3 text-slate-600 whitespace-nowrap">${r.date ? new Date(r.date).toLocaleDateString('ar-SA') : '-'}</td>
+                    <td class="py-3 px-3 font-black text-blue-700">${escapeHtmlAttr(r.ref)}</td>
+                    <td class="py-3 px-3 text-slate-800">${escapeHtmlAttr(r.desc)}</td>
+                    <td class="py-3 px-3 text-center font-black text-rose-600">${r.debit > 0 ? r.debit.toFixed(2) : '-'}</td>
+                    <td class="py-3 px-3 text-center font-black text-emerald-700">${r.credit > 0 ? r.credit.toFixed(2) : '-'}</td>
+                    <td class="py-3 px-3 text-center font-black text-slate-900">${r.bal.toFixed(2)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function exportCustomerStatementExcel() {
+            const cust = appState.customers.find(c => c.id === activeStatementCustomerId);
+            if (!cust) return;
+            const table = document.getElementById('stmtTable');
+            if (!table) return;
+            const wb = XLSX.utils.table_to_book(table, { sheet: 'كشف_الحساب' });
+            XLSX.writeFile(wb, `كشف_حساب_${cust.name}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
+        function openImportCustomersModal() {
+            pendingImportedCustomers = [];
+            document.getElementById('importCustomersFileInput').value = '';
+            document.getElementById('importCustomersPreviewBox').classList.add('hidden');
+            document.getElementById('confirmImportCustomersBtn').disabled = true;
+            document.getElementById('importCustomersModal')?.classList.remove('hidden');
+        }
+
+        function closeImportCustomersModal() {
+            document.getElementById('importCustomersModal')?.classList.add('hidden');
+        }
+
+        function downloadCustomersExcelTemplate() {
+            const data = [['اسم العميل', 'المدينة', 'رقم الجوال', 'الرقم الضريبي', 'التصنيف']];
+            data.push(['شركة الأفق للدعاية', 'جدة', '0500000000', '300000000000003', 'عميل']);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'العملاء');
+            XLSX.writeFile(wb, 'نموذج_استيراد_العملاء.xlsx');
+        }
+
+        function previewImportedCustomers(e) {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const wb = XLSX.read(evt.target.result, { type: 'binary' });
+                const ws = wb.Sheets[wb.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+                pendingImportedCustomers = [];
+                for (let i = 1; i < rows.length; i++) {
+                    const r = rows[i];
+                    if (!r || !r[0]) continue;
+                    pendingImportedCustomers.push({
+                        name: String(r[0]).trim(),
+                        city: String(r[1] || '').trim(),
+                        phone: String(r[2] || '').trim(),
+                        vat: String(r[3] || '').trim(),
+                        type: String(r[4] || 'عميل').trim()
+                    });
+                }
+                const box = document.getElementById('importCustomersPreviewBox');
+                if (pendingImportedCustomers.length > 0) {
+                    box.innerHTML = `<p class="text-emerald-700 font-black mb-1">تم قراءة ${pendingImportedCustomers.length} عميل:</p>` +
+                        pendingImportedCustomers.map(x => `<div class="py-1 border-b border-slate-100">${x.name} — ${x.city}</div>`).join('');
+                    box.classList.remove('hidden');
+                    document.getElementById('confirmImportCustomersBtn').disabled = false;
+                }
+            };
+            reader.readAsBinaryString(file);
+        }
+
+        function confirmImportCustomers() {
+            pendingImportedCustomers.forEach((imp, idx) => {
+                if (!appState.customers.some(c => c.name === imp.name)) {
+                    appState.customers.push({
+                        id: 'cust_' + Date.now() + '_' + idx,
+                        type: imp.type || 'عميل',
+                        name: imp.name,
+                        city: imp.city,
+                        phone: imp.phone,
+                        vat: imp.vat,
+                        country: 'المملكة العربية السعودية',
+                        openingBalance: 0
+                    });
+                }
+            });
+            saveState();
+            closeImportCustomersModal();
+            refreshAllViews();
+            showToast(`تم استيراد ${pendingImportedCustomers.length} عميل بنجاح`);
+        }
+
+        function submitTransfer() {
+            if (!hasPermission('transfers', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية التحويل بين المستودعات', true);
+                return;
+            }
+            const fromWh = document.getElementById('trFromWarehouse')?.value;
+            const toWh = document.getElementById('trToWarehouse')?.value;
+            const date = document.getElementById('trDate')?.value || getNowLocalInputStr();
+            const itemId = document.getElementById('trItemSelect')?.value;
+            const rolls = parseFloat(document.getElementById('trRollsQty')?.value) || 0;
+            const notes = (document.getElementById('trNotes')?.value || '').trim();
+
+            if (fromWh === toWh) {
+                showToast('يجب اختيار مستودع محوّل إليه مختلف عن المستودع المحوّل منه', true);
+                return;
+            }
+            const item = appState.items.find(x => x.id === itemId);
+            if (!item || rolls <= 0) {
+                showToast('يرجى اختيار الصنف وإدخال عدد الرولات بشكل صحيح', true);
+                return;
+            }
+
+            if (fromWh === 'wh_tahlia') item.stockTahlia = Math.max(0, Number(item.stockTahlia || 0) - rolls);
+            else item.stockSamir = Math.max(0, Number(item.stockSamir || 0) - rolls);
+
+            if (toWh === 'wh_tahlia') item.stockTahlia = Number(item.stockTahlia || 0) + rolls;
+            else item.stockSamir = Number(item.stockSamir || 0) + rolls;
+
+            const trId = 'TRN-' + (1000 + appState.transactions.length + 1);
+            appState.transactions.push({
+                id: trId,
+                seq: Date.now(),
+                type: 'transfer',
+                date,
+                fromWh,
+                toWh,
+                itemId: item.id,
+                itemName: item.name,
+                rolls,
+                notes
+            });
+
+            logUserActivity('create', 'التحويل المخزني', `تحويل ${rolls} رول من (${item.name}) - سند ${trId}`);
+            if (document.getElementById('trRollsQty')) document.getElementById('trRollsQty').value = '';
+            if (document.getElementById('trNotes')) document.getElementById('trNotes').value = '';
+            saveState();
+            refreshAllViews();
+            showToast(`تم اعتماد التحويل المخزني (${trId}) بنجاح`);
+        }
+
+        function submitReturn() {
+            if (!hasPermission('returns', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية تسجيل مرتجعات العملاء', true);
+                return;
+            }
+            const custId = document.getElementById('retCustomerSelect')?.value;
+            const cust = appState.customers.find(c => c.id === custId);
+            const wh = document.getElementById('retWarehouse')?.value || 'wh_samir';
+            const itemId = document.getElementById('retItemSelect')?.value;
+            const item = appState.items.find(x => x.id === itemId);
+            const width = parseFloat(document.getElementById('retWidth')?.value) || 0;
+            const length = parseFloat(document.getElementById('retLength')?.value) || 0;
+            const qty = parseFloat(document.getElementById('retQty')?.value) || 0;
+            const price = parseFloat(document.getElementById('retPrice')?.value) || 0;
+
+            const totalSqm = width * length * qty;
+            if (!cust || !item || totalSqm <= 0) {
+                showToast('يرجى إكمال بيانات المرتجع بشكل صحيح', true);
+                return;
+            }
+
+            const area = (Number(item.length) || 50) * (Number(item.width) || 1);
+            const rolls = area > 0 ? totalSqm / area : 0;
+            if (wh === 'wh_tahlia') item.stockTahlia = Number(item.stockTahlia || 0) + rolls;
+            else item.stockSamir = Number(item.stockSamir || 0) + rolls;
+
+            const totalAmount = totalSqm * price;
+            const retId = 'RET-' + (1000 + appState.transactions.length + 1);
+            appState.transactions.push({
+                id: retId,
+                seq: Date.now(),
+                type: 'return',
+                date: getNowLocalInputStr(),
+                customerId: cust.id,
+                customerName: cust.name,
+                warehouseId: wh,
+                itemId: item.id,
+                itemName: item.name,
+                width,
+                length,
+                qty,
+                totalSqm,
+                price,
+                totalAmount
+            });
+
+            logUserActivity('create', 'مرتجعات العملاء', `تسجيل مرتجع ${retId} للعميل ${cust.name} بقيمة ${totalAmount.toFixed(2)} ر.س`);
+            saveState();
+            refreshAllViews();
+            showToast(`تم تسجيل مرتجع العميل (${retId}) وإعادة الكمية للمخزن`);
         }
 
         // ==========================================
