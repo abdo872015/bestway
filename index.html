@@ -7971,6 +7971,85 @@ ${statusLine}
             switchTab('sales');
         }
 
+        function onSaleItemPicked(focusPrice = true) {
+            const itemId = document.getElementById('saleItemSelect')?.value;
+            const item = appState.items.find(x => x.id === itemId);
+            const hintEl = document.getElementById('saleLastPriceHint');
+            if (!item) return;
+
+            const lenEl = document.getElementById('saleLength');
+            const widEl = document.getElementById('saleWidth');
+            const qtyEl = document.getElementById('saleQty');
+            const priceEl = document.getElementById('salePrice');
+
+            if (lenEl) lenEl.value = Number(item.length) || 50;
+            if (widEl) widEl.value = Number(item.width) || 1;
+            if (qtyEl && (!qtyEl.value || Number(qtyEl.value) <= 0)) qtyEl.value = '1';
+
+            // البحث عن آخر سعر بيع لنفس العميل ونفس الصنف (ذاكرة الأسعار)
+            const custId = document.getElementById('saleCustomerSelect')?.value;
+            let lastPrice = null;
+            if (custId) {
+                const custSales = appState.transactions
+                    .filter(t => t.type === 'sale' && t.customerId === custId)
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                for (const s of custSales) {
+                    const matchedLine = (s.lines || []).find(ln => ln.itemId === item.id || ln.itemName === item.name);
+                    if (matchedLine && Number(matchedLine.price) > 0) {
+                        lastPrice = Number(matchedLine.price);
+                        break;
+                    }
+                }
+            }
+
+            if (hintEl) {
+                if (lastPrice !== null) {
+                    const cur = escapeHtmlAttr(getCompanySettings().currencySymbol || 'ر.س');
+                    hintEl.textContent = `آخر سعر لهذا العميل: ${lastPrice.toFixed(2)} ${cur}/م²`;
+                    hintEl.classList.remove('hidden');
+                    if (priceEl && !priceEl.value) priceEl.value = lastPrice;
+                } else {
+                    hintEl.classList.add('hidden');
+                }
+            }
+
+            calcSaleLineSqm();
+            if (focusPrice && priceEl) {
+                priceEl.focus();
+                priceEl.select();
+            }
+        }
+
+        function checkSaleCustomerCreditAlert() {
+            const custId = document.getElementById('saleCustomerSelect')?.value;
+            const banner = document.getElementById('saleCustomerCreditBanner');
+            if (!banner) return;
+            const cust = appState.customers.find(c => c.id === custId);
+            if (!cust) {
+                banner.classList.add('hidden');
+                return;
+            }
+            const st = getCustomerStats(cust.id);
+            const limit = Number(cust.creditLimit || 0);
+            const cur = escapeHtmlAttr(getCompanySettings().currencySymbol || 'ر.س');
+            const overLimit = limit > 0 && st.balance >= limit;
+
+            if (st.balance > 0 || limit > 0 || cust.notes) {
+                banner.className = `p-3 rounded-xl border text-xs font-extrabold flex flex-wrap items-center justify-between gap-2 ${overLimit ? 'bg-rose-50 border-rose-300 text-rose-800' : 'bg-amber-50/70 border-amber-200 text-amber-900'}`;
+                banner.innerHTML = `
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span>الرصيد القائم على العميل: <strong>${st.balance.toFixed(2)} ${cur}</strong></span>
+                        ${limit > 0 ? `<span>السقف الائتماني: <strong>${limit.toFixed(2)} ${cur}</strong></span>` : ''}
+                        ${cust.notes ? `<span class="text-slate-700">ملاحظة: ${escapeHtmlAttr(cust.notes)}</span>` : ''}
+                    </div>
+                    ${overLimit ? '<span class="px-2.5 py-0.5 rounded-lg bg-rose-600 text-white text-[11px] font-black">تنبيه: تجاوز السقف الائتماني!</span>' : ''}
+                `;
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
         async function handleAiQuoteImageUpload(event) {
             const file = event.target?.files?.[0];
             if (!file) return;
