@@ -4689,7 +4689,7 @@
                 });
             }
             document.addEventListener('click', (e) => {
-                if (!e.target.closest('.searchable-select-wrapper')) {
+                if (!e.target.closest('.searchable-select-wrapper') && !e.target.closest('.universal-combo-wrapper') && !e.target.closest('.universal-combo-menu')) {
                     closeAllSearchableDropdowns();
                 }
                 if (!e.target.closest('.action-dropdown') && !e.target.closest('button[onclick^="toggleActionMenu"]')) {
@@ -4699,7 +4699,301 @@
                     document.getElementById('userProfileDropdown')?.classList.add('hidden');
                 }
             });
+            initUniversalComboboxSystem();
         });
+
+        // =========================================================================
+        // تعميم نظام القوائم المنسدلة التفاعلية (Combobox) على كافة قوائم البرنامج
+        // =========================================================================
+        const UNIVERSAL_COMBO_REGISTRY = new Map();
+
+        function isItemSelectorId(id) {
+            return ['inItemSelect', 'trItemSelect', 'retItemSelect', 'wasteItemSelect', 'stAddItemSelect', 'movItemSelect'].includes(id);
+        }
+
+        function isCustomerSelectorId(id) {
+            return ['retCustomerSelect', 'qPayCustomerSelect'].includes(id);
+        }
+
+        function syncUniversalComboboxFromSelect(selectEl) {
+            if (!selectEl) return;
+            const entry = UNIVERSAL_COMBO_REGISTRY.get(selectEl);
+            if (!entry) return;
+            const selectedOpt = selectEl.options[selectEl.selectedIndex];
+            if (selectedOpt && selectEl.value !== '') {
+                const it = isItemSelectorId(selectEl.id) ? appState.items.find(x => x.id === selectEl.value) : null;
+                const cust = isCustomerSelectorId(selectEl.id) ? appState.customers.find(x => x.id === selectEl.value) : null;
+                entry.input.value = it ? it.name : (cust ? cust.name : selectedOpt.text);
+            } else {
+                entry.input.value = '';
+            }
+        }
+
+        function syncAllUniversalComboboxes() {
+            UNIVERSAL_COMBO_REGISTRY.forEach((entry, selectEl) => {
+                syncUniversalComboboxFromSelect(selectEl);
+            });
+        }
+
+        function buildUniversalComboMenu(selectEl, query = '') {
+            const entry = UNIVERSAL_COMBO_REGISTRY.get(selectEl);
+            if (!entry) return;
+            const q = String(query || '').trim().toLowerCase();
+            const isItem = isItemSelectorId(selectEl.id);
+            const isCust = isCustomerSelectorId(selectEl.id);
+
+            const optionsList = Array.from(selectEl.options).filter(opt => !opt.disabled);
+            const filtered = optionsList.filter(opt => {
+                if (!q) return true;
+                if (isItem) {
+                    const it = appState.items.find(x => x.id === opt.value);
+                    if (it) {
+                        const dims = `${it.length} ${it.width} ${it.width}*${it.length} ${it.width}×${it.length}`;
+                        return (it.name || '').toLowerCase().includes(q) || dims.includes(q);
+                    }
+                }
+                return opt.text.toLowerCase().includes(q);
+            });
+
+            entry.filteredOptions = filtered;
+            if (filtered.length === 0) {
+                entry.highlightIdx = -1;
+                entry.menu.innerHTML = `<div class="p-3.5 text-center text-xs font-bold text-slate-400">لا توجد نتائج مطابقة</div>`;
+                return;
+            }
+
+            if (entry.highlightIdx < 0 || entry.highlightIdx >= filtered.length) {
+                const selIdx = filtered.findIndex(o => o.value === selectEl.value);
+                entry.highlightIdx = selIdx >= 0 ? selIdx : 0;
+            }
+
+            entry.menu.innerHTML = filtered.map((opt, idx) => {
+                const isActive = idx === entry.highlightIdx;
+                if (isItem) {
+                    const it = appState.items.find(x => x.id === opt.value);
+                    if (it) {
+                        const rS = Number(it.stockSamir || 0);
+                        const rT = Number(it.stockTahlia || 0);
+                        return `
+                            <div data-ucombo-idx="${idx}"
+                                 class="px-3.5 py-2.5 cursor-pointer flex flex-col gap-1 border-b border-slate-100 last:border-b-0 transition-colors ${isActive ? 'bg-blue-600 text-white' : 'hover:bg-blue-50 text-slate-800'}">
+                                <div class="text-xs font-black whitespace-normal break-words leading-snug ${isActive ? 'text-white' : 'text-slate-900'}">${escapeHtmlAttr(it.name)}</div>
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <span class="text-[11px] font-semibold ${isActive ? 'text-blue-100' : 'text-slate-500'}">المقاس: ${it.width}م × ${it.length}م</span>
+                                    <div class="flex items-center gap-1 text-[10px] font-black">
+                                        <span class="px-1.5 py-0.5 rounded ${isActive ? 'bg-white/20 text-white' : (rS > 0 ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-400')}">السامر: ${rS.toFixed(2)}</span>
+                                        <span class="px-1.5 py-0.5 rounded ${isActive ? 'bg-white/20 text-white' : (rT > 0 ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-400')}">التحلية: ${rT.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+
+                if (isCust) {
+                    const cust = appState.customers.find(x => x.id === opt.value);
+                    if (cust) {
+                        const st = getCustomerStats(cust.id);
+                        return `
+                            <div data-ucombo-idx="${idx}"
+                                 class="px-3.5 py-2.5 cursor-pointer flex items-center justify-between gap-2 border-b border-slate-100 last:border-b-0 transition-colors ${isActive ? 'bg-blue-600 text-white' : 'hover:bg-blue-50 text-slate-800'}">
+                                <div class="min-w-0">
+                                    <div class="text-xs font-black truncate ${isActive ? 'text-white' : 'text-slate-900'}">${escapeHtmlAttr(cust.name)}</div>
+                                    <div class="text-[11px] font-semibold mt-0.5 ${isActive ? 'text-blue-100' : 'text-slate-500'}">${[cust.city, cust.phone].filter(Boolean).join(' • ') || 'عميل مسجل'}</div>
+                                </div>
+                                <span class="px-2 py-0.5 rounded-md text-[10px] font-black shrink-0 ${isActive ? 'bg-white/20 text-white' : (st.balance > 0 ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700')}">
+                                    ${st.balance.toFixed(2)} ر.س
+                                </span>
+                            </div>
+                        `;
+                    }
+                }
+
+                return `
+                    <div data-ucombo-idx="${idx}"
+                         class="px-3.5 py-2 cursor-pointer text-xs font-extrabold border-b border-slate-100 last:border-b-0 transition-colors ${isActive ? 'bg-blue-600 text-white' : 'hover:bg-blue-50 text-slate-800'}">
+                        ${escapeHtmlAttr(opt.text)}
+                    </div>
+                `;
+            }).join('');
+
+            Array.from(entry.menu.querySelectorAll('[data-ucombo-idx]')).forEach(rowEl => {
+                const i = Number(rowEl.dataset.ucomboIdx);
+                rowEl.addEventListener('mouseenter', () => {
+                    entry.highlightIdx = i;
+                    buildUniversalComboMenu(selectEl, entry.isSearching ? entry.input.value : '');
+                });
+                rowEl.addEventListener('mousedown', (ev) => {
+                    ev.preventDefault();
+                    pickUniversalComboOption(selectEl, i);
+                });
+            });
+        }
+
+        function positionUniversalComboMenu(selectEl) {
+            const entry = UNIVERSAL_COMBO_REGISTRY.get(selectEl);
+            if (!entry) return;
+            if (entry.menu.parentElement !== document.body) {
+                document.body.appendChild(entry.menu);
+            }
+            const rect = entry.wrapper.getBoundingClientRect();
+            const isItem = isItemSelectorId(selectEl.id);
+            const minW = isItem ? Math.min(window.innerWidth - 16, Math.max(rect.width, 440)) : rect.width;
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const maxH = 270;
+
+            entry.menu.style.width = `${minW}px`;
+            const leftPos = Math.max(8, Math.min(rect.right - minW, window.innerWidth - minW - 8));
+            entry.menu.style.left = `${leftPos}px`;
+            entry.menu.style.right = 'auto';
+
+            if (spaceBelow < 180 && rect.top > 200) {
+                entry.menu.style.top = 'auto';
+                entry.menu.style.bottom = `${window.innerHeight - rect.top + 4}px`;
+            } else {
+                entry.menu.style.bottom = 'auto';
+                entry.menu.style.top = `${rect.bottom + 4}px`;
+            }
+            entry.menu.style.maxHeight = `${maxH}px`;
+        }
+
+        function openUniversalComboMenu(selectEl) {
+            closeAllSearchableDropdowns();
+            const entry = UNIVERSAL_COMBO_REGISTRY.get(selectEl);
+            if (!entry) return;
+            entry.isSearching = false;
+            const selIdx = Array.from(selectEl.options).findIndex(o => o.value === selectEl.value);
+            entry.highlightIdx = selIdx >= 0 ? selIdx : 0;
+            buildUniversalComboMenu(selectEl, '');
+            entry.menu.classList.remove('hidden');
+            positionUniversalComboMenu(selectEl);
+            const activeRow = entry.menu.children[entry.highlightIdx];
+            if (activeRow) activeRow.scrollIntoView({ block: 'nearest' });
+        }
+
+        function pickUniversalComboOption(selectEl, idx) {
+            const entry = UNIVERSAL_COMBO_REGISTRY.get(selectEl);
+            if (!entry || !entry.filteredOptions || !entry.filteredOptions[idx]) return;
+            const chosenOpt = entry.filteredOptions[idx];
+            selectEl.value = chosenOpt.value;
+            entry.isSearching = false;
+            syncUniversalComboboxFromSelect(selectEl);
+            entry.menu.classList.add('hidden');
+            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        function upgradeSelectToUniversalCombobox(selectEl) {
+            if (!selectEl || UNIVERSAL_COMBO_REGISTRY.has(selectEl)) return;
+            if (selectEl.closest('#saleCartBody') || selectEl.id === 'saleCustomerSelect' || selectEl.id === 'saleItemSelect') return;
+
+            const legacySiblingInputId = {
+                movItemSelect: 'movItemSearch',
+                qPayCustomerSelect: 'qPayCustomerSearch',
+                stAddItemSelect: 'stAddItemSearch'
+            }[selectEl.id];
+            if (legacySiblingInputId) {
+                document.getElementById(legacySiblingInputId)?.classList.add('hidden');
+            }
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'universal-combo-wrapper relative w-full';
+            selectEl.parentNode.insertBefore(wrapper, selectEl);
+            wrapper.appendChild(selectEl);
+            selectEl.classList.add('hidden');
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.autocomplete = 'off';
+            input.placeholder = isItemSelectorId(selectEl.id)
+                ? 'ابحث باسم الصنف أو المقاس...'
+                : (isCustomerSelectorId(selectEl.id) ? 'ابحث باسم العميل...' : 'اختر أو ابحث...');
+            input.className = 'w-full p-2.5 pl-8 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold cursor-pointer focus:ring-2 focus:ring-blue-500 outline-none';
+
+            const arrowBtn = document.createElement('button');
+            arrowBtn.type = 'button';
+            arrowBtn.tabIndex = -1;
+            arrowBtn.className = 'absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1';
+            arrowBtn.innerHTML = '<i class="fa-solid fa-chevron-down text-xs"></i>';
+
+            const menu = document.createElement('div');
+            menu.className = 'universal-combo-menu hidden fixed overflow-y-auto bg-white border border-slate-300 rounded-2xl shadow-2xl z-50';
+
+            wrapper.appendChild(input);
+            wrapper.appendChild(arrowBtn);
+
+            const entry = { wrapper, input, menu, filteredOptions: [], highlightIdx: 0, isSearching: false };
+            UNIVERSAL_COMBO_REGISTRY.set(selectEl, entry);
+
+            input.addEventListener('focus', () => {
+                input.select();
+                openUniversalComboMenu(selectEl);
+            });
+            input.addEventListener('click', () => {
+                if (menu.classList.contains('hidden')) openUniversalComboMenu(selectEl);
+            });
+            arrowBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (menu.classList.contains('hidden')) {
+                    input.focus();
+                } else {
+                    menu.classList.add('hidden');
+                }
+            });
+            input.addEventListener('input', () => {
+                entry.isSearching = true;
+                entry.highlightIdx = 0;
+                buildUniversalComboMenu(selectEl, input.value);
+                if (menu.classList.contains('hidden')) {
+                    menu.classList.remove('hidden');
+                }
+                positionUniversalComboMenu(selectEl);
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (menu.classList.contains('hidden')) {
+                        openUniversalComboMenu(selectEl);
+                        return;
+                    }
+                    if (entry.filteredOptions.length === 0) return;
+                    entry.highlightIdx = e.key === 'ArrowDown'
+                        ? (entry.highlightIdx < entry.filteredOptions.length - 1 ? entry.highlightIdx + 1 : 0)
+                        : (entry.highlightIdx > 0 ? entry.highlightIdx - 1 : entry.filteredOptions.length - 1);
+                    buildUniversalComboMenu(selectEl, entry.isSearching ? input.value : '');
+                    const row = menu.children[entry.highlightIdx];
+                    if (row) row.scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'Enter') {
+                    if (!menu.classList.contains('hidden') && entry.filteredOptions.length > 0) {
+                        e.preventDefault();
+                        pickUniversalComboOption(selectEl, Math.max(0, entry.highlightIdx));
+                    }
+                } else if (e.key === 'Escape' || e.key === 'Tab') {
+                    menu.classList.add('hidden');
+                    syncUniversalComboboxFromSelect(selectEl);
+                }
+            });
+
+            syncUniversalComboboxFromSelect(selectEl);
+        }
+
+        function initUniversalComboboxSystem() {
+            document.querySelectorAll('select').forEach(sel => upgradeSelectToUniversalCombobox(sel));
+        }
+
+        const _origCloseAllSearchableDropdowns = closeAllSearchableDropdowns;
+        closeAllSearchableDropdowns = function() {
+            _origCloseAllSearchableDropdowns();
+            document.querySelectorAll('.universal-combo-menu').forEach(m => m.classList.add('hidden'));
+            syncAllUniversalComboboxes();
+        };
+
+        const _origPopulateSelects = populateSelects;
+        populateSelects = function() {
+            _origPopulateSelects();
+            initUniversalComboboxSystem();
+            syncAllUniversalComboboxes();
+        };
+        // =========================================================================
 
         function renderDashboard() {
             let samirRolls = 0, tahliaRolls = 0, samirSqm = 0, tahliaSqm = 0;
