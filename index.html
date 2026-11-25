@@ -607,15 +607,6 @@
                     <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
                     <span class="nav-label">لوحة القيادة والملخص</span>
                 </button>
-                <button type="button" data-tab="reports" onclick="switchTab('reports')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                    <span class="nav-icon"><i class="fa-solid fa-chart-column text-indigo-600"></i></span>
-                    <span class="nav-label">التقارير والرسوم البيانية</span>
-                </button>
-                <button type="button" data-tab="overdue" onclick="switchTab('overdue')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                    <span class="nav-icon"><i class="fa-solid fa-bell-concierge text-rose-600"></i></span>
-                    <span class="nav-label">الفواتير المتأخرة (25 يوم)</span>
-                    <span id="navBadgeOverdue" class="hidden px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black">0</span>
-                </button>
                 <button type="button" data-tab="sales" onclick="switchTab('sales')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
                     <span class="nav-icon"><i class="fa-solid fa-file-invoice-dollar text-blue-600"></i></span>
                     <span class="nav-label">إذون الصرف والمبيعات</span>
@@ -626,26 +617,35 @@
                     <span class="nav-label">كشف سندات القبض</span>
                     <span id="navBadgeReceipts" class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">0</span>
                 </button>
-                <button type="button" data-tab="inbound" onclick="switchTab('inbound')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                    <span class="nav-icon"><i class="fa-solid fa-truck-ramp-box text-emerald-600"></i></span>
-                    <span class="nav-label">توريد وتغذية المخزن</span>
+                <button type="button" data-tab="customers" onclick="switchTab('customers')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                    <span class="nav-icon"><i class="fa-solid fa-users text-purple-600"></i></span>
+                    <span class="nav-label">العملاء وكشوف الحساب</span>
+                    <span id="navBadgeCustomers" class="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 text-[10px] font-black">0</span>
+                </button>
+                <button type="button" data-tab="reports" onclick="switchTab('reports')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                    <span class="nav-icon"><i class="fa-solid fa-chart-column text-indigo-600"></i></span>
+                    <span class="nav-label">التقارير والرسوم البيانية</span>
                 </button>
                 <button type="button" data-tab="transfers" onclick="switchTab('transfers')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
                     <span class="nav-icon"><i class="fa-solid fa-right-left text-indigo-600"></i></span>
                     <span class="nav-label">التحويل بين المستودعات</span>
                 </button>
+                <button type="button" data-tab="inbound" onclick="switchTab('inbound')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                    <span class="nav-icon"><i class="fa-solid fa-truck-ramp-box text-emerald-600"></i></span>
+                    <span class="nav-label">توريد وتغذية المخزن</span>
+                </button>
                 <button type="button" data-tab="returns" onclick="switchTab('returns')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
                     <span class="nav-icon"><i class="fa-solid fa-rotate-left text-amber-600"></i></span>
                     <span class="nav-label">مرتجعات العملاء</span>
+                </button>
+                <button type="button" data-tab="stocktake" onclick="switchTab('stocktake')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                    <span class="nav-icon"><i class="fa-solid fa-clipboard-check text-teal-600"></i></span>
+                    <span class="nav-label">الجرد الفعلي والمطابقة</span>
                 </button>
                 <button type="button" data-tab="inventory" onclick="switchTab('inventory')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
                     <span class="nav-icon"><i class="fa-solid fa-boxes-stacked text-sky-600"></i></span>
                     <span class="nav-label">الأصناف وأرصدة الرولات</span>
                     <span id="navBadgeLowStock" class="hidden px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-black">0</span>
-                </button>
-                <button type="button" data-tab="stocktake" onclick="switchTab('stocktake')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                    <span class="nav-icon"><i class="fa-solid fa-clipboard-check text-teal-600"></i></span>
-                    <span class="nav-label">الجرد الفعلي والمطابقة</span>
                 </button>
                 <button type="button" data-tab="waste" onclick="switchTab('waste')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
                     <span class="nav-icon"><i class="fa-solid fa-scissors text-rose-600"></i></span>
@@ -656,10 +656,10 @@
                     <span class="nav-label">الأصناف الراكدة (60 يوم)</span>
                     <span id="navBadgeStagnant" class="hidden px-2 py-0.5 rounded-full bg-orange-500 text-white text-[10px] font-black">0</span>
                 </button>
-                <button type="button" data-tab="customers" onclick="switchTab('customers')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                    <span class="nav-icon"><i class="fa-solid fa-users text-purple-600"></i></span>
-                    <span class="nav-label">العملاء وكشوف الحساب</span>
-                    <span id="navBadgeCustomers" class="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 text-[10px] font-black">0</span>
+                <button type="button" data-tab="overdue" onclick="switchTab('overdue')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                    <span class="nav-icon"><i class="fa-solid fa-bell-concierge text-rose-600"></i></span>
+                    <span class="nav-label">الفواتير المتأخرة (25 يوم)</span>
+                    <span id="navBadgeOverdue" class="hidden px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black">0</span>
                 </button>
                 <button type="button" data-tab="opening" onclick="switchTab('opening')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
                     <span class="nav-icon"><i class="fa-solid fa-scale-balanced text-cyan-600"></i></span>
@@ -673,13 +673,13 @@
                     <span class="nav-icon"><i class="fa-solid fa-fingerprint text-violet-600"></i></span>
                     <span class="nav-label">سجل نشاط المستخدمين</span>
                 </button>
-                <button type="button" data-tab="settings" onclick="switchTab('settings')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
-                    <span class="nav-icon"><i class="fa-solid fa-gear text-slate-700"></i></span>
-                    <span class="nav-label">الإعدادات</span>
-                </button>
                 <button type="button" data-tab="users" onclick="switchTab('users')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
                     <span class="nav-icon"><i class="fa-solid fa-user-shield text-amber-600"></i></span>
                     <span class="nav-label">المستخدمين والصلاحيات</span>
+                </button>
+                <button type="button" data-tab="settings" onclick="switchTab('settings')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-slate-700">
+                    <span class="nav-icon"><i class="fa-solid fa-gear text-slate-700"></i></span>
+                    <span class="nav-label">الإعدادات</span>
                 </button>
 
                 <div class="pt-3 mt-2 border-t border-slate-200 space-y-2">
@@ -1417,7 +1417,7 @@
                                     <button type="button" id="saleItemClearBtn" onclick="clearSaleItemCombo()" class="hidden absolute left-8 text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-xmark"></i></button>
                                     <button type="button" onclick="toggleSaleItemMenu()" class="absolute left-2 text-slate-400 hover:text-slate-700 p-1"><i class="fa-solid fa-chevron-down text-xs"></i></button>
                                 </div>
-                                <div id="saleItemMenu" class="hidden absolute left-0 right-0 mt-1 max-h-64 overflow-y-auto bg-white border border-slate-300 rounded-2xl shadow-2xl z-40"></div>
+                                <div id="saleItemMenu" class="hidden absolute right-0 w-full lg:w-[540px] max-w-[94vw] mt-1 max-h-72 overflow-y-auto bg-white border border-slate-300 rounded-2xl shadow-2xl z-40"></div>
                             </div>
 
                             <div class="col-span-4 sm:col-span-3 lg:col-span-1">
@@ -3608,16 +3608,14 @@
                     <div data-combo-idx="${idx}"
                          onmouseenter="highlightSaleItemOption(${idx})"
                          onmousedown="event.preventDefault(); selectSaleItemById('${it.id}');"
-                         class="px-3.5 py-2.5 cursor-pointer flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2 border-b border-slate-100 last:border-b-0 transition-colors ${isActive ? 'bg-blue-600 text-white' : 'hover:bg-blue-50 text-slate-800'}">
-                        <div class="min-w-0 flex-1">
-                            <div class="text-xs font-black whitespace-normal break-words leading-snug sm:truncate ${isActive ? 'text-white' : 'text-slate-900'}">${escapeHtmlAttr(it.name)}</div>
-                            <div class="text-[10px] sm:text-[11px] font-semibold mt-0.5 ${isActive ? 'text-blue-100' : 'text-slate-500'}">
-                                المقاس: ${it.width}م × ${it.length}م
+                         class="px-3.5 py-2.5 cursor-pointer flex flex-col gap-1 border-b border-slate-100 last:border-b-0 transition-colors ${isActive ? 'bg-blue-600 text-white' : 'hover:bg-blue-50 text-slate-800'}">
+                        <div class="text-xs font-black whitespace-normal break-words leading-snug ${isActive ? 'text-white' : 'text-slate-900'}">${escapeHtmlAttr(it.name)}</div>
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span class="text-[11px] font-semibold ${isActive ? 'text-blue-100' : 'text-slate-500'}">المقاس: ${it.width}م × ${it.length}م</span>
+                            <div class="flex items-center gap-1 text-[10px] font-black">
+                                <span class="px-1.5 py-0.5 rounded ${isActive ? 'bg-white/20 text-white' : (rS > 0 ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-400')}">السامر: ${rS.toFixed(2)}</span>
+                                <span class="px-1.5 py-0.5 rounded ${isActive ? 'bg-white/20 text-white' : (rT > 0 ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-400')}">التحلية: ${rT.toFixed(2)}</span>
                             </div>
-                        </div>
-                        <div class="flex items-center gap-1 shrink-0 text-[10px] font-black self-start sm:self-center">
-                            <span class="px-1.5 py-0.5 rounded ${isActive ? 'bg-white/20 text-white' : (rS > 0 ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-400')}">السامر: ${rS.toFixed(2)}</span>
-                            <span class="px-1.5 py-0.5 rounded ${isActive ? 'bg-white/20 text-white' : (rT > 0 ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-400')}">التحلية: ${rT.toFixed(2)}</span>
                         </div>
                     </div>
                 `;
@@ -3634,19 +3632,19 @@
                 const rS = Number(it.stockSamir || 0);
                 const rT = Number(it.stockTahlia || 0);
                 if (i === idx) {
-                    el.className = 'px-3.5 py-2.5 cursor-pointer flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2 border-b border-slate-100 last:border-b-0 transition-colors bg-blue-600 text-white';
-                    el.querySelector('div > div:first-child').className = 'text-xs font-black whitespace-normal break-words leading-snug sm:truncate text-white';
-                    el.querySelector('div > div:last-child').className = 'text-[10px] sm:text-[11px] font-semibold mt-0.5 text-blue-100';
-                    el.lastElementChild.innerHTML = `
+                    el.className = 'px-3.5 py-2.5 cursor-pointer flex flex-col gap-1 border-b border-slate-100 last:border-b-0 transition-colors bg-blue-600 text-white';
+                    el.children[0].className = 'text-xs font-black whitespace-normal break-words leading-snug text-white';
+                    el.children[1].children[0].className = 'text-[11px] font-semibold text-blue-100';
+                    el.children[1].children[1].innerHTML = `
                         <span class="px-1.5 py-0.5 rounded bg-white/20 text-white">السامر: ${rS.toFixed(2)}</span>
                         <span class="px-1.5 py-0.5 rounded bg-white/20 text-white">التحلية: ${rT.toFixed(2)}</span>
                     `;
                     el.scrollIntoView({ block: 'nearest' });
                 } else {
-                    el.className = 'px-3.5 py-2.5 cursor-pointer flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2 border-b border-slate-100 last:border-b-0 transition-colors hover:bg-blue-50 text-slate-800';
-                    el.querySelector('div > div:first-child').className = 'text-xs font-black whitespace-normal break-words leading-snug sm:truncate text-slate-900';
-                    el.querySelector('div > div:last-child').className = 'text-[10px] sm:text-[11px] font-semibold mt-0.5 text-slate-500';
-                    el.lastElementChild.innerHTML = `
+                    el.className = 'px-3.5 py-2.5 cursor-pointer flex flex-col gap-1 border-b border-slate-100 last:border-b-0 transition-colors hover:bg-blue-50 text-slate-800';
+                    el.children[0].className = 'text-xs font-black whitespace-normal break-words leading-snug text-slate-900';
+                    el.children[1].children[0].className = 'text-[11px] font-semibold text-slate-500';
+                    el.children[1].children[1].innerHTML = `
                         <span class="px-1.5 py-0.5 rounded ${rS > 0 ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-400'}">السامر: ${rS.toFixed(2)}</span>
                         <span class="px-1.5 py-0.5 rounded ${rT > 0 ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-400'}">التحلية: ${rT.toFixed(2)}</span>
                     `;
