@@ -3327,6 +3327,7 @@
                     }
                     saveState();
                     applyCompanyBrandingToUI();
+                    initDynamicPwaAssets();
                     showToast('تم رفع وتحديث شعار الشركة في شاشة الدخول والهيدر وكامل النظام فوراً!');
                 };
                 img.onerror = function() {
@@ -3336,6 +3337,7 @@
                     };
                     saveState();
                     applyCompanyBrandingToUI();
+                    initDynamicPwaAssets();
                     showToast('تم رفع وتحديث شعار الشركة بنجاح!');
                 };
                 img.src = rawDataUrl;
@@ -3355,6 +3357,7 @@
             };
             saveState();
             applyCompanyBrandingToUI();
+            initDynamicPwaAssets();
             showToast('تمت استعادة الشعار الافتراضي');
         }
 
@@ -3398,6 +3401,7 @@
             logUserActivity('edit', 'الإعدادات', `تحديث إعدادات النظام وهوية الشركة (${companyName})`);
             saveState();
             applyCompanyBrandingToUI();
+            initDynamicPwaAssets();
             refreshAllViews();
             showToast('تم حفظ جميع إعدادات النظام وتحديثها بنجاح');
         }
@@ -9357,25 +9361,69 @@ ${statusLine}
         function initDynamicPwaAssets() {
             try {
                 const cfg = getCompanySettings();
-                const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 245"><rect width="260" height="245" rx="36" fill="#0f2361"/><rect x="20" y="20" width="220" height="205" rx="28" fill="#ffffff"/><text x="130" y="135" text-anchor="middle" font-family="Cairo, sans-serif" font-weight="900" font-size="34" fill="#0f2361">BW</text><text x="130" y="178" text-anchor="middle" font-family="Cairo, sans-serif" font-weight="800" font-size="22" fill="#1d4ed8">${escapeHtmlAttr(cfg.brandShort || 'Best Way')}</text></svg>`;
-                const iconUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgIcon);
-                const fav = document.getElementById('pwaFavicon');
-                const apple = document.getElementById('pwaAppleIcon');
-                const manifestLink = document.getElementById('pwaManifestLink');
-                if (fav) fav.href = iconUrl;
-                if (apple) apple.href = iconUrl;
-                if (manifestLink) {
-                    const manifestObj = {
-                        name: cfg.companyName || 'مؤسسة الطريق الأمثل',
-                        short_name: cfg.brandShort || 'الطريق الأمثل',
-                        start_url: '.',
-                        display: 'standalone',
-                        background_color: '#0f2361',
-                        theme_color: '#1C2C6E',
-                        icons: [{ src: iconUrl, sizes: '192x192 512x512', type: 'image/svg+xml' }]
-                    };
-                    manifestLink.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestObj));
-                }
+                const svgIconUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(PRINT_HD_LOGO_SVG.trim());
+
+                const applyManifestAndLinks = (png512Url, png192Url) => {
+                    const fav = document.getElementById('pwaFavicon');
+                    const apple = document.getElementById('pwaAppleIcon');
+                    const manifestLink = document.getElementById('pwaManifestLink');
+
+                    if (fav) {
+                        fav.type = png192Url ? 'image/png' : 'image/svg+xml';
+                        fav.href = png192Url || svgIconUrl;
+                    }
+                    if (apple) {
+                        apple.href = png192Url || svgIconUrl;
+                    }
+                    if (manifestLink) {
+                        const icons = [];
+                        if (png192Url) icons.push({ src: png192Url, sizes: '192x192', type: 'image/png', purpose: 'any maskable' });
+                        if (png512Url) icons.push({ src: png512Url, sizes: '512x512', type: 'image/png', purpose: 'any maskable' });
+                        if (icons.length === 0) icons.push({ src: svgIconUrl, sizes: 'any', type: 'image/svg+xml' });
+
+                        const manifestObj = {
+                            name: cfg.companyName || 'مؤسسة الطريق الأمثل للدعاية والإعلان',
+                            short_name: 'الطريق الأمثل',
+                            start_url: '.',
+                            display: 'standalone',
+                            background_color: '#ffffff',
+                            theme_color: '#1C2C6E',
+                            icons
+                        };
+                        manifestLink.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestObj));
+                    }
+                };
+
+                const sourceUrl = cfg.logoDataUrl || svgIconUrl;
+                const img = new Image();
+                img.onload = function() {
+                    try {
+                        const renderPng = (size) => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = size;
+                            canvas.height = size;
+                            const ctx = canvas.getContext('2d');
+                            if (!ctx) return null;
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, size, size);
+                            const pad = Math.round(size * 0.06);
+                            const maxW = size - pad * 2;
+                            const maxH = size - pad * 2;
+                            const ratio = Math.min(maxW / (img.width || 260), maxH / (img.height || 245));
+                            const drawW = Math.round((img.width || 260) * ratio);
+                            const drawH = Math.round((img.height || 245) * ratio);
+                            ctx.drawImage(img, Math.round((size - drawW) / 2), Math.round((size - drawH) / 2), drawW, drawH);
+                            return canvas.toDataURL('image/png');
+                        };
+                        applyManifestAndLinks(renderPng(512), renderPng(192));
+                    } catch (err) {
+                        applyManifestAndLinks(null, null);
+                    }
+                };
+                img.onerror = function() {
+                    applyManifestAndLinks(null, null);
+                };
+                img.src = sourceUrl;
             } catch (e) {}
         }
 
