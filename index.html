@@ -2479,7 +2479,7 @@
                 <div class="searchable-select-wrapper relative sm:col-span-2">
                     <label class="block text-xs font-extrabold text-slate-700 mb-1">اختر الصنف</label>
                     <input type="text" id="movItemSearch" onfocus="showSearchableDropdown('movItemSelect')" oninput="filterSearchableSelect('movItemSearch', 'movItemSelect')" placeholder="ابحث باسم الصنف..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                    <select id="movItemSelect" size="5" onchange="syncSearchableInput('movItemSelect', 'movItemSearch'); renderItemMovementReport();" class="hidden absolute left-0 right-0 mt-1 bg-white border border-slate-300 rounded-xl shadow-xl z-40 text-xs font-bold p-1"></select>
+                    <select id="movItemSelect" onchange="renderItemMovementReport();" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
                 </div>
                 <div>
                     <label class="block text-xs font-extrabold text-slate-700 mb-1">المخزن</label>
@@ -2692,7 +2692,7 @@
                 <div class="searchable-select-wrapper relative">
                     <label class="block text-xs font-extrabold text-slate-700 mb-1">اسم العميل</label>
                     <input type="text" id="qPayCustomerSearch" onfocus="showSearchableDropdown('qPayCustomerSelect')" oninput="filterSearchableSelect('qPayCustomerSearch', 'qPayCustomerSelect')" placeholder="ابحث واختر العميل..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                    <select id="qPayCustomerSelect" size="5" onchange="syncSearchableInput('qPayCustomerSelect', 'qPayCustomerSearch'); updateQuickReceiptBalanceHint();" class="hidden absolute left-0 right-0 mt-1 bg-white border border-slate-300 rounded-xl shadow-xl z-40 text-xs font-bold p-1"></select>
+                    <select id="qPayCustomerSelect" onchange="updateQuickReceiptBalanceHint();" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
                     <p id="qPayCustomerBalanceHint" class="text-[11px] font-extrabold text-slate-500 mt-1"></p>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2732,7 +2732,7 @@
             <h3 class="text-base font-black text-slate-900">إضافة صنف لقائمة الجرد</h3>
             <div class="searchable-select-wrapper relative">
                 <input type="text" id="stAddItemSearch" onfocus="showSearchableDropdown('stAddItemSelect')" oninput="filterSearchableSelect('stAddItemSearch', 'stAddItemSelect')" placeholder="ابحث باسم الصنف..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
-                <select id="stAddItemSelect" size="6" onchange="syncSearchableInput('stAddItemSelect', 'stAddItemSearch')" class="w-full mt-2 bg-white border border-slate-300 rounded-xl text-xs font-bold p-1"></select>
+                <select id="stAddItemSelect" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"></select>
             </div>
             <div class="flex justify-end gap-2">
                 <button type="button" onclick="closeStocktakeAddItemModal()" class="px-4 py-2 bg-slate-100 rounded-xl text-xs font-extrabold">إلغاء</button>
@@ -3204,6 +3204,12 @@
                 ...DEFAULT_COMPANY_SETTINGS,
                 ...(appState.companySettings || {})
             };
+        }
+
+        function getWarehouseName(whId) {
+            const found = (appState.warehouses || []).find(w => w.id === whId);
+            if (found && found.name) return found.name;
+            return whId === 'wh_tahlia' ? 'مخزن التحلية' : 'مخزن السامر';
         }
 
         function getBrandLogoMarkup(extraClasses = 'w-full h-full object-contain') {
@@ -5005,6 +5011,8 @@
         function renderDashboard() {
             let samirRolls = 0, tahliaRolls = 0, samirSqm = 0, tahliaSqm = 0;
             const lowItems = [];
+            const lowLimit = Number(getCompanySettings().lowStockLimit || 10);
+            const stagLimit = Number(getCompanySettings().stagnantDays || 60);
 
             appState.items.forEach(it => {
                 const rS = Number(it.stockSamir || 0);
@@ -5014,7 +5022,7 @@
                 tahliaRolls += rT;
                 samirSqm += rS * area;
                 tahliaSqm += rT * area;
-                if (rS + rT <= 10) lowItems.push({ ...it, totalR: rS + rT });
+                if (rS + rT <= lowLimit) lowItems.push({ ...it, totalR: rS + rT });
             });
 
             const totSqm = samirSqm + tahliaSqm;
@@ -5108,7 +5116,7 @@
             const ovdSumEl = document.getElementById('dashOverdueSummary');
             if (ovdSumEl) ovdSumEl.textContent = `${lateInvoices.length} فاتورة متأخرة (${lateTotal.toFixed(2)} ر.س)`;
 
-            const stagList = getStagnantItemsList(60);
+            const stagList = getStagnantItemsList(stagLimit);
             const stagSumEl = document.getElementById('dashStagnantSummary');
             if (stagSumEl) stagSumEl.textContent = `${stagList.length} صنف راكد بالمستودعات`;
         }
@@ -6386,8 +6394,8 @@ ${statusLine}
                         <td class="py-3.5 px-4">
                             <div class="font-extrabold text-slate-900">${escapeHtmlAttr(it.name)}${alertBadge}</div>
                             <div class="flex flex-wrap items-center gap-2 mt-1 text-[11px]">
-                                <span class="px-2 py-0.5 rounded bg-sky-50 text-sky-700 font-black">السامر: ${rS.toFixed(2)} رول</span>
-                                <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-black">التحلية: ${rT.toFixed(2)} رول</span>
+                                <span class="px-2 py-0.5 rounded bg-sky-50 text-sky-700 font-black">${escapeHtmlAttr(getWarehouseName('wh_samir'))}: ${rS.toFixed(2)} رول</span>
+                                <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-black">${escapeHtmlAttr(getWarehouseName('wh_tahlia'))}: ${rT.toFixed(2)} رول</span>
                             </div>
                         </td>
                         <td class="py-3.5 px-4 text-center">${Number(it.length || 50)}</td>
@@ -6517,14 +6525,10 @@ ${statusLine}
         function openItemMovementModal(itemId = null) {
             populateSelects();
             const sel = document.getElementById('movItemSelect');
-            const inp = document.getElementById('movItemSearch');
-            if (sel && itemId) {
-                sel.value = itemId;
-                const it = appState.items.find(x => x.id === itemId);
-                if (inp && it) inp.value = it.name;
-            } else if (sel && sel.options.length > 0) {
-                sel.selectedIndex = 0;
-                if (inp) inp.value = sel.options[0].text;
+            if (sel) {
+                if (itemId) sel.value = itemId;
+                else if (sel.options.length > 0) sel.selectedIndex = 0;
+                syncUniversalComboboxFromSelect(sel);
             }
             document.getElementById('itemMovementModal')?.classList.remove('hidden');
             renderItemMovementReport();
@@ -7099,14 +7103,17 @@ ${statusLine}
             const totalSqm = saleCart.reduce((s, x) => s + Number(x.sqm || 0), 0);
             const rawSum = saleCart.reduce((s, x) => s + Number(x.total || 0), 0);
             const taxMode = document.getElementById('saleTaxMode')?.value || 'none';
+            const cfg = getCompanySettings();
+            const vatRate = (Number(cfg.vatPercent ?? 15)) / 100;
+            const cur = cfg.currencySymbol || 'ر.س';
 
             let vatAmount = 0;
             let grandTotal = rawSum;
             if (taxMode === 'exclusive') {
-                vatAmount = rawSum * 0.15;
+                vatAmount = rawSum * vatRate;
                 grandTotal = rawSum + vatAmount;
             } else if (taxMode === 'inclusive') {
-                const base = rawSum / 1.15;
+                const base = vatRate > 0 ? (rawSum / (1 + vatRate)) : rawSum;
                 vatAmount = rawSum - base;
                 grandTotal = rawSum;
             }
@@ -7114,8 +7121,8 @@ ${statusLine}
             setTextSafe('saleCartTotalSqm', `${totalSqm.toFixed(2)} م²`);
             const vatWrap = document.getElementById('saleCartVatWrap');
             if (vatWrap) vatWrap.classList.toggle('hidden', taxMode === 'none');
-            setTextSafe('saleCartVatAmount', `${vatAmount.toFixed(2)} ر.س`);
-            setTextSafe('saleCartTotalAmount', `${grandTotal.toFixed(2)} ر.س`);
+            setTextSafe('saleCartVatAmount', `${vatAmount.toFixed(2)} ${cur}`);
+            setTextSafe('saleCartTotalAmount', `${grandTotal.toFixed(2)} ${cur}`);
         }
 
         function submitSaleOrder() {
@@ -7161,15 +7168,18 @@ ${statusLine}
 
             const totalSqm = saleCart.reduce((s, x) => s + Number(x.sqm || 0), 0);
             const rawSum = saleCart.reduce((s, x) => s + Number(x.total || 0), 0);
+            const cfg = getCompanySettings();
+            const vatPercent = Number(cfg.vatPercent ?? 15);
+            const vatRate = vatPercent / 100;
             let subtotalBeforeVat = rawSum;
             let vatAmount = 0;
             let totalAmount = rawSum;
 
             if (taxMode === 'exclusive') {
-                vatAmount = rawSum * 0.15;
+                vatAmount = rawSum * vatRate;
                 totalAmount = rawSum + vatAmount;
             } else if (taxMode === 'inclusive') {
-                subtotalBeforeVat = rawSum / 1.15;
+                subtotalBeforeVat = vatRate > 0 ? (rawSum / (1 + vatRate)) : rawSum;
                 vatAmount = rawSum - subtotalBeforeVat;
                 totalAmount = rawSum;
             }
@@ -7195,6 +7205,7 @@ ${statusLine}
                 warehouseId: wh,
                 quoteRef,
                 taxMode,
+                vatPercent,
                 paymentStatus,
                 paidMethod,
                 driverName,
@@ -7269,7 +7280,7 @@ ${statusLine}
                     <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap">${formatDateTimeAr(t.date)}</td>
                     <td class="py-3.5 px-4 font-extrabold text-slate-900">${escapeHtmlAttr(t.customerName || '-')}</td>
                     <td class="py-3.5 px-4 text-slate-600">${t.quoteRef ? escapeHtmlAttr(t.quoteRef) : '-'}</td>
-                    <td class="py-3.5 px-4">${t.warehouseId === 'wh_tahlia' ? 'مخزن التحلية' : 'مخزن السامر'}</td>
+                    <td class="py-3.5 px-4">${escapeHtmlAttr(getWarehouseName(t.warehouseId))}</td>
                     <td class="py-3.5 px-4 text-center font-black text-indigo-700">${Number(t.totalSqm || 0).toFixed(2)} م²</td>
                     <td class="py-3.5 px-4 text-center font-black text-emerald-700">${Number(t.totalAmount || 0).toFixed(2)} ر.س</td>
                     <td class="py-3.5 px-4 text-center">
@@ -7327,7 +7338,7 @@ ${statusLine}
                     <div class="grid grid-cols-2 gap-2 text-xs font-bold bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
                         <div>العميل: <strong class="text-slate-900">${escapeHtmlAttr(tx.customerName)}</strong></div>
                         <div>التاريخ: <strong>${formatDateTimeAr(tx.date)}</strong></div>
-                        <div>المستودع: <strong>${tx.warehouseId === 'wh_tahlia' ? 'مخزن التحلية' : 'مخزن السامر'}</strong></div>
+                        <div>المستودع: <strong>${escapeHtmlAttr(getWarehouseName(tx.warehouseId))}</strong></div>
                         <div>الحالة: <strong>${tx.paymentStatus === 'paid' ? 'مدفوعة' : 'آجل (على الحساب)'}</strong></div>
                     </div>
                     <div class="overflow-x-auto border border-slate-200 rounded-2xl">
@@ -7373,16 +7384,19 @@ ${statusLine}
 
             const rawSum = (tx.lines || []).reduce((s, ln) => s + Number(ln.total || 0), 0);
             const taxMode = tx.taxMode || 'none';
+            const vatPercent = Number(tx.vatPercent ?? cfg.vatPercent ?? 15);
+            const vatRate = vatPercent / 100;
+            const cur = escapeHtmlAttr(cfg.currencySymbol || 'ر.س');
             let beforeVat = rawSum;
             let vatAmt = 0;
             let finalTotal = Number(tx.totalAmount || rawSum);
 
             if (taxMode === 'exclusive') {
                 beforeVat = rawSum;
-                vatAmt = rawSum * 0.15;
+                vatAmt = rawSum * vatRate;
                 finalTotal = beforeVat + vatAmt;
             } else if (taxMode === 'inclusive') {
-                beforeVat = rawSum / 1.15;
+                beforeVat = vatRate > 0 ? (rawSum / (1 + vatRate)) : rawSum;
                 vatAmt = rawSum - beforeVat;
                 finalTotal = rawSum;
             } else {
@@ -7458,7 +7472,7 @@ ${statusLine}
                             <div style="flex:1;text-align:left;font-size:11.5px;font-weight:800;color:#334155;line-height:1.8;">
                                 <div>رقم المستند: <span style="color:#0f2361;font-weight:900;">${escapeHtmlAttr(tx.quoteRef || tx.id)}</span></div>
                                 <div>التاريخ: <span>${new Date(tx.date).toLocaleDateString('ar-SA')}</span></div>
-                                <div>المستودع: <span>${tx.warehouseId === 'wh_tahlia' ? 'التحلية' : 'السامر'}</span></div>
+                                <div>المستودع: <span>${escapeHtmlAttr(getWarehouseName(tx.warehouseId))}</span></div>
                             </div>
                         </div>
 
@@ -7505,15 +7519,15 @@ ${statusLine}
                             <div style="min-width:280px;border:1.5px solid #cbd5e1;border-radius:14px;overflow:hidden;font-size:12.5px;">
                                 <div style="display:flex;justify-content:space-between;padding:8px 14px;background:#f8fafc;border-bottom:1px solid #cbd5e1;font-weight:800;">
                                     <span>الإجمالي قبل الضريبة:</span>
-                                    <span>${beforeVat.toFixed(2)} ر.س</span>
+                                    <span>${beforeVat.toFixed(2)} ${cur}</span>
                                 </div>
                                 <div style="display:flex;justify-content:space-between;padding:8px 14px;background:#ffffff;border-bottom:1px solid #cbd5e1;font-weight:800;color:#b45309;">
-                                    <span>ضريبة القيمة المضافة (15%):</span>
-                                    <span>${vatAmt.toFixed(2)} ر.س</span>
+                                    <span>ضريبة القيمة المضافة (${vatPercent}%):</span>
+                                    <span>${vatAmt.toFixed(2)} ${cur}</span>
                                 </div>
                                 <div style="display:flex;justify-content:space-between;padding:10px 14px;background:#0f2361;color:#ffffff;font-weight:900;font-size:14px;">
                                     <span>الإجمالي شامل الضريبة:</span>
-                                    <span>${finalTotal.toFixed(2)} ر.س</span>
+                                    <span>${finalTotal.toFixed(2)} ${cur}</span>
                                 </div>
                             </div>
                         </div>
@@ -7887,9 +7901,10 @@ ${statusLine}
             if (btnEl) btnEl.textContent = 'اعتماد وحفظ سند القبض';
 
             const sel = document.getElementById('qPayCustomerSelect');
-            const inp = document.getElementById('qPayCustomerSearch');
-            if (sel) sel.selectedIndex = -1;
-            if (inp) inp.value = '';
+            if (sel) {
+                sel.selectedIndex = -1;
+                syncUniversalComboboxFromSelect(sel);
+            }
             setTextSafe('qPayCustomerBalanceHint', '');
             document.getElementById('qPayAmountInput').value = '';
             document.getElementById('qPayDateInput').value = getNowLocalInputStr();
@@ -7914,9 +7929,10 @@ ${statusLine}
             if (btnEl) btnEl.textContent = 'حفظ تعديلات سند القبض';
 
             const sel = document.getElementById('qPayCustomerSelect');
-            const inp = document.getElementById('qPayCustomerSearch');
-            if (sel) sel.value = r.customerId || '';
-            if (inp) inp.value = r.customerName || '';
+            if (sel) {
+                sel.value = r.customerId || '';
+                syncUniversalComboboxFromSelect(sel);
+            }
             updateQuickReceiptBalanceHint();
 
             document.getElementById('qPayAmountInput').value = Number(r.amount || 0);
@@ -8589,17 +8605,31 @@ ${statusLine}
                             </div>
                         </div>
 
-                        <div style="margin-top:24px;padding-top:12px;border-top:1px dashed #cbd5e1;display:flex;justify-content:space-between;font-size:11.5px;font-weight:800;color:#334155;">
-                            <div>مصادقة العميل: ....................................</div>
+                        <div style="margin-top:28px;padding-top:12px;border-top:1px dashed #cbd5e1;display:flex;justify-content:space-between;font-size:11.5px;font-weight:800;color:#334155;">
+                            <div>توقيع المحاسب: ....................................</div>
                             <div>ختم وتوقيع المؤسسة: ....................................</div>
                         </div>
-                        ${cfg.printFooterNote ? `<div style="margin-top:12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;">${escapeHtmlAttr(cfg.printFooterNote)}</div>` : ''}
+                        ${cfg.printFooterNote ? `<div style="margin-top:14px;padding:8px 12px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;text-align:center;font-size:11px;font-weight:800;color:#475569;">${escapeHtmlAttr(cfg.printFooterNote)}</div>` : ''}
                     </div>
                     <script>setTimeout(() => { window.print(); window.close(); }, 450);<\/script>
                 </body>
                 </html>
             `);
             win.document.close();
+        }
+
+        function openImportCustomersModal() {
+            if (!hasPermission('customers', 'edit')) {
+                showToast('عذراً، ليس لديك صلاحية استيراد العملاء', true);
+                return;
+            }
+            pendingImportedCustomers = [];
+            const fileInp = document.getElementById('importCustomersFileInput');
+            if (fileInp) fileInp.value = '';
+            document.getElementById('importCustomersPreviewBox')?.classList.add('hidden');
+            const confirmBtn = document.getElementById('confirmImportCustomersBtn');
+            if (confirmBtn) confirmBtn.disabled = true;
+            document.getElementById('importCustomersModal')?.classList.remove('hidden');
         }
 
         function closeImportCustomersModal() {
